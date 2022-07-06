@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/Image">
+        <file>res/iconGo.png</file>
+        <file>res/iconStop.png</file>
+        <file>res/iconGoGo.png</file>
+    </qresource>
+</RCC>

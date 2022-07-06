@@ -1,0 +1,14 @@
+一．操作系统
+ＬＩＮＵＸ　ＵＯＳ
+
+二．QT版本
+QTCreator：4.8.2
+QT：5.11.3
+
+三．所需编译工程
+源码\0QtSPDriver\1DriverPlatform\AgentBuild.pro
+源码\1QtSPDriver\1BusinessPro\LogBuild.pro
+源码\1QtSPDriver\2DriverAndSP\SPBuild.pro
+
+四．注意事项
+QT工程目录不含中文
