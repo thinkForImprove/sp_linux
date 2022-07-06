@@ -74,7 +74,8 @@ LIBS += -L/usr/local/CFES/lib  \
     -lDetectLivenessModule \
     -lcwauthorize_x64 \
     -lCwChip \
-    -ljpeg
+    -ljpeg  \
+    -ludev
 
 LIBS += -lusb-1.0
 CONFIG(debug, debug|release) {

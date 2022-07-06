@@ -6,7 +6,6 @@
 #include <QObject>
 #include <QSettings>
 #include <sys/stat.h>
-
 #include <dirent.h>
 
 // CAM 版本号
@@ -29,9 +28,8 @@ CDevCAM_CloudWalk::CDevCAM_CloudWalk() : CDevImpl_CloudWalk()
     m_bIsTakePicExStop = FALSE;
 
     m_bDisplayOpenOK = FALSE;     // 未打开
-
     m_qSharedMemData = nullptr;
-
+    m_DevStatusOLD.Clear();
     memset(m_szSharedDataName, 0x00, sizeof(m_szSharedDataName));
     m_ulSharedDataSize = 0;
 
@@ -65,6 +63,13 @@ long CDevCAM_CloudWalk::Open(LPCSTR lpMode)
             return ERR_OPEN_CAMER;
         }
     }
+    // 检查设备是否链接
+    DEVCAMSTATUS stStatus;						// 30-00-00-00(FT#0031)
+    GetStatus(stStatus);                        // 30-00-00-00(FT#0031)
+    if (stStatus.fwDevice != DEVICE_ONLINE)		// 30-00-00-00(FT#0031)
+    {											// 30-00-00-00(FT#0031)
+        return ERR_OPEN_CAMER;					// 30-00-00-00(FT#0031)
+    }											// 30-00-00-00(FT#0031)
 
     // 初始化检测器(加载算法模型)
     if (bInitDetectorParam(m_stCamCwInitParam.nModelMode,
@@ -131,6 +136,11 @@ long CDevCAM_CloudWalk::Reset()
     {
         return ERR_OTHER;
     }
+    // 停止连续活体检测
+    bStopLiveDetect();		// 30-00-00-00(FT#0031)
+
+    m_bDisplayOpenOK = FALSE;	// 30-00-00-00(FT#0031)
+    m_bIsTakePicExStop = TRUE;	// 30-00-00-00(FT#0031)
 
     return CAM_SUCCESS;
 }
@@ -147,6 +157,9 @@ long CDevCAM_CloudWalk::GetDevInfo(char *pInfo)
 
 long CDevCAM_CloudWalk::GetStatus(DEVCAMSTATUS &stStatus)
 {
+#define MCMP(a, b) \
+    (memcmp(a, b, strlen(a)) == 0 && memcmp(a, b, strlen(b)) == 0)
+
     THISMODULE(__FUNCTION__);
     //AutoLogFuncBeginEnd();
     AutoMutex(m_cMutex);
@@ -192,8 +205,133 @@ long CDevCAM_CloudWalk::GetStatus(DEVCAMSTATUS &stStatus)
             return ERR_OTHER;
         }
     }
+    */
 
-    switch(state0)
+    if (IsDeviceOpen() != TRUE)
+    {
+        // 该接口调用频繁,记录本次错误码与上次比较,不同则记录Log,用于避免多次写log造成文本冗余
+        if (m_nRetErrOLD[0] != ERR_OPEN_CAMER)
+        {
+            Log(ThisModule, __LINE__, "IsDeviceOpen() != TRUE. Return: %d.", ERR_OPEN_CAMER);
+            m_nRetErrOLD[0] = ERR_OPEN_CAMER;
+        }
+        return ERR_OPEN_CAMER;
+    }
+
+    // 枚举当前设备上的所有相机 新增 // 30-00-00-00(FT#0031)
+    CWCameraDevice *stCameraLists = nullptr, *stCameraTmp = nullptr;
+    if (bEnumCameras(&stCameraLists) != TRUE)
+    {
+        stStatus.fwDevice   = DEVICE_HWERROR;
+        stStatus.fwMedia[1] = MEDIA_UNKNOWN;
+        stStatus.fwCameras[1] = STATUS_UNKNOWN;
+        // 该接口调用频繁,记录本次错误码与上次比较,不同则记录Log,用于避免多次写log造成文本冗余
+        if (m_nRetErrOLD[0] != ERR_OTHER)
+        {
+            Log(ThisModule, __LINE__, "枚举当前设备上的所有相机: bEnumCameras() != TRUE. Return: %d.", ERR_OTHER);
+            m_nRetErrOLD[0] = ERR_OTHER;
+        }
+        return ERR_OTHER;
+    }
+
+    BOOL bIsVisOk = FALSE, bIsNisOk = FALSE;		// 30-00-00-00(FT#0031)
+    stCameraTmp = stCameraLists;					// 30-00-00-00(FT#0031)
+    if (m_stCamOpenType.wOpenType == CAM_OPEN_DEVIDX)// 30-00-00-00(FT#0031)
+    {
+        // 按序号检查枚举的相机,是否包含INI中配置的序号, 新增 // 30-00-00-00(FT#0031)
+        while(stCameraTmp != nullptr)
+        {
+            if (bIsVisOk == FALSE)
+            {
+                if (stCameraTmp->index == m_stCamOpenType.wVisCamIdx)
+                {
+                    bIsVisOk = TRUE;
+                }
+            }
+            if (bIsNisOk == FALSE)
+            {
+                if (stCameraTmp->index == m_stCamOpenType.wNisCamIdx)
+                {
+                    bIsNisOk = TRUE;
+                }
+            }
+            if (bIsVisOk == TRUE && bIsNisOk == TRUE)
+            {
+                break;
+            }
+            stCameraTmp = stCameraTmp->next;
+        }
+
+        // 按序号(相机使用状态)
+        /*if ((bGetCameraStatus(m_stCamCwInitParam.wVisCamIdx, &state0) != TRUE) ||
+            (bGetCameraStatus(m_stCamCwInitParam.wNisCamIdx, &state1) != TRUE))
+        {
+            m_stStatus.fwDevice = DEVICE_HWERROR;
+            m_stStatus.fwMedia[1] = MEDIA_UNKNOWN;
+            m_stStatus.fwCameras[1] = STATUS_NOTSUPP;
+            return ERR_OTHER;
+        }*/
+    } else
+    {
+        // 按VID/PID检查枚举的相机,是否包含INI中配置的VID/PID 新增 // 30-00-00-00(FT#0031)
+        while(stCameraTmp != nullptr)
+        {
+            if (bIsVisOk == FALSE)
+            {
+                if (MCMP(stCameraTmp->vid, m_stCamOpenType.szVisVid) &&
+                    MCMP(stCameraTmp->pid, m_stCamOpenType.szVisPid))
+                {
+                    bIsVisOk = TRUE;
+                }
+            }
+            if (bIsNisOk == FALSE)
+            {
+                if (MCMP(stCameraTmp->vid, m_stCamOpenType.szNisVid) &&
+                    MCMP(stCameraTmp->pid, m_stCamOpenType.szNisPid))
+                {
+                    bIsNisOk = TRUE;
+                }
+            }
+            if (bIsVisOk == TRUE && bIsNisOk == TRUE)
+            {
+                break;
+            }
+            stCameraTmp = stCameraTmp->next;
+        }
+
+        // 按VID+PID(相机使用状态)
+        /*if ((bGetCameraStatusEx(m_stCamCwInitParam.szVisVid, m_stCamCwInitParam.szVisPid, &state0) != TRUE) ||
+            (bGetCameraStatusEx(m_stCamCwInitParam.szNisVid, m_stCamCwInitParam.szNisPid, &state1) != TRUE))
+        {
+            m_stStatus.fwDevice = DEVICE_HWERROR;
+            m_stStatus.fwMedia[1] = MEDIA_UNKNOWN;
+            m_stStatus.fwCameras[1] = STATUS_NOTSUPP;
+            return ERR_OTHER;
+        }*/
+    }
+
+    // 可见光/红外光,有一个序号或VID/PID不存在则OFFLINE // 30-00-00-00(FT#0031)
+    if (bIsVisOk == FALSE && bIsNisOk == FALSE)
+    {
+        stStatus.fwDevice = DEVICE_OFFLINE;
+        stStatus.fwMedia[1] = MEDIA_UNKNOWN;
+        stStatus.fwCameras[1] = MEDIA_UNKNOWN;
+    } else
+    if ((bIsVisOk == FALSE && bIsNisOk == TRUE) ||
+        (bIsVisOk == TRUE && bIsNisOk == FALSE))
+    {
+        stStatus.fwDevice = DEVICE_OFFLINE;
+        stStatus.fwMedia[1] = MEDIA_UNKNOWN;
+        stStatus.fwCameras[1] = MEDIA_UNKNOWN;
+    } else
+    {
+        stStatus.fwDevice   = DEVICE_ONLINE;
+        stStatus.fwMedia[1] = MEDIA_OK;
+        stStatus.fwCameras[1] = STATUS_OK;
+    }
+
+    // 相机使用状态分析
+    /*switch(state0)
     {
         case CW_CAMERA_STATE_UNKNOWN:    // 0状态未知
         case CW_CAMERA_STATE_UNINIT:     // 1未初始化
@@ -234,6 +372,17 @@ long CDevCAM_CloudWalk::GetStatus(DEVCAMSTATUS &stStatus)
     }*/
 
     //UpdateStatus(DEVICE_ONLINE, "000");
+
+    // 比较两次状态记录LOG
+    if (memcmp(&m_DevStatusOLD, &stStatus, sizeof(DEVCAMSTATUS)) != 0)
+    {
+        Log(ThisModule, __LINE__, "状态结果比较: Device:%d->%d%s|Media[1]:%d->%d%s|Cameras[1]:%d->%d%s|",
+            m_DevStatusOLD.fwDevice, stStatus.fwDevice, (m_DevStatusOLD.fwDevice != stStatus.fwDevice ? " *" : ""),
+            m_DevStatusOLD.fwMedia[1], stStatus.fwMedia[1], (m_DevStatusOLD.fwMedia[1] != stStatus.fwMedia[1]? " *" : ""),
+            m_DevStatusOLD.fwCameras[1], stStatus.fwCameras[1], (m_DevStatusOLD.fwCameras[1] != stStatus.fwCameras[1] ? " *" : "")
+            );
+        memcpy(&m_DevStatusOLD, &stStatus, sizeof(DEVCAMSTATUS));
+    }
     return CAM_SUCCESS;
 }
 
