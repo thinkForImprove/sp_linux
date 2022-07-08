@@ -1,0 +1,12 @@
+#ifndef MEMORY_BUFFER_GLOBAL_H
+#define MEMORY_BUFFER_GLOBAL_H
+
+#include <QtCore/qglobal.h>
+
+#if defined(MEMORY_BUFFER_LIBRARY)
+#  define MEMORY_BUFFER_EXPORT Q_DECL_EXPORT
+#else
+#  define MEMORY_BUFFER_EXPORT Q_DECL_IMPORT
+#endif
+
+#endif // MEMORY_BUFFER_GLOBAL_H

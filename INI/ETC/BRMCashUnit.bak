@@ -1,0 +1,413 @@
+<?xml version="1.0.1" encoding="GB2312" ?>
+<CUDATA>
+    <CFG>
+        <!-- 钞箱错误重试次数 -->
+        <BoxErrorRetryNum>1</BoxErrorRetryNum>
+        <!-- 回收钞的CashInCount置为0：1，置为0；0，与Count相同 -->
+        <SetCashInCountOfRetractBoxToZero>0</SetCashInCountOfRetractBoxToZero>
+        <!-- 出钞箱是否允许把状态设置为HIGH或FULL，1，允许；0，不允许（HIGH或FULL时为OK） -->
+        <OutBoxAllowedHighFullStatus>0</OutBoxAllowedHighFullStatus>
+        <!-- 进钞箱、回收箱、拒钞箱是否允许把状态设置为LOW或EMPTY，1，允许；0，不允许（LOW或EMPTY时为OK） -->
+        <InBoxAllowedLowEmptyStatus>0</InBoxAllowedLowEmptyStatus>
+        <!-- CDM模块出钞箱LOW状态张数 -->
+        <CDMBoxLowStatusCount>0</CDMBoxLowStatusCount>
+	<!-- 出钞箱最小留置张数，当小于等于该张数时，钞箱置为空，不允许从该钞箱出钞 -->
+        <CDMBoxLeftCount>0</CDMBoxLeftCount>
+        <!-- 循环箱箱最小留置张数，当小于等于该张数时，钞箱置为空，不允许从该钞箱出钞 -->
+        <RecyclingBoxLeftCount>0</RecyclingBoxLeftCount> 
+	<!-- 循环箱最大留置张数，当大于等于该张数时，钞箱置为FULL，不允许从该钞箱进钞 -->
+        <RecyclingBoxMaxCount>0</RecyclingBoxMaxCount>
+        <!-- CDM结束交换时是否设置ulCount到ulInitialCount中, 1, 允许；0，不允许 -->
+        <SetCountToInitialCountWhenCDMEndExchange>0</SetCountToInitialCountWhenCDMEndExchange>
+        <!--至少一个钞箱处于交换状态时不设置Manip状态, 1, 不允许设置Manip状态；0，允许-->
+        <DontSetManipWhenAnyCUInExchange>1</DontSetManipWhenAnyCUInExchange>
+	<!--是否需要设置钞箱状态为MANIP状态，1，需要设置Manip状态；0，永不需要-->
+        <UseManipInCUStats>1</UseManipInCUStats>
+    </CFG>
+    <!--本配置文件配有4个物理钞箱，其中index=1的回收箱，index=2、3的出钞箱，index=4的进钞箱 -->
+    <!-- 逻辑钞箱属于抽象的虚拟钞箱，配置时需遵从如下约定： -->
+    <!-- 1、一个逻辑钞箱有且仅有一个物理钞箱与其绑定 -->
+    <!-- 2、对于一个逻辑设备来说，多个逻辑钞箱不能与同一个物理钞箱绑定，但CDM的回收箱和废钞箱可以 -->
+    <!-- 3、逻辑钞箱的类型信息需与绑定的物理钞箱一致，否则该钞箱不可用并记录日志报错 -->
+    <!-- 4、本配置的作用有2点：一是在初次运行时构建初始钞箱信息；二是将程序运行中的数据进行实时存储和读取 -->
+    <!-- 5、逻辑钞箱个数在运行中可能会动态增加或减少，这是由于CDM/CIM将某钞箱的类型在循环箱与出钞箱/进钞箱之间修改所造成的。 -->
+    <PCU>
+        <!-- 物理钞箱信息需与机芯实际安装的钱箱一致，配置后只要硬件不变化就不再改变，需将所有物理钞箱信息填写完整 -->
+        <ITEM>
+            <!-- 物理钞箱序号(从1开始),逻辑钞箱通过此建立关联 -->
+            <INDEX>1</INDEX>
+            <!-- type：0: 出钞箱；1: 进钞箱；2: 循环箱；3: 回收箱；4: 废钞箱；-->
+            <TYPE>2</TYPE>
+            <!-- Status：0:正常；1:满；2:将满；3:少钞；4:钞空；5:不可用；6:丢失；7、8:保留；9:人为故障 -->
+            <STATUS>0</STATUS>
+            <!-- Currency :3个字符的币种ID，回收箱为3个空格，出钞箱为CNY -->
+            <CURRENCY>CNY</CURRENCY>
+            <!-- value(use for verify) :对于存款和回收箱其值为0。对于循环箱，该值应与其支持收纳的钞票类型的面额一致，也就是说，其支持收纳的所有类型的钞票的面额也必须相同 -->
+            <VALUE>100</VALUE>
+            <!-- Unit ID (5个字符),该值由字母和数字组成，字母：钞箱的类型；数字i：第i个该类型钞箱。该值不会被应用程序修改 -->
+            <ID>Cass1</ID>
+            <!-- Physical Position Name,PHCUi：PHCU是“physical CashUnit的缩写”，i是该钞箱index的值。该值不会被应用程序修改 -->
+            <PPN>RB1</PPN>
+            <!-- Hardware Sensor：0: 硬件没有钞量感应器；1: 硬件有钞量感应器 -->
+            <SENSOR>1</SENSOR>
+            <!-- 钞箱错误次数: 当该值大于钞箱错误重试次数时，钞箱状态变为不可用 -->
+            <ERRORCOUNT>0</ERRORCOUNT>
+            <!-- Maximum 对于CDM设备，该值仅适用于回收箱和废钞箱。-->
+            <MAX>0</MAX>
+            <!-- Minimum 对于CDM设备，该值不适用于回收箱和废钞箱。-->
+            <MIN>0</MIN>
+        </ITEM>
+        <ITEM>
+            <!-- 物理钞箱序号(从1开始),逻辑钞箱通过此建立关联 -->
+            <INDEX>2</INDEX>
+            <!-- type：0: 出钞箱；1: 进钞箱；2: 循环箱；3: 回收箱；4: 废钞箱；-->
+            <TYPE>2</TYPE>
+            <!-- Status：0: 正常；1: 满；2: 将满；3: 少钞；4: 钞空；5: 不可用；6: 丢失；7、8: 保留；9: 人为故障 -->
+            <STATUS>3</STATUS>
+            <!-- Currency :3个字符的币种ID，回收箱为3个空格，出钞箱为CNY -->
+            <CURRENCY>CNY</CURRENCY>
+            <!-- value(use for verify) :对于存款和回收箱其值为0。对于循环箱，该值应与其支持收纳的钞票类型的面额一致，也就是说，其支持收纳的所有类型的钞票的面额也必须相同 -->
+            <VALUE>100</VALUE>
+            <!-- Unit ID (5个字符),该值由字母和数字组成，字母：钞箱的类型；数字i：第i个该类型钞箱。该值不会被应用程序修改 -->
+            <ID>Cass2</ID>
+            <!-- Physical Position Name,PHCUi：PHCU是“physical CashUnit的缩写”，i是该钞箱index的值。该值不会被应用程序修改 -->
+            <PPN>RB2</PPN>
+            <!-- Hardware Sensor：0: 硬件没有钞量感应器；1: 硬件有钞量感应器 -->
+            <SENSOR>1</SENSOR>
+            <!-- 钞箱错误次数: 当该值大于钞箱错误重试次数时，钞箱状态变为不可用 -->
+            <ERRORCOUNT>0</ERRORCOUNT>
+            <!-- Maximum 对于CDM设备，该值仅适用于回收箱和废钞箱。-->
+            <MAX>0</MAX>
+            <!-- Minimum 对于CDM设备，该值不适用于回收箱和废钞箱。-->
+            <MIN>0</MIN>
+        </ITEM>
+        <ITEM>
+            <!-- 物理钞箱序号(从1开始),逻辑钞箱通过此建立关联 -->
+            <INDEX>3</INDEX>
+            <!-- type：0: 出钞箱；1: 进钞箱；2: 循环箱；3: 回收箱；4: 废钞箱；-->
+            <TYPE>2</TYPE>
+            <!-- Status：0: 正常；1: 满；2: 将满；3: 少钞；4: 钞空；5: 不可用；6: 丢失；7、8: 保留；9: 人为故障 -->
+            <STATUS>3</STATUS>
+            <!-- Currency :3个字符的币种ID，回收箱为3个空格，出钞箱为CNY -->
+            <CURRENCY>CNY</CURRENCY>
+            <!-- value(use for verify) :对于存款和回收箱其值为0。对于循环箱，该值应与其支持收纳的钞票类型的面额一致，也就是说，其支持收纳的所有类型的钞票的面额也必须相同 -->
+            <VALUE>100</VALUE>
+            <!-- Unit ID (5个字符),该值由字母和数字组成，字母：钞箱的类型；数字i：第i个该类型钞箱。该值不会被应用程序修改 -->
+            <ID>Cass3</ID>
+            <!-- Physical Position Name,PHCUi：PHCU是“physical CashUnit的缩写”，i是该钞箱index的值。该值不会被应用程序修改 -->
+            <PPN>RB3</PPN>
+            <!-- Hardware Sensor：0: 硬件没有钞量感应器；1: 硬件有钞量感应器 -->
+            <SENSOR>1</SENSOR>
+            <!-- 钞箱错误次数: 当该值大于钞箱错误重试次数时，钞箱状态变为不可用 -->
+            <ERRORCOUNT>0</ERRORCOUNT>
+            <!-- Maximum 对于CDM设备，该值仅适用于回收箱和废钞箱。-->
+            <MAX>0</MAX>
+            <!-- Minimum 对于CDM设备，该值不适用于回收箱和废钞箱。-->
+            <MIN>0</MIN>
+        </ITEM>
+        <ITEM>
+            <!-- 物理钞箱序号(从1开始),逻辑钞箱通过此建立关联 -->
+            <INDEX>4</INDEX>
+            <!-- type：0: 出钞箱；1: 进钞箱；2: 循环箱；3: 回收箱；4: 废钞箱；-->
+            <TYPE>3</TYPE>
+            <!-- Status：0: 正常；1: 满；2: 将满；3: 少钞；4: 钞空；5: 不可用；6: 丢失；7、8: 保留；9: 人为故障 -->
+            <STATUS>3</STATUS>
+            <!-- Currency :3个字符的币种ID，回收箱为3个空格，出钞箱为CNY -->
+            <CURRENCY>   </CURRENCY>
+            <!-- value(use for verify) :对于存款和回收箱其值为0。对于循环箱，该值应与其支持收纳的钞票类型的面额一致，也就是说，其支持收纳的所有类型的钞票的面额也必须相同 -->
+            <VALUE>0</VALUE>
+            <!-- Unit ID (5个字符),该值由字母和数字组成，字母：钞箱的类型；数字i：第i个该类型钞箱。该值不会被应用程序修改 -->
+            <ID>Cass4</ID>
+            <!-- Physical Position Name,PHCUi：PHCU是“physical CashUnit的缩写”，i是该钞箱index的值。该值不会被应用程序修改 -->
+            <PPN>AB1</PPN>
+            <!-- Hardware Sensor：0: 硬件没有钞量感应器；1: 硬件有钞量感应器 -->
+            <SENSOR>1</SENSOR>
+            <!-- 钞箱错误次数: 当该值大于钞箱错误重试次数时，钞箱状态变为不可用 -->
+            <ERRORCOUNT>0</ERRORCOUNT>
+            <!-- Maximum 对于CDM设备，该值仅适用于回收箱和废钞箱。-->
+            <MAX>0</MAX>
+            <!-- Minimum 对于CDM设备，该值不适用于回收箱和废钞箱。-->
+            <MIN>0</MIN>
+        </ITEM>
+        <ITEM>
+            <!-- 物理钞箱序号(从1开始),逻辑钞箱通过此建立关联 -->
+            <INDEX>5</INDEX>
+            <!-- type：0: 出钞箱；1: 进钞箱；2: 循环箱；3: 回收箱；4: 废钞箱；-->
+            <TYPE>2</TYPE>
+            <!-- Status：0: 正常；1: 满；2: 将满；3: 少钞；4: 钞空；5: 不可用；6: 丢失；7、8: 保留；9: 人为故障 -->
+            <STATUS>3</STATUS>
+            <!-- Currency :3个字符的币种ID，回收箱为3个空格，出钞箱为CNY -->
+            <CURRENCY>CNY</CURRENCY>
+            <!-- value(use for verify) :对于存款和回收箱其值为0。对于循环箱，该值应与其支持收纳的钞票类型的面额一致，也就是说，其支持收纳的所有类型的钞票的面额也必须相同 -->
+            <VALUE>100</VALUE>
+            <!-- Unit ID (5个字符),该值由字母和数字组成，字母：钞箱的类型；数字i：第i个该类型钞箱。该值不会被应用程序修改 -->
+            <ID>Cass5</ID>
+            <!-- Physical Position Name,PHCUi：PHCU是“physical CashUnit的缩写”，i是该钞箱index的值。该值不会被应用程序修改 -->
+            <PPN>RB4</PPN>
+            <!-- Hardware Sensor：0: 硬件没有钞量感应器；1: 硬件有钞量感应器 -->
+            <SENSOR>1</SENSOR>
+            <!-- 钞箱错误次数: 当该值大于钞箱错误重试次数时，钞箱状态变为不可用 -->
+            <ERRORCOUNT>0</ERRORCOUNT>
+            <!-- Maximum 对于CDM设备，该值仅适用于回收箱和废钞箱。-->
+            <MAX>0</MAX>
+            <!-- Minimum 对于CDM设备，该值不适用于回收箱和废钞箱。-->
+            <MIN>0</MIN>
+        </ITEM>
+    </PCU>
+    <LCU>
+        <CDM>
+            <ITEM>
+                <!-- Number：从1开始，依次增1，该值不允许跳跃 -->
+                <NUMBER>1</NUMBER>
+                <!-- type：0: 出钞箱；1: 进钞箱；2: 循环箱；3: 回收箱；4: 废钞箱 -->
+                <TYPE>3</TYPE>
+                <!-- App LOCK：0: 未锁定；1: 锁定 -->
+                <LOCK>0</LOCK>
+                <!-- Initial Count -->
+                <INITCOUNT>0</INITCOUNT>
+                <!-- Current Count -->
+                <COUNT>0</COUNT>
+                <!-- Reject Count -->
+                <REJCOUNT>0</REJCOUNT>
+                <!-- Cash In Count : only available for cash in and recyle unit -->
+                <CINCOUNT>0</CINCOUNT>
+                <!-- ItemType：0: 出钞箱使用该值；1: 所有可接受币种；2: 所有不可接收币种；3：所有币种；4: NNLIST中定义的币种（循环箱必须为4）；6: NNLIST中定义的纸币加上所有不可接收的纸币 -->
+                <ITEMTYPE>3</ITEMTYPE>
+                <!--NOTEIDS：以|分隔-->
+                <NOTEIDS></NOTEIDS>
+                <!--NNLIST：ID:COUNT-->
+                <NNLIST>1:0</NNLIST>
+                <!-- Corresponding physical cash unit : 填对应物理钞箱的INDEX -->
+                <PHCU>4</PHCU>
+                <ID>Cass1</ID>
+            </ITEM>
+            <ITEM>
+                <!-- Number：从1开始，依次增1，该值不允许跳跃 -->
+                <NUMBER>2</NUMBER>
+                <!-- type：0: 出钞箱；1: 进钞箱；2: 循环箱；3: 回收箱；4: 废钞箱 -->
+                <TYPE>2</TYPE>
+                <!-- App LOCK：0: 未锁定；1: 锁定 -->
+                <LOCK>0</LOCK>
+                <!-- Initial Count -->
+                <INITCOUNT>0</INITCOUNT>
+                <!-- Current Count -->
+                <COUNT>0</COUNT>
+                <!-- Reject Count -->
+                <REJCOUNT>0</REJCOUNT>
+                <!-- Cash In Count : only available for cash in and recyle unit -->
+                <CINCOUNT>0</CINCOUNT>
+                <!-- ItemType：0: 出钞箱使用该值；1: 所有可接受币种；2: 所有不可接收币种；3：所有币种；4: NNLIST中定义的币种（循环箱必须为4）；6: NNLIST中定义的纸币加上所有不可接收的纸币 -->
+                <ITEMTYPE>4</ITEMTYPE>
+                <!--NOTEIDS：以|分隔-->
+                <NOTEIDS>1</NOTEIDS>
+                <!--NNLIST：ID:COUNT-->
+                <NNLIST>1:0</NNLIST>
+                <!-- Corresponding physical cash unit : 填对应物理钞箱的INDEX -->
+                <PHCU>1</PHCU>
+                <ID>Cass2</ID>
+            </ITEM>
+            <ITEM>
+                <!-- Number：从1开始，依次增1，该值不允许跳跃 -->
+                <NUMBER>3</NUMBER>
+                <!-- type：0: 出钞箱；1: 进钞箱；2: 循环箱；3: 回收箱；4: 废钞箱 -->
+                <TYPE>2</TYPE>
+                <!-- App LOCK：0: 未锁定；1: 锁定 -->
+                <LOCK>0</LOCK>
+                <!-- Initial Count -->
+                <INITCOUNT>0</INITCOUNT>
+                <!-- Current Count -->
+                <COUNT>0</COUNT>
+                <!-- Reject Count -->
+                <REJCOUNT>0</REJCOUNT>
+                <!-- Cash In Count : only available for cash in and recyle unit -->
+                <CINCOUNT>0</CINCOUNT>
+                <!-- ItemType：0: 出钞箱使用该值；1: 所有可接受币种；2: 所有不可接收币种；3：所有币种；4: NNLIST中定义的币种（循环箱必须为4）；6: NNLIST中定义的纸币加上所有不可接收的纸币 -->
+                <ITEMTYPE>4</ITEMTYPE>
+                <!--NOTEIDS：以|分隔-->
+                <NOTEIDS>1</NOTEIDS>
+                <!--NNLIST：ID:COUNT-->
+                <NNLIST>1:0</NNLIST>
+                <!-- Corresponding physical cash unit : 填对应物理钞箱的INDEX -->
+                <PHCU>2</PHCU>
+                <ID>Cass3</ID>
+            </ITEM>
+            <ITEM>
+                <!-- Number：从1开始，依次增1，该值不允许跳跃 -->
+                <NUMBER>4</NUMBER>
+                <!-- type：0: 出钞箱；1: 进钞箱；2: 循环箱；3: 回收箱；4: 废钞箱 -->
+                <TYPE>2</TYPE>
+                <!-- App LOCK：0: 未锁定；1: 锁定 -->
+                <LOCK>0</LOCK>
+                <!-- Initial Count -->
+                <INITCOUNT>0</INITCOUNT>
+                <!-- Current Count -->
+                <COUNT>0</COUNT>
+                <!-- Reject Count -->
+                <REJCOUNT>0</REJCOUNT>
+                <!-- Cash In Count : only available for cash in and recyle unit -->
+                <CINCOUNT>0</CINCOUNT>
+                <!-- ItemType：0: 出钞箱使用该值；1: 所有可接受币种；2: 所有不可接收币种；3：所有币种；4: NNLIST中定义的币种（循环箱必须为4）；6: NNLIST中定义的纸币加上所有不可接收的纸币 -->
+                <ITEMTYPE>4</ITEMTYPE>
+                <!--NOTEIDS：以|分隔-->
+                <NOTEIDS>1</NOTEIDS>
+                <!--NNLIST：ID:COUNT-->
+                <NNLIST>1:0</NNLIST>
+                <!-- Corresponding physical cash unit : 填对应物理钞箱的INDEX -->
+                <PHCU>3</PHCU>
+                <ID>Cass4</ID>
+            </ITEM>
+            <ITEM>
+                <!-- Number：从1开始，依次增1，该值不允许跳跃 -->
+                <NUMBER>5</NUMBER>
+                <!-- type：0: 出钞箱；1: 进钞箱；2: 循环箱；3: 回收箱；4: 废钞箱 -->
+                <TYPE>2</TYPE>
+                <!-- App LOCK：0: 未锁定；1: 锁定 -->
+                <LOCK>0</LOCK>
+                <!-- Initial Count -->
+                <INITCOUNT>0</INITCOUNT>
+                <!-- Current Count -->
+                <COUNT>0</COUNT>
+                <!-- Reject Count -->
+                <REJCOUNT>0</REJCOUNT>
+                <!-- Cash In Count : only available for cash in and recyle unit -->
+                <CINCOUNT>0</CINCOUNT>
+                <!-- ItemType：0: 出钞箱使用该值；1: 所有可接受币种；2: 所有不可接收币种；3：所有币种；4: NNLIST中定义的币种（循环箱必须为4）；6: NNLIST中定义的纸币加上所有不可接收的纸币 -->
+                <ITEMTYPE>4</ITEMTYPE>
+                <!--NOTEIDS：以|分隔-->
+                <NOTEIDS>1</NOTEIDS>
+                <!--NNLIST：ID:COUNT-->
+                <NNLIST>1:0</NNLIST>
+                <!-- Corresponding physical cash unit : 填对应物理钞箱的INDEX -->
+                <PHCU>5</PHCU>
+                <ID>Cass5</ID>
+            </ITEM>
+        </CDM>
+        <CIM>
+            <ITEM>
+                <!-- Number：从1开始，依次增1，该值不允许跳跃 -->
+                <NUMBER>1</NUMBER>
+                <!-- type：0: 出钞箱；1: 进钞箱；2: 循环箱；3: 回收箱；4: 废钞箱 -->
+                <TYPE>3</TYPE>
+                <!-- App LOCK：0: 未锁定；1: 锁定 -->
+                <LOCK>0</LOCK>
+                <!-- Initial Count -->
+                <INITCOUNT>0</INITCOUNT>
+                <!-- Current Count -->
+                <COUNT>0</COUNT>
+                <!-- Reject Count -->
+                <REJCOUNT>0</REJCOUNT>
+                <!-- Cash In Count : only available for cash in and recyle unit -->
+                <CINCOUNT>0</CINCOUNT>
+                <!-- ItemType：0: 出钞箱使用该值；1: 所有可接受币种；2: 所有不可接收币种；3：所有币种；4: NNLIST中定义的币种（循环箱必须为4）；6: NNLIST中定义的纸币加上所有不可接收的纸币 -->
+                <ITEMTYPE>3</ITEMTYPE>
+                <!--NOTEIDS：以|分隔-->
+                <NOTEIDS>1</NOTEIDS>
+                <!--NNLIST：ID:COUNT-->
+                <NNLIST>1:0</NNLIST>
+                <!-- Corresponding physical cash unit : 填对应物理钞箱的INDEX -->
+                <PHCU>4</PHCU>
+                <ID>Cass1</ID>
+            </ITEM>
+            <ITEM>
+                <!-- Number：从1开始，依次增1，该值不允许跳跃 -->
+                <NUMBER>2</NUMBER>
+                <!-- type：0: 出钞箱；1: 进钞箱；2: 循环箱；3: 回收箱；4: 废钞箱 -->
+                <TYPE>2</TYPE>
+                <!-- App LOCK：0: 未锁定；1: 锁定 -->
+                <LOCK>0</LOCK>
+                <!-- Initial Count -->
+                <INITCOUNT>0</INITCOUNT>
+                <!-- Current Count -->
+                <COUNT>0</COUNT>
+                <!-- Reject Count -->
+                <REJCOUNT>0</REJCOUNT>
+                <!-- Cash In Count : only available for cash in and recyle unit -->
+                <CINCOUNT>0</CINCOUNT>
+                <!-- ItemType：0: 出钞箱使用该值；1: 所有可接受币种；2: 所有不可接收币种；3：所有币种；4: NNLIST中定义的币种（循环箱必须为4）；6: NNLIST中定义的纸币加上所有不可接收的纸币 -->
+                <ITEMTYPE>4</ITEMTYPE>
+                <!--NOTEIDS：以|分隔-->
+                <NOTEIDS>1</NOTEIDS>
+                <!--NNLIST：ID:COUNT-->
+                <NNLIST>1:0</NNLIST>
+                <!-- Corresponding physical cash unit : 填对应物理钞箱的INDEX -->
+                <PHCU>1</PHCU>
+                <ID>Cass2</ID>
+            </ITEM>
+            <ITEM>
+                <!-- Number：从1开始，依次增1，该值不允许跳跃 -->
+                <NUMBER>3</NUMBER>
+                <!-- type：0: 出钞箱；1: 进钞箱；2: 循环箱；3: 回收箱；4: 废钞箱 -->
+                <TYPE>2</TYPE>
+                <!-- App LOCK：0: 未锁定；1: 锁定 -->
+                <LOCK>0</LOCK>
+                <!-- Initial Count -->
+                <INITCOUNT>0</INITCOUNT>
+                <!-- Current Count -->
+                <COUNT>0</COUNT>
+                <!-- Reject Count -->
+                <REJCOUNT>0</REJCOUNT>
+                <!-- Cash In Count : only available for cash in and recyle unit -->
+                <CINCOUNT>0</CINCOUNT>
+                <!-- ItemType：0: 出钞箱使用该值；1: 所有可接受币种；2: 所有不可接收币种；3：所有币种；4: NNLIST中定义的币种（循环箱必须为4）；6: NNLIST中定义的纸币加上所有不可接收的纸币 -->
+                <ITEMTYPE>4</ITEMTYPE>
+                <!--NOTEIDS：以|分隔-->
+                <NOTEIDS>1</NOTEIDS>
+                <!--NNLIST：ID:COUNT-->
+                <NNLIST>1:0</NNLIST>
+                <!-- Corresponding physical cash unit : 填对应物理钞箱的INDEX -->
+                <PHCU>2</PHCU>
+                <ID>Cass3</ID>
+            </ITEM>
+            <ITEM>
+                <!-- Number：从1开始，依次增1，该值不允许跳跃 -->
+                <NUMBER>4</NUMBER>
+                <!-- type：0: 出钞箱；1: 进钞箱；2: 循环箱；3: 回收箱；4: 废钞箱 -->
+                <TYPE>2</TYPE>
+                <!-- App LOCK：0: 未锁定；1: 锁定 -->
+                <LOCK>0</LOCK>
+                <!-- Initial Count -->
+                <INITCOUNT>0</INITCOUNT>
+                <!-- Current Count -->
+                <COUNT>0</COUNT>
+                <!-- Reject Count -->
+                <REJCOUNT>0</REJCOUNT>
+                <!-- Cash In Count : only available for cash in and recyle unit -->
+                <CINCOUNT>0</CINCOUNT>
+                <!-- ItemType：0: 出钞箱使用该值；1: 所有可接受币种；2: 所有不可接收币种；3：所有币种；4: NNLIST中定义的币种（循环箱必须为4）；6: NNLIST中定义的纸币加上所有不可接收的纸币 -->
+                <ITEMTYPE>4</ITEMTYPE>
+                <!--NOTEIDS：以|分隔-->
+                <NOTEIDS>1</NOTEIDS>
+                <!--NNLIST：ID:COUNT-->
+                <NNLIST>1:0</NNLIST>
+                <!-- Corresponding physical cash unit : 填对应物理钞箱的INDEX -->
+                <PHCU>3</PHCU>
+                <ID>Cass4</ID>
+            </ITEM>
+            <ITEM>
+                <!-- Number：从1开始，依次增1，该值不允许跳跃 -->
+                <NUMBER>5</NUMBER>
+                <!-- type：0: 出钞箱；1: 进钞箱；2: 循环箱；3: 回收箱；4: 废钞箱 -->
+                <TYPE>2</TYPE>
+                <!-- App LOCK：0: 未锁定；1: 锁定 -->
+                <LOCK>0</LOCK>
+                <!-- Initial Count -->
+                <INITCOUNT>0</INITCOUNT>
+                <!-- Current Count -->
+                <COUNT>0</COUNT>
+                <!-- Reject Count -->
+                <REJCOUNT>0</REJCOUNT>
+                <!-- Cash In Count : only available for cash in and recyle unit -->
+                <CINCOUNT>0</CINCOUNT>
+                <!-- ItemType：0: 出钞箱使用该值；1: 所有可接受币种；2: 所有不可接收币种；3：所有币种；4: NNLIST中定义的币种（循环箱必须为4）；6: NNLIST中定义的纸币加上所有不可接收的纸币 -->
+                <ITEMTYPE>4</ITEMTYPE>
+                <!--NOTEIDS：以|分隔-->
+                <NOTEIDS>1</NOTEIDS>
+                <!--NNLIST：ID:COUNT-->
+                <NNLIST>1:0</NNLIST>
+                <!-- Corresponding physical cash unit : 填对应物理钞箱的INDEX -->
+                <PHCU>5</PHCU>
+                <ID>Cass5</ID>
+            </ITEM>
+        </CIM>
+    </LCU>
+</CUDATA>

@@ -1,0 +1,2453 @@
+// 测试Form示例
+// Form名有重复时,以最先读取的为准,其他忽略
+// Form相关定义项说明如下: 
+//   UNIT ROWCOLUMN : 行列模式(只支持该模式:一个字符占位约1.5MM,一行占位3.0MM)
+//     注意: 行列以0为开始,即0为第一行或第一列,1为第二行或第二列，以此类推
+//   Form SIZE: 指定允许打印的行列总数
+//   Field: 指定一个打印单元
+//     POSITION: 指定Field单元起始行列；
+//       X,Y 行列以0为开始,即0为第一行或第一列,1为第二行或第二列，以此类推
+//     SIZE: 指定打印数据占用的行列数;
+//     INDEX: 第一位指定Field下标上限(0~X)
+//     OVERFLOW: 字段溢出设置(TERMINATE:SP终止/BESTFIT:舍位)
+//     HORIZONTAL: 水平对齐(LEFT/RIGHT/CENTER)
+//     VERTICAL: 垂直对齐(BOTTOM/CENTER/TOP)
+//     TYPE: 类型(TEXT:文本/GRAPHIC:图片/BARCODE:条形码)
+//       TYPE为BARCODE时,配合FONT属性可配置打印的条码类型、二维码、PDF417码
+//         FONT 指定条码类型关键字参考INI中FieldFont_XXX配置项
+//     STYLE: 指定打印字体属性(可通过"|”进行组合,例: 2倍宽高可写成 DOUBLE|DOUBLEHIGH ， "|"前后不要有空格)
+//        NORMAL:正常/BOLD:粗体/ITALIC:斜体/UNDER:下划线/DOUBLEUNDER:双下划线/DOUBLE:2倍宽/TRIPLE:3倍宽/QUADRUPLE:4倍宽/
+//        STRIKETHROUGH:删除线/ROTATE90:顺时针旋转90度/ROTATE270:逆时针旋转270度/UPSIDEDOWN:倒置/DOUBLEHIGH:2倍高/
+//        TRIPLEHIGH:3倍高/QUADRUPLEHIGH:4倍高/CONDENSED:压缩字体/SUPERSCRIPT:H上标/SUBSCRIPT:下标/OVERSCORE:上划线
+//        DOUBLESTRIKE:双线
+//       NH80M机型支持如下参数: NORMAL|BOLD|DOUBLEUNDER|DOUBLE|TRIPLE|QUADRUPLE|ROTATE90|UPSIDEDOWN|DOUBLEHIGH|
+//        TRIPLEHIGH|QUADRUPLEHIGH|CONDENSED
+//       注: STYLE为CONDENSED(压缩字体)时,设备采用内置压缩ASCII字体打印
+//    FONT: 指定字体或条码类型,字体支持"宋体"
+//       注: NH80M设备下,FONT为宋体时,设备采用内置"标准宋体"字体打印
+//     INITIALVALUE: 设置缺省打印内容
+//
+
+
+
+//////////////////////////////////////////////////
+// 测试Form: 文本/图片/二维码
+XFSFORM "form"
+BEGIN
+    UNIT ROWCOLUMN, 1, 1
+    SIZE 44, 22
+    LANGUAGE 4002
+    XFSFIELD "CardNo"
+    BEGIN
+        POSITION 11, 0
+        SIZE 15, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL
+//BOLD|DOUBLE|DOUBLEHIGH|UNDER
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        FONT "宋体"
+        INITIALVALUE "卡号123456"
+    END
+    XFSFIELD "Amount"
+    BEGIN
+        POSITION 9, 5
+        SIZE 15, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "1000.00"
+    END
+    XFSFIELD "EBalance"
+    BEGIN
+        POSITION 25, 5
+        SIZE 18, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "EBalance"
+    END
+	XFSFIELD "ATCValue"
+    BEGIN
+        POSITION 27, 5
+        SIZE 10, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "ACTVALUE"
+    END
+    XFSFIELD "TransferTo"
+    BEGIN
+        POSITION 11, 7
+        SIZE 22, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "TransFer"
+    END
+    XFSFIELD "Deposit"
+    BEGIN
+        POSITION 7, 9
+        SIZE 8, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "Deposit"
+    END
+    XFSFIELD "Withdrawal"
+    BEGIN
+        POSITION 22, 9
+        SIZE 10, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "Withdra"
+    END
+    XFSFIELD "Transfer"
+    BEGIN
+        POSITION 35, 9
+        SIZE 9, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "Transfer"
+    END
+    XFSFIELD "Fee"
+    BEGIN
+        POSITION 7, 11
+        SIZE 6, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "FEE12"
+    END
+    XFSFIELD "OtherTrans"
+    BEGIN
+        POSITION 22, 11
+        SIZE 10, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "OtherTrans"
+    END
+    XFSFIELD "Retain"
+    BEGIN
+        POSITION 35, 11
+        SIZE 9, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "Retain"
+    END
+    XFSFIELD "Accepted"
+    BEGIN
+        POSITION 7, 13
+        SIZE 6, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "Accepted"
+    END
+    XFSFIELD "Cancelled"
+    BEGIN
+        POSITION 22, 13
+        SIZE 6, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "Cancelled"
+    END
+    XFSFIELD "Contact"
+    BEGIN
+        POSITION 35, 13
+        SIZE 9, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "Contact"
+    END
+    XFSFIELD "Date"
+    BEGIN
+        POSITION 7, 15
+        SIZE 11, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "Date"
+    END
+    XFSFIELD "Time"
+    BEGIN
+        POSITION 18, 15
+        SIZE 9, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "Time"
+    END
+    XFSFIELD "ATMNo"
+    BEGIN
+        POSITION 28, 15
+        SIZE 6, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "ATMNo"
+    END
+    XFSFIELD "RetCode"
+    BEGIN
+        POSITION 38, 15
+        SIZE 5, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "RetCo"
+    END
+    XFSFIELD "Pic"
+    BEGIN
+        POSITION 6, 0
+        SIZE 20, 1
+        TYPE GRAPHIC
+        INITIALVALUE "/usr/local/CFES/DATA/FORM/PTR/ABCLogo.bmp"
+    END
+    XFSFIELD "RetCode1"
+    BEGIN
+        POSITION 0, 16
+        SIZE 5, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "RetC1"
+    END
+    XFSFIELD "RetCode2"
+    BEGIN
+        POSITION 30, 16
+        SIZE 5, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "RetC2"
+    END
+    XFSFIELD "QRData"
+    BEGIN
+        POSITION 11, 17
+        SIZE 16, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        TYPE BARCODE
+        FONT "QRCODE"
+        INITIALVALUE "www.baidu.com"
+    END
+END
+
+//////////////////////////////////////////////////
+// 测试Form: 打印各类条码
+XFSFORM "formbar"
+BEGIN
+    UNIT ROWCOLUMN, 1, 1
+    SIZE 44, 20
+    LANGUAGE 4002
+
+    XFSFIELD "UPC-A_Data1"
+    BEGIN
+        POSITION 0, 0
+        SIZE 12, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "UPC-A"
+    END
+    XFSFIELD "UPC-A"
+    BEGIN
+        POSITION 15, 1
+        SIZE 26, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        TYPE BARCODE
+        FONT "UPC-A"
+        INITIALVALUE "123456789012"
+    END
+
+    XFSFIELD "UPC-C_Data1"
+    BEGIN
+        POSITION 0, 2
+        SIZE 12, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "UPC-C"
+    END
+    XFSFIELD "UPC-C"
+    BEGIN
+        POSITION 15, 3
+        SIZE 26, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        TYPE BARCODE
+        FONT "UPC-C"
+        INITIALVALUE "123456789012"
+    END
+
+    XFSFIELD "JAN13_Data1"
+    BEGIN
+        POSITION 0, 4
+        SIZE 12, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "JAN13/EAN13"
+    END
+    XFSFIELD "JAN13"
+    BEGIN
+        POSITION 15, 5
+        SIZE 26, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        TYPE BARCODE
+        FONT "JAN13"
+        INITIALVALUE "123456789012"
+    END
+
+    XFSFIELD "JAN8_Data1"
+    BEGIN
+        POSITION 0, 6
+        SIZE 12, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "JAN8/EAN8"
+    END
+    XFSFIELD "JAN8"
+    BEGIN
+        POSITION 15, 7
+        SIZE 26, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        TYPE BARCODE
+        FONT "JAN8"
+        INITIALVALUE "12345678"
+    END
+
+    XFSFIELD "CODE39_Data1"
+    BEGIN
+        POSITION 0, 8
+        SIZE 10, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "CODE39"
+    END
+    XFSFIELD "CODE39"
+    BEGIN
+        POSITION 11, 9
+        SIZE 26, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        TYPE BARCODE
+        FONT "CODE39"
+        INITIALVALUE "1234567"
+    END
+
+    XFSFIELD "INTERLEAVED_Data1"
+    BEGIN
+        POSITION 0, 10
+        SIZE 12, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "INTERLEAVED"
+    END
+    XFSFIELD "INTERLEAVED"
+    BEGIN
+        POSITION 15, 11
+        SIZE 26, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        TYPE BARCODE
+        FONT "INTERLEAVED"
+        INITIALVALUE "123456789012"
+    END
+
+    XFSFIELD "CODEBAR_Data1"
+    BEGIN
+        POSITION 0, 12
+        SIZE 12, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "CODEBAR"
+    END
+    XFSFIELD "CODEBAR"
+    BEGIN
+        POSITION 15, 13
+        SIZE 26, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        TYPE BARCODE
+        FONT "CODEBAR"
+        INITIALVALUE "A123456789A"
+    END
+
+    XFSFIELD "CODE93_Data1"
+    BEGIN
+        POSITION 0, 14
+        SIZE 12, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "CODE93"
+    END
+    XFSFIELD "CODE93"
+    BEGIN
+        POSITION 15, 15
+        SIZE 26, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        TYPE BARCODE
+        FONT "CODE93"
+        INITIALVALUE "ABC123"
+    END
+
+    XFSFIELD "CODE128_Data1"
+    BEGIN
+        POSITION 0, 16
+        SIZE 12, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "CODE128"
+    END
+    XFSFIELD "CODE128"
+    BEGIN
+        POSITION 15, 17
+        SIZE 26, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        TYPE BARCODE
+        FONT "CODE128"
+        INITIALVALUE "ABC123"
+    END
+
+    XFSFIELD "PDF417CODE_Data1"
+    BEGIN
+        POSITION 0, 18
+        SIZE 12, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "PDF417CODE"
+    END
+    XFSFIELD "PDF417CODE"
+    BEGIN
+        POSITION 15, 19
+        SIZE 26, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        TYPE BARCODE
+        FONT "PDF417CODE"
+        INITIALVALUE "123456789012"
+    END
+END
+
+//////////////////////////////////////////////////
+// 打印行数列数占位
+XFSFORM "line"
+BEGIN
+    UNIT ROWCOLUMN, 1, 1
+    SIZE 62, 25
+    LANGUAGE 4002
+    XFSFIELD "Line0"
+    BEGIN
+        POSITION 0, 0
+        SIZE 62, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "0-34567890#234567890#234567890#234567890#234567890#2"
+    END
+    XFSFIELD "Line1"
+    BEGIN
+        POSITION 0, 1
+        SIZE 62, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "1-34567890#234567890#234567890#234567890#234567890#2"
+    END
+    XFSFIELD "Line2"
+    BEGIN
+        POSITION 0, 2
+        SIZE 62, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "2-34567890#234567890#234567890#234567890#234567890#2"
+    END
+    XFSFIELD "Line3"
+    BEGIN
+        POSITION 0, 3
+        SIZE 62, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "3-34567890#234567890#234567890#234567890#234567890#2"
+    END
+    XFSFIELD "Line4"
+    BEGIN
+        POSITION 0, 4
+        SIZE 62, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "4-34567890#234567890#234567890#234567890#234567890#2"
+    END
+    XFSFIELD "Line5"
+    BEGIN
+        POSITION 0, 5
+        SIZE 62, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "5-34567890#234567890#234567890#234567890#234567890#2"
+    END
+    XFSFIELD "Line6"
+    BEGIN
+        POSITION 0, 6
+        SIZE 62, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "6-34567890#234567890#234567890#234567890#234567890#2"
+    END
+    XFSFIELD "Line7"
+    BEGIN
+        POSITION 0, 7
+        SIZE 62, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "7-34567890#234567890#234567890#234567890#234567890#2"
+    END
+    XFSFIELD "Line8"
+    BEGIN
+        POSITION 0, 8
+        SIZE 62, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "8-34567890#234567890#234567890#234567890#234567890#2"
+    END
+    XFSFIELD "Line9"
+    BEGIN
+        POSITION 0, 9
+        SIZE 62, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "9-34567890#234567890#234567890#234567890#234567890#2"
+    END
+    XFSFIELD "Line10"
+    BEGIN
+        POSITION 0, 10
+        SIZE 62, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "10-4567890#234567890#234567890#234567890#234567890#2"
+    END
+    XFSFIELD "Line11"
+    BEGIN
+        POSITION 0, 11
+        SIZE 62, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "11-4567890#234567890#234567890#234567890#234567890#2"
+    END
+    XFSFIELD "Line12"
+    BEGIN
+        POSITION 0, 12
+        SIZE 62, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "12-4567890#234567890#234567890#234567890#234567890#2"
+    END
+    XFSFIELD "Line13"
+    BEGIN
+        POSITION 0, 13
+        SIZE 62, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "13-4567890#234567890#234567890#234567890#234567890#2"
+    END
+    XFSFIELD "Line14"
+    BEGIN
+        POSITION 0, 14
+        SIZE 62, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "14-4567890#234567890#234567890#234567890#234567890#2"
+    END
+    XFSFIELD "Line15"
+    BEGIN
+        POSITION 0, 15
+        SIZE 62, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "15-4567890#234567890#234567890#234567890#234567890#2"
+    END
+    XFSFIELD "Line16"
+    BEGIN
+        POSITION 0, 16
+        SIZE 62, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "16-4567890#234567890#234567890#234567890#234567890#2"
+    END
+    XFSFIELD "Line17"
+    BEGIN
+        POSITION 0, 17
+        SIZE 62, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "17-4567890#234567890#234567890#234567890#234567890#2"
+    END
+    XFSFIELD "Line18"
+    BEGIN
+        POSITION 0, 18
+        SIZE 62, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "18-4567890#234567890#234567890#234567890#234567890#2"
+    END
+    XFSFIELD "Line19"
+    BEGIN
+        POSITION 0, 19
+        SIZE 62, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "19-4567890#234567890#234567890#234567890#234567890#2"
+    END
+    XFSFIELD "Line20"
+    BEGIN
+        POSITION 0, 20
+        SIZE 62, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "20-4567890#234567890#234567890#234567890#234567890#2"
+    END
+    XFSFIELD "Line21"
+    BEGIN
+        POSITION 0, 21
+        SIZE 62, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "21-4567890#234567890#234567890#234567890#234567890#2"
+    END
+    XFSFIELD "Line22"
+    BEGIN
+        POSITION 0, 22
+        SIZE 62, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "22-4567890#234567890#234567890#234567890#234567890#2"
+    END
+    XFSFIELD "Line23"
+    BEGIN
+        POSITION 0, 23
+        SIZE 62, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "23-4567890#234567890#234567890#234567890#234567890#2"
+    END
+    XFSFIELD "Line34"
+    BEGIN
+        POSITION 0, 24
+        SIZE 62, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+        INITIALVALUE "24-4567890#234567890#234567890#234567890#234567890#2"
+    END
+END
+
+ 
+//////////////////////////////////////////////////
+XFSFORM "Receipt_TTI"
+BEGIN
+    UNIT ROWCOLUMN, 1, 1
+    SIZE 40, 20
+    LANGUAGE 4002
+    XFSFIELD "CWDNumTitle"
+    BEGIN
+        POSITION 7, 6
+        SIZE 10, 1
+        INITIALVALUE "TOTAL CWD:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "CWDAmount"
+    BEGIN
+        POSITION 18, 6
+        SIZE 21, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "CWDCountTitle"
+    BEGIN
+        POSITION 7, 7
+        SIZE 10, 1
+        INITIALVALUE "CWD COUNT:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "CWDCount"
+    BEGIN
+        POSITION 18, 7
+        SIZE 22, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "CDPNumTitle"
+    BEGIN
+        POSITION 7, 8
+        SIZE 10, 1
+        INITIALVALUE "TOTAL DET:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "CDPAmount"
+    BEGIN
+        POSITION 18, 8
+        SIZE 22, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "CDPCountTitle"
+    BEGIN
+        POSITION 7, 9
+        SIZE 10, 1
+        INITIALVALUE "DEP COUNT:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "CDPCount"
+    BEGIN
+        POSITION 18, 9
+        SIZE 22, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "TotalTitle"
+    BEGIN
+        POSITION 4, 10
+        SIZE 13, 1
+        INITIALVALUE "TOTAL AMOUNT:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "TotalAmount"
+    BEGIN
+        POSITION 18, 10
+        SIZE 22, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "LeftTitle"
+    BEGIN
+        POSITION 7, 11
+        SIZE 10, 1
+        INITIALVALUE "LEFTTOTAL:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "LeftAmount"
+    BEGIN
+        POSITION 18, 11
+        SIZE 22, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Date"
+    BEGIN
+        POSITION 9, 3
+        SIZE 11, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Time"
+    BEGIN
+        POSITION 26, 3
+        SIZE 14, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "BankNo"
+    BEGIN
+        POSITION 9, 4
+        SIZE 10, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "ATMNo"
+    BEGIN
+        POSITION 26, 4
+        SIZE 14, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Time1"
+    BEGIN
+        POSITION 20, 4
+        SIZE 6, 1
+        INITIALVALUE "ATMNO:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Time11"
+    BEGIN
+        POSITION 21, 3
+        SIZE 5, 1
+        INITIALVALUE "TIME:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Time12"
+    BEGIN
+        POSITION 4, 3
+        SIZE 5, 1
+        INITIALVALUE "DATE:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Time121"
+    BEGIN
+        POSITION 2, 4
+        SIZE 7, 1
+        INITIALVALUE "BANKNO:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+END
+ 
+//////////////////////////////////////////////////
+XFSFORM "Receipt_TTIChn"
+BEGIN
+    UNIT ROWCOLUMN, 1, 1
+    SIZE 40, 20
+    LANGUAGE 4002
+    XFSFIELD "CWDNumTitle"
+    BEGIN
+        POSITION 5, 6
+        SIZE 15, 1
+        INITIALVALUE "ȡ���ܽ���:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "CWDAmount"
+    BEGIN
+        POSITION 20, 6
+        SIZE 20, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "CWDCountTitle"
+    BEGIN
+        POSITION 5, 7
+        SIZE 15, 1
+        INITIALVALUE "ȡ���ܱ���:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "CWDCount"
+    BEGIN
+        POSITION 20, 7
+        SIZE 20, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "CDPNumTitle"
+    BEGIN
+        POSITION 5, 8
+        SIZE 15, 1
+        INITIALVALUE "�����ܽ���:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "CDPAmount"
+    BEGIN
+        POSITION 20, 8
+        SIZE 20, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "CDPCountTitle"
+    BEGIN
+        POSITION 5, 9
+        SIZE 15, 1
+        INITIALVALUE "�����ܱ���:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "CDPCount"
+    BEGIN
+        POSITION 20, 9
+        SIZE 20, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "TotalTitle"
+    BEGIN
+        POSITION 5, 10
+        SIZE 15, 1
+        INITIALVALUE "�ӳ��ܽ���:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "TotalAmount"
+    BEGIN
+        POSITION 20, 10
+        SIZE 20, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "LeftTitle"
+    BEGIN
+        POSITION 3, 11
+        SIZE 15, 1
+        INITIALVALUE "Ӧ���ֽ�����:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "LeftAmount"
+    BEGIN
+        POSITION 20, 11
+        SIZE 20, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Date"
+    BEGIN
+        POSITION 8, 3
+        SIZE 11, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Time"
+    BEGIN
+        POSITION 25, 3
+        SIZE 14, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "BankNo"
+    BEGIN
+        POSITION 8, 4
+        SIZE 10, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "ATMNo"
+    BEGIN
+        POSITION 25, 4
+        SIZE 14, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "TimeTitle"
+    BEGIN
+        POSITION 20, 3
+        SIZE 5, 1
+        INITIALVALUE "ʱ��:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "ATMTitle1"
+    BEGIN
+        POSITION 18, 4
+        SIZE 7, 1
+        INITIALVALUE "�ն˺�:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "TimeTitle1"
+    BEGIN
+        POSITION 3, 3
+        SIZE 5, 1
+        INITIALVALUE "����:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "TimeTitle11"
+    BEGIN
+        POSITION 1, 4
+        SIZE 7, 1
+        INITIALVALUE "���к�:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+END
+ 
+//////////////////////////////////////////////////
+XFSFORM "TTISuspectChn"
+BEGIN
+    UNIT ROWCOLUMN, 1, 1
+    SIZE 40, 20
+    LANGUAGE 4002
+    XFSFIELD "PageTitle"
+    BEGIN
+        POSITION 2, 1
+        SIZE 7, 1
+        INITIALVALUE "��ǰҳ:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "PageNo"
+    BEGIN
+        POSITION 10, 1
+        SIZE 3, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "TotalPageTitle"
+    BEGIN
+        POSITION 18, 1
+        SIZE 7, 1
+        INITIALVALUE "��ҳ��:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "TotalPage"
+    BEGIN
+        POSITION 26, 1
+        SIZE 4, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "TimeTitle"
+    BEGIN
+        POSITION 2, 3
+        SIZE 6, 1
+        INITIALVALUE "ʱ��:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Time"
+    BEGIN
+        POSITION 10, 3
+        SIZE 23, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "ATMNoTitle"
+    BEGIN
+        POSITION 2, 4
+        SIZE 6, 1
+        INITIALVALUE "�ն˺�:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "ATMNo"
+    BEGIN
+        POSITION 10, 4
+        SIZE 12, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "BankIdTitle"
+    BEGIN
+        POSITION 2, 5
+        SIZE 7, 1
+        INITIALVALUE "���к�:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "BankId"
+    BEGIN
+        POSITION 10, 5
+        SIZE 9, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Suspect1"
+    BEGIN
+        POSITION 2, 7
+        SIZE 38, 2
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Suspect2"
+    BEGIN
+        POSITION 2, 9
+        SIZE 38, 2
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Suspect3"
+    BEGIN
+        POSITION 2, 11
+        SIZE 38, 2
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Suspect4"
+    BEGIN
+        POSITION 2, 13
+        SIZE 38, 2
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Suspect5"
+    BEGIN
+        POSITION 2, 15
+        SIZE 38, 2
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+END
+ 
+//////////////////////////////////////////////////
+XFSFORM "TTISuspect"
+BEGIN
+    UNIT ROWCOLUMN, 1, 1
+    SIZE 40, 20
+    LANGUAGE 4002
+    XFSFIELD "PageTitle"
+    BEGIN
+        POSITION 2, 1
+        SIZE 5, 1
+        INITIALVALUE "PAGE:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "PageNo"
+    BEGIN
+        POSITION 8, 1
+        SIZE 3, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "TotalPageTitle"
+    BEGIN
+        POSITION 13, 1
+        SIZE 11, 1
+        INITIALVALUE "TOTAL PAGE:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "TotalPage"
+    BEGIN
+        POSITION 25, 1
+        SIZE 4, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "TimeTitle"
+    BEGIN
+        POSITION 2, 3
+        SIZE 6, 1
+        INITIALVALUE "TIME:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Time"
+    BEGIN
+        POSITION 9, 3
+        SIZE 23, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "ATMNoTitle"
+    BEGIN
+        POSITION 2, 4
+        SIZE 6, 1
+        INITIALVALUE "ATMNO:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "ATMNo"
+    BEGIN
+        POSITION 9, 4
+        SIZE 12, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "BankIdTitle"
+    BEGIN
+        POSITION 2, 5
+        SIZE 7, 1
+        INITIALVALUE "BANKID:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "BankId"
+    BEGIN
+        POSITION 10, 5
+        SIZE 9, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Suspect1"
+    BEGIN
+        POSITION 2, 7
+        SIZE 38, 2
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Suspect2"
+    BEGIN
+        POSITION 2, 9
+        SIZE 38, 2
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Suspect3"
+    BEGIN
+        POSITION 2, 11
+        SIZE 38, 2
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Suspect4"
+    BEGIN
+        POSITION 2, 13
+        SIZE 38, 2
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Suspect5"
+    BEGIN
+        POSITION 2, 15
+        SIZE 38, 2
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+END
+ 
+//////////////////////////////////////////////////
+XFSFORM "CASHUNITINFO"
+BEGIN
+    UNIT ROWCOLUMN, 1, 1
+    SIZE 40, 20
+    LANGUAGE 4002
+    XFSFIELD "L16"
+    BEGIN
+        POSITION 1, 3
+        SIZE 39, 1
+        OVERFLOW BESTFIT
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "L0"
+    BEGIN
+        POSITION 1, 4
+        SIZE 39, 1
+        OVERFLOW BESTFIT
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "L1"
+    BEGIN
+        POSITION 1, 5
+        SIZE 39, 1
+        OVERFLOW BESTFIT
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "L2"
+    BEGIN
+        POSITION 1, 6
+        SIZE 39, 1
+        OVERFLOW BESTFIT
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "L3"
+    BEGIN
+        POSITION 1, 7
+        SIZE 39, 1
+        OVERFLOW BESTFIT
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "L4"
+    BEGIN
+        POSITION 1, 8
+        SIZE 39, 1
+        OVERFLOW BESTFIT
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "L5"
+    BEGIN
+        POSITION 1, 9
+        SIZE 39, 1
+        OVERFLOW BESTFIT
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "L6"
+    BEGIN
+        POSITION 1, 10
+        SIZE 39, 1
+        OVERFLOW BESTFIT
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "L7"
+    BEGIN
+        POSITION 1, 11
+        SIZE 39, 1
+        OVERFLOW BESTFIT
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "L8"
+    BEGIN
+        POSITION 1, 12
+        SIZE 39, 1
+        OVERFLOW BESTFIT
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "L9"
+    BEGIN
+        POSITION 1, 13
+        SIZE 39, 1
+        OVERFLOW BESTFIT
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "L10"
+    BEGIN
+        POSITION 1, 14
+        SIZE 39, 1
+        OVERFLOW BESTFIT
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+END
+ 
+//////////////////////////////////////////////////
+XFSFORM "AddCash"
+BEGIN
+    UNIT ROWCOLUMN, 1, 1
+    SIZE 40, 20
+    LANGUAGE 4002
+    XFSFIELD "AddCashTimeTitle"
+    BEGIN
+        POSITION 1, 3
+        SIZE 12, 1
+        INITIALVALUE "ADDCASHTIME:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "AddCashTime"
+    BEGIN
+        POSITION 13, 3
+        SIZE 19, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "AtmNoTitle"
+    BEGIN
+        POSITION 6, 4
+        SIZE 7, 1
+        FONT "Courier"
+        INITIALVALUE "ATMNO:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "AtmNo"
+    BEGIN
+        POSITION 13, 4
+        SIZE 7, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "BankNoTitle"
+    BEGIN
+        POSITION 24, 4
+        SIZE 7, 1
+        INITIALVALUE "BANKNO:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "BankNo"
+    BEGIN
+        POSITION 31, 4
+        SIZE 6, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Title"
+    BEGIN
+        POSITION 1, 5
+        SIZE 34, 1
+        INITIALVALUE "----------ADD CASH DATA---------"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Title1"
+    BEGIN
+        POSITION 1, 6
+        SIZE 37, 1
+        INITIALVALUE "POSN DENO STATE   NOTES    TOTAL"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "CashNo1"
+    BEGIN
+        POSITION 1, 7
+        SIZE 4, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "NoteValue1"
+    BEGIN
+        POSITION 6, 7
+        SIZE 4, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Status1"
+    BEGIN
+        POSITION 11, 7
+        SIZE 8, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Counts1"
+    BEGIN
+        POSITION 19, 7
+        SIZE 8, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Amounts1"
+    BEGIN
+        POSITION 28, 7
+        SIZE 10, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "CashNo2"
+    BEGIN
+        POSITION 1, 8
+        SIZE 4, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "NoteValue2"
+    BEGIN
+        POSITION 6, 8
+        SIZE 4, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Status2"
+    BEGIN
+        POSITION 11, 8
+        SIZE 8, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Counts2"
+    BEGIN
+        POSITION 19, 8
+        SIZE 8, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Amounts2"
+    BEGIN
+        POSITION 28, 8
+        SIZE 10, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "CashNo3"
+    BEGIN
+        POSITION 1, 9
+        SIZE 4, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "NoteValue3"
+    BEGIN
+        POSITION 6, 9
+        SIZE 4, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Status3"
+    BEGIN
+        POSITION 11, 9
+        SIZE 8, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Counts3"
+    BEGIN
+        POSITION 19, 9
+        SIZE 8, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Amounts3"
+    BEGIN
+        POSITION 28, 9
+        SIZE 10, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "CashNo4"
+    BEGIN
+        POSITION 1, 10
+        SIZE 4, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "NoteValue4"
+    BEGIN
+        POSITION 6, 10
+        SIZE 4, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Status4"
+    BEGIN
+        POSITION 11, 10
+        SIZE 8, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Counts4"
+    BEGIN
+        POSITION 19, 10
+        SIZE 8, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Amounts4"
+    BEGIN
+        POSITION 28, 10
+        SIZE 10, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "CashNo5"
+    BEGIN
+        POSITION 1, 11
+        SIZE 4, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "NoteValue5"
+    BEGIN
+        POSITION 6, 11
+        SIZE 4, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Status5"
+    BEGIN
+        POSITION 11, 11
+        SIZE 8, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Counts5"
+    BEGIN
+        POSITION 19, 11
+        SIZE 8, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Amounts5"
+    BEGIN
+        POSITION 28, 11
+        SIZE 10, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "AddCashTimeTitle1"
+    BEGIN
+        POSITION 1, 12
+        SIZE 12, 1
+        INITIALVALUE "LOCALAMOUNT:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Amount"
+    BEGIN
+        POSITION 13, 12
+        SIZE 22, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+END
+ 
+//////////////////////////////////////////////////
+XFSFORM "AddCashChn"
+BEGIN
+    UNIT ROWCOLUMN, 1, 1
+    SIZE 40, 20
+    LANGUAGE 4002
+    XFSFIELD "AddCashTimeTitle"
+    BEGIN
+        POSITION 1, 2
+        SIZE 13, 1
+        INITIALVALUE "���μӳ�ʱ��:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "AddCashTime"
+    BEGIN
+        POSITION 14, 2
+        SIZE 19, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "AtmNoTitle"
+    BEGIN
+        POSITION 6, 3
+        SIZE 7, 1
+        INITIALVALUE "�ն˺�:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "AtmNo"
+    BEGIN
+        POSITION 14, 3
+        SIZE 7, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "BankNoTitle"
+    BEGIN
+        POSITION 24, 3
+        SIZE 7, 1
+        INITIALVALUE "���к�:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "BankNo"
+    BEGIN
+        POSITION 32, 3
+        SIZE 6, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Title"
+    BEGIN
+        POSITION 1, 4
+        SIZE 39, 1
+        INITIALVALUE "--------------�ӳ���Ϣ--------------"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL CENTER
+        VERTICAL CENTER
+    END
+    XFSFIELD "Title1"
+    BEGIN
+        POSITION 1, 5
+        SIZE 18, 1
+        INITIALVALUE "������  ��ֵ ״̬"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Title2"
+    BEGIN
+        POSITION 22, 5
+        SIZE 16, 1
+        INITIALVALUE "����    �ܶ�"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "CashNo1"
+    BEGIN
+        POSITION 1, 6
+        SIZE 7, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "NoteValue1"
+    BEGIN
+        POSITION 9, 6
+        SIZE 4, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Status1"
+    BEGIN
+        POSITION 14, 6
+        SIZE 7, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Counts1"
+    BEGIN
+        POSITION 22, 6
+        SIZE 6, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Amounts1"
+    BEGIN
+        POSITION 30, 6
+        SIZE 10, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "CashNo2"
+    BEGIN
+        POSITION 1, 7
+        SIZE 7, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "NoteValue2"
+    BEGIN
+        POSITION 9, 7
+        SIZE 4, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Status2"
+    BEGIN
+        POSITION 14, 7
+        SIZE 7, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Counts2"
+    BEGIN
+        POSITION 22, 7
+        SIZE 6, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Amounts2"
+    BEGIN
+        POSITION 30, 7
+        SIZE 10, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "CashNo3"
+    BEGIN
+        POSITION 1, 8
+        SIZE 7, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "NoteValue3"
+    BEGIN
+        POSITION 9, 8
+        SIZE 4, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Status3"
+    BEGIN
+        POSITION 14, 8
+        SIZE 7, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Counts3"
+    BEGIN
+        POSITION 22, 8
+        SIZE 6, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Amounts3"
+    BEGIN
+        POSITION 30, 8
+        SIZE 10, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "CashNo4"
+    BEGIN
+        POSITION 1, 9
+        SIZE 7, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "NoteValue4"
+    BEGIN
+        POSITION 9, 9
+        SIZE 4, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Status4"
+    BEGIN
+        POSITION 14, 9
+        SIZE 7, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Counts4"
+    BEGIN
+        POSITION 22, 9
+        SIZE 6, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Amounts4"
+    BEGIN
+        POSITION 30, 9
+        SIZE 10, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "CashNo5"
+    BEGIN
+        POSITION 1, 10
+        SIZE 7, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "NoteValue5"
+    BEGIN
+        POSITION 9, 10
+        SIZE 4, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Status5"
+    BEGIN
+        POSITION 14, 10
+        SIZE 7, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Counts5"
+    BEGIN
+        POSITION 22, 10
+        SIZE 6, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Amounts5"
+    BEGIN
+        POSITION 30, 10
+        SIZE 10, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "AddCashTimeTitle1"
+    BEGIN
+        POSITION 1, 11
+        SIZE 13, 1
+        INITIALVALUE "���ؼӳ�����:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Amount"
+    BEGIN
+        POSITION 14, 11
+        SIZE 23, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+END
+ 
+//////////////////////////////////////////////////
+XFSFORM "REQUESTHLCHN"
+BEGIN
+    UNIT ROWCOLUMN, 1, 1
+    SIZE 40, 20
+    LANGUAGE 4002
+    XFSFIELD "TimeTitle"
+    BEGIN
+        POSITION 1, 6
+        SIZE 5, 1
+        INITIALVALUE "����:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Date"
+    BEGIN
+        POSITION 6, 6
+        SIZE 13, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "AtmNoTitle"
+    BEGIN
+        POSITION 1, 7
+        SIZE 7, 1
+        INITIALVALUE "�ն˺�:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "ATMId"
+    BEGIN
+        POSITION 8, 7
+        SIZE 7, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "BankNoTitle"
+    BEGIN
+        POSITION 18, 7
+        SIZE 7, 1
+        INITIALVALUE "���к�:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "BankNo"
+    BEGIN
+        POSITION 25, 7
+        SIZE 8, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Title"
+    BEGIN
+        POSITION 1, 8
+        SIZE 17, 1
+        INITIALVALUE "����β�������"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Amount"
+    BEGIN
+        POSITION 18, 8
+        SIZE 21, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Time"
+    BEGIN
+        POSITION 25, 6
+        SIZE 13, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "TimeTitle1"
+    BEGIN
+        POSITION 20, 6
+        SIZE 5, 1
+        INITIALVALUE "ʱ��:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+END
+ 
+//////////////////////////////////////////////////
+XFSFORM "REQUESTHL"
+BEGIN
+    UNIT ROWCOLUMN, 1, 1
+    SIZE 40, 20
+    LANGUAGE 4002
+    XFSFIELD "TimeTitle"
+    BEGIN
+        POSITION 1, 6
+        SIZE 5, 1
+        INITIALVALUE "DATE:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Time"
+    BEGIN
+        POSITION 25, 6
+        SIZE 15, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "AtmNoTitle"
+    BEGIN
+        POSITION 1, 7
+        SIZE 7, 1
+        INITIALVALUE "ATMNO:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "ATMId"
+    BEGIN
+        POSITION 8, 7
+        SIZE 7, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "BankNoTitle"
+    BEGIN
+        POSITION 18, 7
+        SIZE 7, 1
+        INITIALVALUE "BANKNO:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "BankNo"
+    BEGIN
+        POSITION 25, 7
+        SIZE 6, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Title"
+    BEGIN
+        POSITION 1, 8
+        SIZE 20, 1
+        INITIALVALUE "HOSTLEFTAMOUNT:��"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Amount"
+    BEGIN
+        POSITION 21, 8
+        SIZE 19, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "Date"
+    BEGIN
+        POSITION 6, 6
+        SIZE 12, 1
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+    XFSFIELD "TimeTitle1"
+    BEGIN
+        POSITION 20, 6
+        SIZE 5, 1
+        INITIALVALUE "TIME:"
+        OVERFLOW WORDWRAP
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL CENTER
+    END
+END
+
+
+
+
+
+
+
+
+
+

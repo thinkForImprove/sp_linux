@@ -1,0 +1,890 @@
+// 测试Form示例
+// PPR SP 只加载一个Form文件,该文件包含,所有PPR相关的Form定义,Form名有重复时,以最先读取的为准,其他忽略
+// Form相关定义项说明如下: 
+//   UNIT ROWCOLUMN : 行列模式(只支持该模式:一个字符占位约1.5MM,一行占位3.0MM)
+//     注意: 行列以0为开始,即0为第一行或第一列,1为第二行或第二列，以此类推
+//   Form SIZE: 指定允许打印的行列总数
+//   Field: 指定一个打印单元
+//     POSITION: 指定Field单元起始行列;
+//     SIZE: 指定打印数据占用的行列数;
+//     INDEX: 第一位指定Field下标上限(0~X)
+//     OVERFLOW: 字段溢出设置(TERMINATE:SP终止/BESTFIT:舍位)
+//     HORIZONTAL: 水平对齐(LEFT/RIGHT/CENTER)
+//     VERTICAL: 垂直对齐(BOTTOM/CENTER/TOP)
+//     TYPE: 类型(TEXT:文本/GRAPHIC:图片)
+//     CPI: 指定字符宽度,该项单位值参考INI.FieldCPIMode值
+//        MB2机型支持如下参数: 10(2.5MM);12(2.2MM);13(2.0MM);15(1.7MM);16(1.6MM);17(1.5MM);18(1.4MM), 括号内值为 字符宽+间距，高度为3.0MM
+//        PRM机型支持如下参数: 10(2.5MM);12(2.2MM);15(1.7MM);16(1.6MM);17(1.5MM), 括号内值为 字符宽+间距，高度为3.0MM
+//     LPI: 指定一行高度,该项单位值参考INI.FieldLPIMode值
+//     STYLE: 指定打印字体属性(可通过"|”进行组合,例: 2倍宽高可写成 DOUBLE|DOUBLEHIGH ， "|"前后不要有空格)
+//        NORMAL:正常/BOLD:粗体/ITALIC:斜体/UNDER:下划线/DOUBLEUNDER:双下划线/DOUBLE:2倍宽/TRIPLE:3倍宽/QUADRUPLE:4倍宽/
+//        STRIKETHROUGH:删除线/ROTATE90:顺时针旋转90度/ROTATE270:逆时针旋转270度/UPSIDEDOWN:倒置/DOUBLEHIGH:2倍高/
+//        TRIPLEHIGH:3倍高/QUADRUPLEHIGH:4倍高/CONDENSED:压缩字体/SUPERSCRIPT:H上标/SUBSCRIPT:下标/OVERSCORE:上划线
+//        DOUBLESTRIKE:双线
+//       MB2机型支持如下参数: NORMAL/BOLD/UNDER/DOUBLESTRIKE/SUPERSCRIPT/SUBSCRIPT/DOUBLE/TRIPLE/DOUBLEHIGH/TRIPLEHIGH
+//     INITIALVALUE: 设置缺省打印内容
+
+
+
+XFSFORM "form"
+BEGIN
+    UNIT ROWCOLUMN, 1, 1
+    SIZE 119, 23
+    LANGUAGE 2052    
+
+    XFSFIELD "Field1"
+    BEGIN
+        POSITION 1, 1
+        SIZE 8, 1
+        INDEX 23, 0, 1
+		CPI 12
+        LPI 5
+        OVERFLOW BESTFIT
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL BOTTOM
+    END
+
+    XFSFIELD "Field2"
+    BEGIN
+        POSITION 11, 1
+        SIZE 8, 1
+        INDEX 23, 0,1
+        CPI 12
+        LPI 5
+        OVERFLOW BESTFIT
+        STYLE BOLD 
+        HORIZONTAL CENTER
+        VERTICAL CENTER
+    END
+
+    XFSFIELD "Field3"
+    BEGIN
+        POSITION 20, 1
+        SIZE 8, 1
+        INDEX 23, 0,1
+        CPI 12
+        LPI 5
+        OVERFLOW BESTFIT
+        STYLE UNDER 
+        HORIZONTAL RIGHT
+        VERTICAL BOTTOM
+    END
+
+    XFSFIELD "Field4"
+    BEGIN
+        POSITION 30, 1
+        SIZE 8, 1
+        INDEX 23, 0, 1
+        CPI 12
+        LPI 5
+        OVERFLOW BESTFIT
+        STYLE DOUBLESTRIKE 
+        HORIZONTAL RIGHT
+        VERTICAL BOTTOM
+    END
+
+    XFSFIELD "Field5"
+    BEGIN
+        POSITION 40, 1
+        SIZE 8, 1
+        INDEX 23, 0, 1
+        CPI 12
+        LPI 5
+        OVERFLOW BESTFIT
+        STYLE SUPERSCRIPT 
+        HORIZONTAL RIGHT
+        VERTICAL BOTTOM
+    END
+
+    XFSFIELD "Field6"
+    BEGIN
+        POSITION 49, 1
+        SIZE 8, 1
+        INDEX 23, 0, 1
+        CPI 12
+        LPI 5
+        OVERFLOW BESTFIT
+        STYLE SUBSCRIPT 
+        HORIZONTAL RIGHT
+        VERTICAL BOTTOM
+    END
+
+    XFSFIELD "Field7"
+    BEGIN
+        POSITION 58, 1
+        SIZE 6, 1
+        INDEX 23, 0, 1
+        CPI 12
+        LPI 5
+        OVERFLOW BESTFIT
+        STYLE NORMAL 
+        HORIZONTAL RIGHT
+        VERTICAL BOTTOM
+    END
+
+    XFSFIELD "Field8"
+    BEGIN
+        POSITION 65, 1
+        SIZE 12, 1
+        INDEX 23, 0, 1
+        CPI 12
+        LPI 5
+        OVERFLOW BESTFIT
+        STYLE DOUBLE 
+        HORIZONTAL LEFT
+        VERTICAL BOTTOM
+    END
+
+    XFSFIELD "Field9"
+    BEGIN
+        POSITION 80, 1
+        SIZE 18, 1
+        INDEX 23, 0, 1
+        CPI 12
+        LPI 5
+        OVERFLOW BESTFIT
+        STYLE TRIPLE 
+        HORIZONTAL LEFT
+        VERTICAL BOTTOM
+    END
+
+    XFSFIELD "Field10"
+    BEGIN
+        POSITION 100, 1
+        SIZE 8, 1
+        INDEX 23, 0, 1
+        CPI 12
+        LPI 5
+        OVERFLOW BESTFIT
+        STYLE DOUBLEHIGH 
+        HORIZONTAL LEFT
+        VERTICAL BOTTOM
+    END
+
+    XFSFIELD "Field10"
+    BEGIN
+        POSITION 108, 1
+        SIZE 8, 1
+        INDEX 23, 0, 1
+        CPI 12
+        LPI 5
+        OVERFLOW BESTFIT
+        STYLE TRIPLEHIGH 
+        HORIZONTAL LEFT
+        VERTICAL BOTTOM
+    END
+
+END
+
+XFSFORM "formMB2"
+BEGIN
+    UNIT ROWCOLUMN, 1, 1
+    SIZE 119, 23
+    LANGUAGE 2052    
+
+    XFSFIELD "Field1"
+    BEGIN
+        POSITION 1, 0
+        SIZE 8, 1
+        INDEX 23, 0, 1
+		CPI 12
+        LPI 5
+        OVERFLOW BESTFIT
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL BOTTOM
+        INITIALVALUE "H正常"
+    END
+
+    XFSFIELD "Field2"
+    BEGIN
+        POSITION 11, 0
+        SIZE 8, 1
+        INDEX 23, 0,1
+        CPI 12
+        LPI 5
+        OVERFLOW BESTFIT
+        STYLE BOLD 
+        HORIZONTAL CENTER
+        VERTICAL CENTER
+        INITIALVALUE "H加粗"
+    END
+
+    XFSFIELD "Field3"
+    BEGIN
+        POSITION 20, 0
+        SIZE 8, 1
+        INDEX 23, 0,1
+        CPI 12
+        LPI 5
+        OVERFLOW BESTFIT
+        STYLE UNDER 
+        HORIZONTAL RIGHT
+        VERTICAL BOTTOM
+        INITIALVALUE "H下划线"
+    END
+
+    XFSFIELD "Field4"
+    BEGIN
+        POSITION 30, 0
+        SIZE 8, 1
+        INDEX 23, 0, 1
+        CPI 12
+        LPI 5
+        OVERFLOW BESTFIT
+        STYLE DOUBLESTRIKE 
+        HORIZONTAL RIGHT
+        VERTICAL BOTTOM
+        INITIALVALUE "H双线"
+    END
+
+    XFSFIELD "Field5"
+    BEGIN
+        POSITION 40, 0
+        SIZE 8, 1
+        INDEX 23, 0, 1
+        CPI 12
+        LPI 5
+        OVERFLOW BESTFIT
+        STYLE SUPERSCRIPT 
+        HORIZONTAL RIGHT
+        VERTICAL BOTTOM
+        INITIALVALUE "H上标"
+    END
+
+    XFSFIELD "Field6"
+    BEGIN
+        POSITION 49, 0
+        SIZE 8, 1
+        INDEX 23, 0, 1
+        CPI 12
+        LPI 5
+        OVERFLOW BESTFIT
+        STYLE SUBSCRIPT 
+        HORIZONTAL RIGHT
+        VERTICAL BOTTOM
+        INITIALVALUE "H下标"
+    END
+
+    XFSFIELD "Field7"
+    BEGIN
+        POSITION 58, 0
+        SIZE 6, 1
+        INDEX 23, 0, 1
+        CPI 12
+        LPI 5
+        OVERFLOW BESTFIT
+        STYLE NORMAL 
+        HORIZONTAL RIGHT
+        VERTICAL BOTTOM
+        INITIALVALUE "H国"
+    END
+
+    XFSFIELD "Field8"
+    BEGIN
+        POSITION 65, 0
+        SIZE 12, 1
+        INDEX 23, 0, 1
+        CPI 12
+        LPI 5
+        OVERFLOW BESTFIT
+        STYLE DOUBLE 
+        HORIZONTAL LEFT
+        VERTICAL BOTTOM
+        INITIALVALUE "H国"
+    END
+
+    XFSFIELD "Field9"
+    BEGIN
+        POSITION 80, 0
+        SIZE 18, 1
+        INDEX 23, 0, 1
+        CPI 12
+        LPI 5
+        OVERFLOW BESTFIT
+        STYLE TRIPLE 
+        HORIZONTAL LEFT
+        VERTICAL BOTTOM
+        INITIALVALUE "H国"
+    END
+
+    XFSFIELD "Field10"
+    BEGIN
+        POSITION 100, 0
+        SIZE 8, 1
+        INDEX 23, 0, 1
+        CPI 12
+        LPI 5
+        OVERFLOW BESTFIT
+        STYLE DOUBLEHIGH 
+        HORIZONTAL LEFT
+        VERTICAL BOTTOM
+        INITIALVALUE "H国"
+    END
+
+    XFSFIELD "Field10"
+    BEGIN
+        POSITION 108, 0
+        SIZE 8, 1
+        INDEX 23, 0, 1
+        CPI 12
+        LPI 5
+        OVERFLOW BESTFIT
+        STYLE TRIPLEHIGH 
+        HORIZONTAL LEFT
+        VERTICAL BOTTOM
+        INITIALVALUE "H国"
+    END
+
+END
+
+XFSFORM "formPRM1"
+BEGIN
+    UNIT ROWCOLUMN, 1, 1
+    SIZE 119, 23
+    LANGUAGE 2052    
+
+    XFSFIELD "Field1"
+    BEGIN
+        POSITION 0, 0
+        SIZE 8, 1
+        INDEX 23, 0, 1
+        CPI 10
+        LPI 5
+        OVERFLOW BESTFIT
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL BOTTOM
+    END    
+
+    XFSFIELD "Field2"
+    BEGIN
+        POSITION 9, 0
+        SIZE 8, 1
+        INDEX 23, 0, 1
+        CPI 12
+        LPI 5
+        OVERFLOW BESTFIT
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL BOTTOM
+    END    
+
+    XFSFIELD "Field3"
+    BEGIN
+        POSITION 18, 0
+        SIZE 8, 1
+        INDEX 23, 0, 1
+        CPI 15
+        LPI 5
+        OVERFLOW BESTFIT
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL BOTTOM
+    END    
+
+    XFSFIELD "Field4"
+    BEGIN
+        POSITION 27, 0
+        SIZE 8, 1
+        INDEX 23, 0, 1
+        CPI 16
+        LPI 5
+        OVERFLOW BESTFIT
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL BOTTOM
+    END    
+
+    XFSFIELD "Field5"
+    BEGIN
+        POSITION 36, 0
+        SIZE 8, 1
+        INDEX 23, 0, 1
+        CPI 17
+        LPI 5
+        OVERFLOW BESTFIT
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL BOTTOM
+    END
+
+    XFSFIELD "Field6"
+    BEGIN
+        POSITION 46, 0
+        SIZE 8, 1
+        INDEX 23, 0,1
+        CPI 12
+        LPI 5
+        OVERFLOW BESTFIT
+        STYLE BOLD 
+        HORIZONTAL CENTER
+        VERTICAL CENTER
+    END
+
+    XFSFIELD "Field7"
+    BEGIN
+        POSITION 54, 0
+        SIZE 8, 1
+        INDEX 23, 0,1
+        CPI 12
+        LPI 5
+        OVERFLOW BESTFIT
+        STYLE UNDER 
+        HORIZONTAL RIGHT
+        VERTICAL BOTTOM
+    END
+
+    XFSFIELD "Field8"
+    BEGIN
+        POSITION 63, 0
+        SIZE 8, 1
+        INDEX 23, 0, 1
+        CPI 12
+        LPI 5
+        OVERFLOW BESTFIT
+        STYLE OVERSCORE
+        HORIZONTAL RIGHT
+        VERTICAL BOTTOM
+    END
+
+    XFSFIELD "Field9"
+    BEGIN
+        POSITION 72, 0
+        SIZE 8, 1
+        INDEX 23, 0, 1
+        CPI 12
+        LPI 5
+        OVERFLOW BESTFIT
+        STYLE UNDER|OVERSCORE 
+        HORIZONTAL RIGHT
+        VERTICAL BOTTOM
+    END
+
+    XFSFIELD "Field10"
+    BEGIN
+        POSITION 80, 0
+        SIZE 8, 1
+        INDEX 23, 0, 1
+        CPI 12
+        LPI 5
+        OVERFLOW BESTFIT
+        STYLE DOUBLE|DOUBLEHIGH
+        HORIZONTAL RIGHT
+        VERTICAL BOTTOM
+    END
+
+    XFSFIELD "Field11"
+    BEGIN
+        POSITION 90, 0
+        SIZE 8, 1
+        INDEX 23, 0, 1
+        CPI 12
+        LPI 5
+        OVERFLOW BESTFIT
+        STYLE TRIPLE|TRIPLEHIGH
+        HORIZONTAL RIGHT
+        VERTICAL BOTTOM
+    END
+END
+
+XFSFORM "formPRM"
+BEGIN
+    UNIT ROWCOLUMN, 1, 1
+    SIZE 119, 23
+    LANGUAGE 2052    
+
+    XFSFIELD "Field1"
+    BEGIN
+        POSITION 0, 0
+        SIZE 8, 1
+        INDEX 23, 0, 1
+        CPI 10
+        LPI 5
+        OVERFLOW BESTFIT
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL BOTTOM
+        INITIALVALUE "H正常10"
+    END    
+
+    XFSFIELD "Field2"
+    BEGIN
+        POSITION 9, 0
+        SIZE 8, 1
+        INDEX 23, 0, 1
+        CPI 12
+        LPI 5
+        OVERFLOW BESTFIT
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL BOTTOM
+        INITIALVALUE "H正常12"
+    END    
+
+    XFSFIELD "Field3"
+    BEGIN
+        POSITION 18, 0
+        SIZE 8, 1
+        INDEX 23, 0, 1
+        CPI 15
+        LPI 5
+        OVERFLOW BESTFIT
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL BOTTOM
+        INITIALVALUE "H正常15"
+    END    
+
+    XFSFIELD "Field4"
+    BEGIN
+        POSITION 27, 0
+        SIZE 8, 1
+        INDEX 23, 0, 1
+        CPI 16
+        LPI 5
+        OVERFLOW BESTFIT
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL BOTTOM
+        INITIALVALUE "H正常166"
+    END    
+
+    XFSFIELD "Field5"
+    BEGIN
+        POSITION 36, 0
+        SIZE 8, 1
+        INDEX 23, 0, 1
+        CPI 17
+        LPI 5
+        OVERFLOW BESTFIT
+        STYLE NORMAL 
+        HORIZONTAL LEFT
+        VERTICAL BOTTOM
+        INITIALVALUE "H正常171"
+    END
+
+    XFSFIELD "Field6"
+    BEGIN
+        POSITION 46, 0
+        SIZE 8, 1
+        INDEX 23, 0,1
+        CPI 12
+        LPI 5
+        OVERFLOW BESTFIT
+        STYLE BOLD 
+        HORIZONTAL CENTER
+        VERTICAL CENTER
+        INITIALVALUE "H加粗"
+    END
+
+    XFSFIELD "Field7"
+    BEGIN
+        POSITION 54, 0
+        SIZE 8, 1
+        INDEX 23, 0,1
+        CPI 12
+        LPI 5
+        OVERFLOW BESTFIT
+        STYLE UNDER 
+        HORIZONTAL RIGHT
+        VERTICAL BOTTOM
+        INITIALVALUE "H下划线"
+    END
+
+    XFSFIELD "Field8"
+    BEGIN
+        POSITION 66, 0
+        SIZE 8, 1
+        INDEX 23, 0, 1
+        CPI 12
+        LPI 5
+        OVERFLOW BESTFIT
+        STYLE OVERSCORE 
+        HORIZONTAL RIGHT
+        VERTICAL BOTTOM
+        INITIALVALUE "H上划线"
+    END
+
+    XFSFIELD "Field9"
+    BEGIN
+        POSITION 80, 0
+        SIZE 10, 1
+        INDEX 23, 0, 1
+        CPI 12
+        LPI 5
+        OVERFLOW BESTFIT
+        STYLE UNDER|OVERSCORE 
+        HORIZONTAL RIGHT
+        VERTICAL BOTTOM
+        INITIALVALUE "H上下划线"
+    END
+
+    XFSFIELD "Field10"
+    BEGIN
+        POSITION 92, 0
+        SIZE 12, 1
+        INDEX 23, 0, 1
+        CPI 12
+        LPI 5
+        OVERFLOW BESTFIT
+        STYLE DOUBLE|DOUBLEHIGH
+        HORIZONTAL RIGHT
+        VERTICAL BOTTOM
+        INITIALVALUE "H倍宽倍高"
+    END
+
+    XFSFIELD "Field11"
+    BEGIN
+        POSITION 110, 0
+        SIZE 8, 1
+        INDEX 23, 0, 1
+        CPI 12
+        LPI 5
+        OVERFLOW BESTFIT
+        STYLE TRIPLE 
+        HORIZONTAL RIGHT
+        VERTICAL BOTTOM
+        INITIALVALUE "H3倍宽"
+    END
+END
+
+
+XFSFORM "ReadForm"
+BEGIN
+    UNIT ROWCOLUMN, 1, 1
+    SIZE 76, 26
+    ALIGNMENT TOPLEFT, 0, 0
+    LANGUAGE 2052
+    
+    XFSFIELD "Track1"
+    BEGIN
+        POSITION 0, 0
+        SIZE 14, 5
+        INDEX 0, 0, 0
+        TYPE MSF
+        CPI  15
+        ACCESS READ
+    END
+    XFSFIELD "Track2"
+    BEGIN
+        POSITION 0, 0
+        SIZE 14, 5
+        INDEX 1, 0, 0
+        TYPE MSF
+        CPI  15
+        ACCESS READ
+    END
+    XFSFIELD "Track3"
+    BEGIN
+        POSITION 0, 0
+        SIZE 14, 5
+        INDEX 2, 0, 0
+        TYPE MSF
+        CPI  15
+        ACCESS READ
+    END
+END
+
+
+//CompanyConfirmForm-业务确认单
+XFSFORM "formDJ"
+BEGIN
+   SIZE     150, 40
+   UNIT ROWCOLUMN, 1, 1
+   LANGUAGE 2052
+
+   XFSFIELD "CompanyTitle"
+   BEGIN
+    POSITION    65, 6
+    SIZE        40, 1
+   // HORIZONTAL  LEFT
+    STYLE DOUBLE|DOUBLEHIGH 
+   INITIALVALUE "业务确认单"
+   END
+   
+   XFSFIELD "OrgnoName"
+   BEGIN
+    POSITION    10, 8
+    SIZE        40, 1
+    CPI 6
+   // HORIZONTAL  LEFT
+   INITIALVALUE "机构名称："
+   END
+   
+   XFSFIELD "TransDate"
+   BEGIN
+    POSITION    55, 8
+    SIZE        30, 1
+    CPI 13
+   // HORIZONTAL  LEFT
+   INITIALVALUE "交易日期："
+   END
+
+   XFSFIELD "TransTsn"
+   BEGIN
+    POSITION    95, 8
+    SIZE        46, 1
+    CPI 13
+   // HORIZONTAL  LEFT
+   INITIALVALUE "交易流水："
+   END
+   
+   XFSFIELD "Line1"
+   BEGIN
+    POSITION    5, 10
+    SIZE        140, 1
+    CPI 15
+   // HORIZONTAL  LEFT
+   INITIALVALUE "-----------------------------------------------------------------------------------------------------------------"
+   END
+   
+   XFSFIELD "TransName"
+   BEGIN
+    POSITION    10, 12
+    SIZE        40, 1
+    CPI 13
+   // HORIZONTAL  LEFT
+   INITIALVALUE "交易名称：单位存款"
+   END
+   
+   XFSFIELD "TransTime"
+   BEGIN
+    POSITION    55, 12
+    SIZE        30, 1
+    CPI 13
+   // HORIZONTAL  LEFT
+   INITIALVALUE "交易时间："
+   END
+
+   XFSFIELD "TransChannelID"
+   BEGIN
+    POSITION    95, 12
+    SIZE        46, 1
+    CPI 13
+   // HORIZONTAL  LEFT
+   INITIALVALUE "交易渠道：133-智能现金柜"
+   END
+   
+   XFSFIELD "CompanyName"
+   BEGIN
+    POSITION    10, 13
+    SIZE        40, 1
+    CPI 13
+   // HORIZONTAL  LEFT
+   INITIALVALUE "存款单位："
+   END
+
+   XFSFIELD "Account"
+   BEGIN
+    POSITION    10, 14
+    SIZE        40, 1
+    CPI 13
+   // HORIZONTAL  LEFT
+   INITIALVALUE "客户账号："
+   END
+   
+   XFSFIELD "OpenBankName"
+   BEGIN
+    POSITION    55, 14
+    SIZE        44, 1
+    CPI 13
+   // HORIZONTAL  LEFT
+   INITIALVALUE "开户行："
+   END
+
+   XFSFIELD "AmountCH"
+   BEGIN
+    POSITION    10, 15
+    SIZE        40, 1
+    CPI 13
+   // HORIZONTAL  LEFT
+   INITIALVALUE "存入金额：人民币（大写） "
+   END
+
+   XFSFIELD "Amount"
+   BEGIN
+    POSITION    55, 15
+    SIZE        44, 1
+    CPI 13
+   // HORIZONTAL  LEFT
+   INITIALVALUE "￥ 1,984.00"
+   END
+   
+   XFSFIELD "Xnjnxmdm"
+   BEGIN
+    POSITION    10, 16
+    SIZE        40, 1
+    CPI 13
+   // HORIZONTAL  LEFT
+   INITIALVALUE "现金项目："
+   END
+
+   XFSFIELD "CompanyRemark"
+   BEGIN
+    POSITION    55, 17
+    SIZE        44, 1
+    CPI 13
+   // HORIZONTAL  LEFT
+   INITIALVALUE "款项来源："
+   END
+
+   XFSFIELD "113"
+   BEGIN
+    POSITION    10, 17
+    SIZE        80, 1
+    CPI 13
+   // HORIZONTAL  LEFT
+   INITIALVALUE "备注："
+   END
+   
+   XFSFIELD "Line2"
+   BEGIN
+    POSITION    5, 19
+    SIZE        140, 1
+   // HORIZONTAL  LEFT
+   CPI 15
+   INITIALVALUE "-------------------------------------------------------------------------"
+   END
+   
+   XFSFIELD "OrgnoNo"
+   BEGIN
+    POSITION    10, 21
+    SIZE        40, 1
+    CPI 13
+   // HORIZONTAL  LEFT
+   INITIALVALUE "机构号："
+   END
+   
+   XFSFIELD "AuthTeller"
+   BEGIN
+    POSITION    55, 21
+    SIZE        50, 1
+    CPI 13
+   // HORIZONTAL  LEFT
+   INITIALVALUE "授权柜员："
+   END
+   
+   XFSFIELD "ElecSeal"
+   BEGIN
+    POSITION   90, 19
+    SIZE        11,10
+	TYPE 		GRAPHIC
+   // HORIZONTAL  LEFT
+   INITIALVALUE "/usr/local/CFES/DATA/FORM/PPR/qrcode1.bmp"
+   END
+
+END
+
+
+
+
+
+
+
+
+
+
+
+

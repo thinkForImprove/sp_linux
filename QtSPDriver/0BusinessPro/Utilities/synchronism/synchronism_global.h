@@ -1,0 +1,12 @@
+#ifndef SYNCHRONISM_GLOBAL_H
+#define SYNCHRONISM_GLOBAL_H
+
+#include <QtCore/qglobal.h>
+
+#if defined(SYNCHRONISM_LIBRARY)
+#  define SYNCHRONISM_EXPORT Q_DECL_EXPORT
+#else
+#  define SYNCHRONISM_EXPORT Q_DECL_IMPORT
+#endif
+
+#endif // SYNCHRONISM_GLOBAL_H

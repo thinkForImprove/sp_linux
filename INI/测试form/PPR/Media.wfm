@@ -1,0 +1,62 @@
+// 测试Media示例
+// PPR SP 只加载一个Media文件,该文件包含,所有PPR相关的Media定义,Media名有重复时,以最先读取的为准,其他忽略
+// Media相关定义项说明如下: 
+//   UNIT ROWCOLUMN : 行列模式(只支持该模式:一个字符占位约1.5MM,一行占位3.0MM)
+//   SIZE 指定介质物理宽高(X,Y)
+//   PRINTAREA: 指定物理介质可用于打印的范围(X,Y,WIDTH,HEIGHT)
+//   RESTRICTED: 指定不可打印的折叠夹缝范围
+//   STAGGERING: 指定介质上留白,即介质顶部到第一行打印的距离,该项单位值参考INI.StaggerMode配置
+//   注意: X,Y 行列以0为开始,即0为第一行或第一列,1为第二行或第二列，以此类推
+
+
+XFSMEDIA "media"
+BEGIN
+    UNIT ROWCOLUMN, 1, 1
+    TYPE PASSBOOK
+    SIZE 120, 28
+    PRINTAREA 0, 0, 119, 24
+    RESTRICTED 0, 11, 0, 2
+    STAGGERING  16
+    PAGE  5    
+END
+
+
+XFSMEDIA "PassbookMedia"
+BEGIN
+    UNIT ROWCOLUMN, 1, 1
+    TYPE PASSBOOK
+    SIZE 78, 30
+    PRINTAREA 0, 0, 76, 26
+    RESTRICTED 0, 6, 0, 2
+    STAGGERING  10
+    PAGE  5
+    LINES  20
+    LINESPACE  45
+    PAGE2START  80
+END
+
+XFSMEDIA "PassbookMedia"
+BEGIN
+    UNIT ROWCOLUMN, 1, 1
+    TYPE PASSBOOK
+    SIZE 78, 33
+    PRINTAREA 0, 0, 76, 26
+    RESTRICTED 0, 6, 0, 2
+    STAGGERING  10
+    PAGE  5
+    LINES  20
+    LINESPACE  45
+    PAGE2START  80
+END
+
+XFSMEDIA "mediaDJ"
+BEGIN
+   UNIT ROWCOLUMN, 1, 1
+   SIZE 150, 40
+END
+
+
+
+
+
+

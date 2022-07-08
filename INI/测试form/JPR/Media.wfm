@@ -1,0 +1,29 @@
+// 测试Media示例
+// Media名有重复时,以最先读取的为准,其他忽略
+// Media相关定义项说明如下: 
+//   UNIT ROWCOLUMN : 行列模式(只支持该模式:一个字符占位约1.5MM,一行占位3.0MM)
+//   SIZE 指定介质物理宽高(X,Y)
+//   PRINTAREA: 指定物理介质可用于打印的范围(X,Y,WIDTH,HEIGHT)
+//   注意: X,Y 行列以0为开始,即0为第一行或第一列,1为第二行或第二列，以此类推
+
+// 适用Form: form,formbar
+XFSMEDIA "media"
+BEGIN
+    UNIT ROWCOLUMN, 1, 1
+    SIZE 46,22
+    PRINTAREA 0, 0, 45, 22
+END
+
+// 适用Form: line
+XFSMEDIA "medialine"
+BEGIN
+    UNIT ROWCOLUMN, 1, 1
+    SIZE 62,25
+    PRINTAREA 0, 0, 62, 25
+END
+
+
+
+
+
+
