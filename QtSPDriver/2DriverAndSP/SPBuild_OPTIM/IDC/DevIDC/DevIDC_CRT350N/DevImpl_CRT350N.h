@@ -408,28 +408,6 @@ enum EN_TAMPER_OPATION
 #define CARDER_STAT_CARD_IS_EXPORT  "01"    // 0x30,0x31:卡在出口
 #define CARDER_STAT_CARD_IS_INSIDE  "02"    // 0x30,0x32:卡在内部
 
-// 错误码
-#define DEV_ERR_CMD_INVALID         "00"        // 0x30,0x30:命令编码未定义
-#define DEV_ERR_CMD_PARAM           "01"        // 0x30,0x31:命令参数错误
-#define DEV_ERR_CMD_DATA            "02"        // 0x30,0x32:命令数据错误
-#define DEV_ERR_CMD_UNABLE          "03"        // 0x30,0x33:命令无法执行
-#define DEV_ERR_DOOR_ISOPEN         "06"        // 0x30,0x36:维护门已经开启(此时不能发送动作指令!)
-#define DEV_ERR_POWER_VOLLOW        "11"        // 0x31,0x31:电源电压过低(低于20V)
-#define DEV_ERR_POWER_VOLHIGH       "12"        // 0x31,0x32:电源电压过高(高于28V)
-#define DEV_ERR_POWER_NEEDINIT      "13"        // 0x31,0x33:电源恢复正常但没有重新初始化
-#define DEV_ERR_POWER_FRAM          "16"        // 0x31,0x36:模块内部FRAM错误
-#define DEV_ERR_SOLT_SENSER         "19"        // 0x31,0x39:暂存仓传感器错误
-#define DEV_ERR_SLOT_JAM            "20"        // 0x32,0x30:升降暂存仓阻塞
-#define DEV_ERR_INCARD_JAM          "22"        // 0x32,0x32:进卡阻塞
-#define DEV_ERR_INCARD_TIMEOUT      "23"        // 0x32,0x33:等待进卡超时
-#define DEV_ERR_INCARD_TAKE         "24"        // 0x32,0x34:进卡时卡被拔走
-#define DEV_ERR_EJECT_JAM           "28"        // 0x32,0x38:退卡堵塞
-#define DEV_ERR_POWER_LOCAT_JAM     "29"        // 0x32,0x39:电机定位堵塞
-#define DEV_ERR_SLOT_NOTAIM_CK      "30"        // 0x33,0x30:暂存仓未对准进卡口
-#define DEV_ERR_SLOT_HAVECARD       "31"        // 0x33,0x31:目标暂存仓有卡
-#define DEV_ERR_SLOT_NOTHAVE        "32"        // 0x33,0x32:目标暂存仓无卡
-#define DEV_ERR_CINFO_NOSAVE        "35"        // 0x33,0x35:卡片信息未保存
-
 
 /*************************************************************
 // 封装类: 命令编辑、发送接收等处理。

@@ -76,10 +76,10 @@
 /* values of WFSBCRSTATUS.wDevicePosition
              WFSBCRDEVICEPOSITION.wPosition */
 
-#define     WFS_BCR_DEVICEINPOSITION           (0)
-#define     WFS_BCR_DEVICENOTINPOSITION        (1)
-#define     WFS_BCR_DEVICEPOSUNKNOWN           (2)
-#define     WFS_BCR_DEVICEPOSNOTSUPP           (3)
+#define WFS_BCR_DEVICEINPOSITION                (0)
+#define WFS_BCR_DEVICENOTINPOSITION             (1)
+#define WFS_BCR_DEVICEPOSUNKNOWN                (2)
+#define WFS_BCR_DEVICEPOSNOTSUPP                (3)
 
 
 /* values of WFSBCRCAPS.lpwSymbologies

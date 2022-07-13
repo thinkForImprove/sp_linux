@@ -37,7 +37,7 @@ struct ICmdFunc
     virtual HRESULT ReadRawData(LPWORD lpReadData, LPWFSIDCCARDDATA *&lppCardData, DWORD dwTimeOut){return WFS_ERR_UNSUPP_COMMAND;}
     virtual HRESULT WriteRawData(const LPWFSIDCCARDDATA *lppCardData){return WFS_IDC_NOTSUPP;}
     virtual HRESULT ChipIO(const LPWFSIDCCHIPIO lpChipIOIn, LPWFSIDCCHIPIO &lpChipIOOut){return WFS_ERR_UNSUPP_COMMAND;}
-    virtual HRESULT Reset(LPWORD lpResetIn){return WFS_ERR_UNSUPP_COMMAND;};
+    virtual HRESULT Reset(LPWORD lpResetIn){return WFS_ERR_UNSUPP_COMMAND;}
     virtual HRESULT ChipPower(LPWORD lpChipPower, LPWFSIDCCHIPPOWEROUT &lpData){return WFS_ERR_UNSUPP_COMMAND;}
     virtual HRESULT ParseData(const LPWFSIDCPARSEDATA lpDataIn, LPSTR &lpTrackData){return WFS_ERR_UNSUPP_COMMAND;}
     virtual HRESULT ReduceCount(){return WFS_ERR_UNSUPP_COMMAND;}

@@ -21,12 +21,13 @@ struct ICmdFunc
     virtual HRESULT OnUpdateDevPDL() = 0;
 
     // BCR类型接口
-    virtual HRESULT GetStatus(LPWFSBCRSTATUS &lpstStatus) = 0;
-    virtual HRESULT GetCapabilities(LPWFSBCRCAPS &lpstCaps) = 0;
-    virtual HRESULT ReadBCR(const WFSBCRREADINPUT &stReadInput, LPWFSBCRREADOUTPUT *&lppReadOutput, DWORD dwTimeOut) = 0;
-    virtual HRESULT Reset() = 0;
-    virtual HRESULT SetGuidLight(const WFSBCRSETGUIDLIGHT &stLight) = 0;
-    virtual HRESULT PowerSaveControl(const WFSBCRPOWERSAVECONTROL &stPowerCtrl) = 0;
+    virtual HRESULT GetStatus(LPWFSBCRSTATUS &lpstStatus){return WFS_ERR_UNSUPP_COMMAND;}
+    virtual HRESULT GetCapabilities(LPWFSBCRCAPS &lpstCaps){return WFS_ERR_UNSUPP_COMMAND;}
+    virtual HRESULT ReadBCR(const WFSBCRREADINPUT &stReadInput, LPWFSBCRREADOUTPUT *&lppReadOutput,
+                            DWORD dwTimeOut){return WFS_ERR_UNSUPP_COMMAND;}
+    virtual HRESULT Reset(){return WFS_ERR_UNSUPP_COMMAND;}
+    virtual HRESULT SetGuidLight(const WFSBCRSETGUIDLIGHT &stLight){return WFS_ERR_UNSUPP_COMMAND;}
+    virtual HRESULT PowerSaveControl(const WFSBCRPOWERSAVECONTROL &stPowerCtrl){return WFS_ERR_UNSUPP_COMMAND;}
 };
 //////////////////////////////////////////////////////////////////////////
 struct ISPBaseBCR
