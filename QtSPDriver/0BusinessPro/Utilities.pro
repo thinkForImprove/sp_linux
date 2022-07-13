@@ -9,6 +9,7 @@ SUBDIRS += \
     Utilities/cjson_object \
     Utilities/data_convertor \
     Utilities/file_access \
+    Utilities/device_port \
     #utilities/serial_port \
     #utilities/sio_client \
     #utilities/synchronism \
