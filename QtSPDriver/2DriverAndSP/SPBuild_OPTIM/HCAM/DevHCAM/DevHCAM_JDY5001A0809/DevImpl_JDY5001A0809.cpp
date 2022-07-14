@@ -72,7 +72,7 @@ INT CDevImpl_JDY5001A0809::OpenDevice(LPSTR lpVid, LPSTR lpPid)
     INT nRet = IMP_SUCCESS;
 
     // 通过Vid/Pid检索设备索引
-    INT nIdx = SearchVideoIdxFromVidPid(lpVid, lpPid);
+    INT nIdx = CDevicePort::SearchVideoIdxFromVidPid(lpVid, lpPid);
     if (nIdx < 0)
     {
         return IMP_ERR_VIDEOIDX_NOTFOUND;
@@ -149,7 +149,7 @@ INT CDevImpl_JDY5001A0809::GetDeviceStatus()
     THISMODULE(__FUNCTION__);
     //AutoLogFuncBeginEnd();
 
-    if (SearchVideoIdxFromVidPid(m_szDevVidPid[0], m_szDevVidPid[1]) == -99)
+    if (CDevicePort::SearchVideoIdxFromVidPid(m_szDevVidPid[0], m_szDevVidPid[1]) == DP_RET_NOTHAVE)
     {
         /*if (m_bDevOpenOk == TRUE)
         {
@@ -394,7 +394,7 @@ DOUBLE CDevImpl_JDY5001A0809::GetVideoCaptMode(EN_VIDEOMODE enVM)
  * 参数: 无
  * 返回值: 参考错误码
 ************************************************************/
-INT CDevImpl_JDY5001A0809::GetVideoImage(LPSTIMGDATA lpImgData, INT nWidth, INT nHeight)
+INT CDevImpl_JDY5001A0809::GetVideoImage(LPSTIMGDATA lpImgData, INT nWidth, INT nHeight, WORD wFlip)
 {
     THISMODULE(__FUNCTION__);
     //AutoLogFuncBeginEnd();
@@ -417,8 +417,22 @@ INT CDevImpl_JDY5001A0809::GetVideoImage(LPSTIMGDATA lpImgData, INT nWidth, INT 
         return IMP_ERR_GET_IMGDATA_ISNULL;
     }
 
+    // 镜像转换
+    if (wFlip == EN_CLIP_LR)    // 左右转换
+    {
+        flip(m_cvMatImg, m_cvMatImg, 1);
+    } else
+    if (wFlip == EN_CLIP_UD)    // 上下转换
+    {
+        flip(m_cvMatImg, m_cvMatImg, 0);
+    } else
+    if (wFlip == EN_CLIP_UDLR)  // 上下左右转换
+    {
+        flip(m_cvMatImg, m_cvMatImg, -1);
+    }
+
     // 通道转换: BGR->RGB
-    cvtColor(m_cvMatImg, cvMatImg_RGB, cv::COLOR_BGR2RGB);
+    cvtColor(m_cvMatImg, cvMatImg_RGB, cv::COLOR_BGR2RGB);    
 
     // 图像数据转换
     if (nWidth > 0 && nHeight > 0)
@@ -536,66 +550,5 @@ LPSTR CDevImpl_JDY5001A0809::ConvertCode_Impl2Str(INT nErrCode)
     }
 
     return (LPSTR)m_szErrStr;
-}
-
-// 通过VidPid查找摄像索引
-// -1/-1: 实例化失败, -99: 设备未找到， 其他<0
-INT CDevImpl_JDY5001A0809::SearchVideoIdxFromVidPid(LPSTR lpVid, LPSTR lpPid)
-{
-    struct udev *stUDev = nullptr;
-    struct udev_enumerate *stUDevEnumErate = nullptr;
-    struct udev_list_entry *stUDevList = nullptr;
-    INT nVideoIdx = 0;
-
-    // 实例化
-    stUDev = udev_new();
-    if (stUDev == nullptr)
-    {
-        return -1;
-    }
-
-    //
-    stUDevEnumErate = udev_enumerate_new(stUDev);
-    if (stUDevEnumErate == nullptr)
-    {
-        return -2;
-    }
-
-    //
-    udev_enumerate_add_match_subsystem(stUDevEnumErate, "video4linux");
-    udev_enumerate_scan_devices(stUDevEnumErate);
-    udev_list_entry_foreach(stUDevList, udev_enumerate_get_list_entry(stUDevEnumErate))
-    {
-        struct udev_device *stDevice = nullptr;
-        stDevice = udev_device_new_from_syspath(udev_enumerate_get_udev(stUDevEnumErate),
-                                                udev_list_entry_get_name(stUDevList));
-        const char *szBuffer = udev_device_get_property_value(stDevice, "ID_MODEL_ID");
-        if (stDevice != nullptr)
-        {
-            CHAR *szGetVid = nullptr, *szGetPid = nullptr;
-            szGetVid = (CHAR*)udev_device_get_property_value(stDevice, "ID_VENDOR_ID");
-            szGetPid = (CHAR*)udev_device_get_property_value(stDevice, "ID_MODEL_ID");
-
-            if (szGetVid != nullptr && szGetVid != nullptr)
-            {
-                if (MCMP_IS0(szGetVid, lpVid) && MCMP_IS0(szGetPid, lpPid))
-                {
-                    nVideoIdx = atoi(udev_device_get_sysnum(stDevice));
-                    udev_device_unref(stDevice);
-                    udev_enumerate_unref(stUDevEnumErate);
-                    udev_unref(stUDev);
-                    return nVideoIdx;
-                }
-            }
-            udev_device_unref(stDevice);
-        } else
-        {
-            udev_enumerate_unref(stUDevEnumErate);
-            udev_unref(stUDev);
-            return -99;
-        }
-    }
-
-    return -99;
 }
 

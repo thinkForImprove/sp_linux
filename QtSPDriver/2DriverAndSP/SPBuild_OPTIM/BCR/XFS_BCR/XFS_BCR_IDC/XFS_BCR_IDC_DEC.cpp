@@ -125,7 +125,7 @@ INT CXFS_BCR::InitConfig()
         // 设备PID(适用于USBHID,4位16进制字符,缺省空)
         strcpy(stDevOpenModeTmp.szHidPid[0], m_cXfsReg.GetValue(szIniAppName, "ProductId", ""));
         // 通讯协议(0:拆分协议, 1:合并协议, 缺省0)
-        stDevOpenModeTmp.wProtocol = (WORD)m_cXfsReg.GetValue(szIniAppName, "Protocol", (DWORD)0);
+        stDevOpenModeTmp.wProtocol[0] = (WORD)m_cXfsReg.GetValue(szIniAppName, "Protocol", (DWORD)0);
         // 命令下发超时时间,缺省0,单位:毫秒
         stDevOpenModeTmp.nOtherParam[0] =
                 (WORD)m_cXfsReg.GetValue(szIniAppName, "SndTimeOut", (DWORD)0);
@@ -194,7 +194,7 @@ INT CXFS_BCR::PrintIniBCR()
     PRINT_INI_BUF2("\n\t\t\t\t 波特率: DEVICE_SET_%d->DevPath = %d", m_stConfig.wDeviceType, m_stConfig.stDevOpenMode.wBaudRate[0]);
     PRINT_INI_BUF2("\n\t\t\t\t 设备VID: DEVICE_SET_%d->VendorId = %s", m_stConfig.wDeviceType, m_stConfig.stDevOpenMode.szHidVid[0]);
     PRINT_INI_BUF2("\n\t\t\t\t 设备PID: DEVICE_SET_%d->ProductId = %s", m_stConfig.wDeviceType, m_stConfig.stDevOpenMode.szHidPid[0]);
-    PRINT_INI_BUF2("\n\t\t\t\t 通讯协议: DEVICE_SET_%d->Protocol = %d", m_stConfig.wDeviceType, m_stConfig.stDevOpenMode.wProtocol);
+    PRINT_INI_BUF2("\n\t\t\t\t 通讯协议: DEVICE_SET_%d->Protocol = %d", m_stConfig.wDeviceType, m_stConfig.stDevOpenMode.wProtocol[0]);
     PRINT_INI_BUF2("\n\t\t\t\t 命令下发超时时间(单位:毫秒): DEVICE_SET_%d->SndTimeOut = %d", m_stConfig.wDeviceType, m_stConfig.stDevOpenMode.nOtherParam[0]);
     PRINT_INI_BUF2("\n\t\t\t\t 命令接收超时时间(单位:毫秒): DEVICE_SET_%d->RcvTimeOut = %d", m_stConfig.wDeviceType, m_stConfig.stDevOpenMode.nOtherParam[1]);
     PRINT_INI_BUF("\n\t\t\t\t Open失败时返回值(0原样返回/1返回SUCCESS): OPEN_CONFIG->OpenFailRet = %d", m_stConfig.wOpenFailRet);

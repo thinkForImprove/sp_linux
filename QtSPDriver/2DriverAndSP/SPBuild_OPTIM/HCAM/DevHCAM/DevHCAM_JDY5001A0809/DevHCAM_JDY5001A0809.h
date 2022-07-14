@@ -81,6 +81,7 @@ private:
     INT                             m_nSaveStat[12];                // 保存必要的状态信息(0:命令值,)
     INT                             m_nRetErrOLD[12];               // 处理错误值保存(0:USB动态库/1:设备连接/
                                                                     //             2:设备初始化/3/4)
+    INT                             m_nClipMode;                    // 图像镜像模式转换
 private:    // 线程处理
     std::thread                     m_thRunDisplay;                 // 窗口处理线程句柄
     INT                             m_nThreadRet;                   // 线程返回值

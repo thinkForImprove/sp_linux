@@ -20,6 +20,7 @@
 #include "ILogWrite.h"
 #include "QtDLLLoader.h"
 #include "../../XFS_HCAM/def.h"
+#include "device_port.h"
 
 using namespace std;
 using namespace cv;
@@ -98,6 +99,14 @@ typedef struct ST_IMAGE_DATA
     }
 } STIMGDATA, *LPSTIMGDATA;
 
+// 图像镜像模式转换
+enum EN_CLIPMODE
+{
+    EN_CLIP_NO      = 0,        // 不转换
+    EN_CLIP_LR      = 1,        // 左右转换
+    EN_CLIP_UD      = 2,        // 上下转换
+    EN_CLIP_UDLR    = 3,        // 上下左右转换
+};
 
 #define CHECK_DEVICE_STAT(S) \
     switch(S) \
@@ -134,14 +143,14 @@ public:
     INT     SetVideoCaptMode(EN_VIDEOMODE enVM, DOUBLE duData = 0.0);// 设置摄像模式
     DOUBLE  GetVideoCaptMode(EN_VIDEOMODE enVM);                    // 获取摄像模式
     INT     GetVideoImage(LPSTIMGDATA lpImgData,
-                          INT nWidth = 0, INT nHeight = 0);         // 取图像帧数据
+                          INT nWidth = 0, INT nHeight = 0,
+                          WORD wFlip = 0);                          // 取图像帧数据
     INT     SaveImageFile(LPSTR lpFileName);                        // 保存图像文件
     LPSTR   ConvertCode_Impl2Str(INT nErrCode);                     // Impl错误码转换解释字符串
 
 
 private:
     void    Init();                                                 // 参数初始化
-    INT     SearchVideoIdxFromVidPid(LPSTR lpVid, LPSTR lpPid);     // 通过VidPid查找摄像索引
 
 private:
     CHAR            m_szDevType[64];                                // 设备类型

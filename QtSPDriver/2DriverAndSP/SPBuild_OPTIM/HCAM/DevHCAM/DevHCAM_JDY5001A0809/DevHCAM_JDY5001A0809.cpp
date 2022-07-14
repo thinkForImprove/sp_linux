@@ -34,6 +34,7 @@ CDevHCAM_JDY5001A0809::CDevHCAM_JDY5001A0809(LPCSTR lpDevType) :
     m_nDevStatOLD = DEV_NOTFOUND;           // 保留上一次状态变化
     MSET_XS(m_nSaveStat, 0, sizeof(INT) * 12); // 保存必要的状态信息
     MSET_XS(m_nRetErrOLD, 0, sizeof(INT) * 12);// 处理错误值保存
+    m_nClipMode = EN_CLIP_NO;               // 图像镜像模式转换
 }
 
 CDevHCAM_JDY5001A0809::~CDevHCAM_JDY5001A0809()
@@ -93,7 +94,7 @@ int CDevHCAM_JDY5001A0809::Open(LPCSTR lpMode)
         m_bReCon = FALSE; // 是否断线重连状态: 初始F
     } else
     {
-        Log(ThisModule, __LINE__,  "打开设备: : ->OpenDevice(%s, %s) Succ.",
+        Log(ThisModule, __LINE__,  "打开设备: ->OpenDevice(%s, %s) Succ.",
             m_stOpenMode.szHidVid[0], m_stOpenMode.szHidPid[0]);
     }
 
@@ -176,18 +177,18 @@ int CDevHCAM_JDY5001A0809::GetStatus(STDEVCAMSTATUS &stStatus)
     switch(nStat)
     {
         case DEV_OK:
-            stStatus.wDevice = CAM_DEVICE_STAT_ONLINE;
+            stStatus.wDevice = DEVICE_STAT_ONLINE;
             stStatus.wMedia[0] = CAM_MEDIA_STAT_OK;
             stStatus.fwCameras[0] = CAM_CAMERA_STAT_OK;
             break;
         case DEV_NOTFOUND:
-            stStatus.wDevice = CAM_DEVICE_STAT_NODEVICE;
+            stStatus.wDevice = DEVICE_STAT_NODEVICE;
             stStatus.wMedia[0] = CAM_MEDIA_STAT_UNKNOWN;
             stStatus.fwCameras[0] = CAM_CAMERA_STAT_UNKNOWN;
             break;
         case DEV_OFFLINE:
         case DEV_NOTOPEN:
-            stStatus.wDevice = CAM_DEVICE_STAT_OFFLINE;
+            stStatus.wDevice = DEVICE_STAT_OFFLINE;
             stStatus.wMedia[0] = CAM_MEDIA_STAT_UNKNOWN;
             stStatus.fwCameras[0] = CAM_CAMERA_STAT_UNKNOWN;
             break;
@@ -527,6 +528,22 @@ int CDevHCAM_JDY5001A0809::SetData(unsigned short usType, void *vData/* = nullpt
             if (vData != nullptr)
             {
                 memcpy(&(m_stVideoParam), ((LPSTVIDEOPARAM)vData), sizeof(STVIDEOPAMAR));
+                // 图像镜像模式转换
+                if (m_stVideoParam.nOtherParam[0] == 1)
+                {
+                    m_nClipMode = EN_CLIP_LR;
+                } else
+                if (m_stVideoParam.nOtherParam[0] == 2)
+                {
+                    m_nClipMode = EN_CLIP_UD;
+                } else
+                if (m_stVideoParam.nOtherParam[0] == 3)
+                {
+                    m_nClipMode = EN_CLIP_UDLR;
+                } else
+                {
+                    m_nClipMode = EN_CLIP_NO;
+                }
             }
             break;
         }
@@ -753,7 +770,7 @@ void CDevHCAM_JDY5001A0809::ThreadRunDisplay(WORD wDisplayW, WORD wDisplayH)
             continue;
         } else
         {
-            nRet = m_pDevImpl.GetVideoImage(stImgData, wDisplayW, wDisplayH);
+            nRet = m_pDevImpl.GetVideoImage(stImgData, wDisplayW, wDisplayH, m_nClipMode);
             if (nRet != IMP_SUCCESS)
             {
                 nRetErrCount ++;

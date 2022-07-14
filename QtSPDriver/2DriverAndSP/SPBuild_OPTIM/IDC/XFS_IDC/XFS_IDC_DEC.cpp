@@ -147,15 +147,15 @@ INT CXFS_IDC::InitConfig()
             stDevOpenModeTmp.wOpenMode = 0;
         }
         // 设备路径(适用于串口和USBHID,缺省空)
-        strcpy(stDevOpenModeTmp.szDevPath, m_cXfsReg.GetValue(szIniAppName, "DevPath", ""));
+        strcpy(stDevOpenModeTmp.szDevPath[0], m_cXfsReg.GetValue(szIniAppName, "DevPath", ""));
         // 波特率(适用于串口,缺省9600)
-        stDevOpenModeTmp.wBaudRate = (WORD)m_cXfsReg.GetValue(szIniAppName, "BaudRate", (DWORD)9600);
+        stDevOpenModeTmp.wBaudRate[0] = (WORD)m_cXfsReg.GetValue(szIniAppName, "BaudRate", (DWORD)9600);
         // 设备VID(适用于USBHID,4位16进制字符,缺省空)
-        strcpy(stDevOpenModeTmp.szHidVid, m_cXfsReg.GetValue(szIniAppName, "VendorId", ""));
+        strcpy(stDevOpenModeTmp.szHidVid[0], m_cXfsReg.GetValue(szIniAppName, "VendorId", ""));
         // 设备PID(适用于USBHID,4位16进制字符,缺省空)
-        strcpy(stDevOpenModeTmp.szHidPid, m_cXfsReg.GetValue(szIniAppName, "ProductId", ""));
+        strcpy(stDevOpenModeTmp.szHidPid[0], m_cXfsReg.GetValue(szIniAppName, "ProductId", ""));
         // 通讯协议(0:拆分协议, 1:合并协议, 缺省0)
-        stDevOpenModeTmp.wProtocol = (WORD)m_cXfsReg.GetValue(szIniAppName, "Protocol", (DWORD)0);
+        stDevOpenModeTmp.wProtocol[0] = (WORD)m_cXfsReg.GetValue(szIniAppName, "Protocol", (DWORD)0);
         // 命令下发超时时间,缺省0,单位:毫秒
         stDevOpenModeTmp.nOtherParam[0] =
                 (WORD)m_cXfsReg.GetValue(szIniAppName, "SndTimeOut", (DWORD)0);
@@ -395,27 +395,27 @@ INT CXFS_IDC::PrintIniIDC()
 
     MSET_0(szBuff);
     sprintf(szBuff, "\n\t\t\t\t 设备路径: DEVICE_SET_%d->DevPath = %s",
-            m_stConfig.wDeviceType, m_stConfig.stDevOpenMode.szDevPath);
+            m_stConfig.wDeviceType, m_stConfig.stDevOpenMode.szDevPath[0]);
     qsIniPrt.append(szBuff);
 
     MSET_0(szBuff);
     sprintf(szBuff, "\n\t\t\t\t 波特率: DEVICE_SET_%d->DevPath = %d",
-            m_stConfig.wDeviceType, m_stConfig.stDevOpenMode.wBaudRate);
+            m_stConfig.wDeviceType, m_stConfig.stDevOpenMode.wBaudRate[0]);
     qsIniPrt.append(szBuff);
 
     MSET_0(szBuff);
     sprintf(szBuff, "\n\t\t\t\t 设备VID: DEVICE_SET_%d->VendorId = %s",
-            m_stConfig.wDeviceType, m_stConfig.stDevOpenMode.szHidVid);
+            m_stConfig.wDeviceType, m_stConfig.stDevOpenMode.szHidVid[0]);
     qsIniPrt.append(szBuff);
 
     MSET_0(szBuff);
     sprintf(szBuff, "\n\t\t\t\t 设备PID: DEVICE_SET_%d->ProductId = %s",
-            m_stConfig.wDeviceType, m_stConfig.stDevOpenMode.szHidPid);
+            m_stConfig.wDeviceType, m_stConfig.stDevOpenMode.szHidPid[0]);
     qsIniPrt.append(szBuff);
 
     MSET_0(szBuff);
     sprintf(szBuff, "\n\t\t\t\t 通讯协议: DEVICE_SET_%d->Protocol = %d",
-            m_stConfig.wDeviceType, m_stConfig.stDevOpenMode.wProtocol);
+            m_stConfig.wDeviceType, m_stConfig.stDevOpenMode.wProtocol[0]);
     qsIniPrt.append(szBuff);
 
     MSET_0(szBuff);

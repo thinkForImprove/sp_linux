@@ -58,7 +58,7 @@ int CDevIDC_CRT350N::Open(const char *pMode)
 
     // 组织USB入参字符串
     CHAR szUsbPar[64] = { 0x00 };
-    sprintf(szUsbPar, "USB:%s,%s", m_stOpenMode.szHidVid, m_stOpenMode.szHidPid);
+    sprintf(szUsbPar, "USB:%s,%s", m_stOpenMode.szHidVid[0], m_stOpenMode.szHidPid[0]);
     nRet = m_pDevImpl.OpenDevice(szUsbPar, m_szResetParam, strlen(m_szResetParam));
     if (nRet != IMP_SUCCESS)
     {

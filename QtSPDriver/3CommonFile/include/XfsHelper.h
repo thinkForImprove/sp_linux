@@ -16,11 +16,12 @@
 #include "QtTypeDef.h"
 #include "XFSIDC.H"
 #include "XFSBCR.H"
+#include "XFSCAM.H"
+
 
 //**************************************************************************
 // --------------------------- IDC命令系结构体封装 ---------------------------
 //**************************************************************************
-
 
 #define MAX_CARD_DATA_COUNT         (7)                     //最大的卡数据个数
 #define MAX_CHIP_IO_LEN             4096                    //最大的ChipIO返回数据长度
@@ -435,3 +436,93 @@ public:
         bPowerSaveControl= FALSE;                                   // 是否支持省电模式
     }
 };
+
+
+//**************************************************************************
+// --------------------------- CAM命令系结构体封装 ---------------------------
+//**************************************************************************
+class CWfsCAMStatus : public WFSCAMSTATUS
+{
+public:
+    CWfsCAMStatus()
+    {
+        Clear();
+    }
+
+    // 初始化
+    void Clear()
+    {
+        fwDevice    = WFS_CAM_DEVONLINE;
+        for (INT i = 0; i < WFS_CAM_CAMERAS_SIZE; i ++)
+        {
+            fwMedia[i] = WFS_CAM_MEDIANOTSUPP;
+        }
+        for (INT i = 0; i < WFS_CAM_CAMERAS_SIZE; i ++)
+        {
+            fwCameras[i] = WFS_CAM_CAMNOTSUPP;
+        }
+        for (INT i = 0; i < WFS_CAM_CAMERAS_SIZE; i ++)
+        {
+            usPictures[i] = 0;
+        }
+        lpszExtra = nullptr;
+        wAntiFraudModule = 0;
+    }
+
+    // 用于比较(true:有差别, false:无差别)
+    bool Diff(CWfsCAMStatus clStat)
+    {
+        if (fwDevice != clStat.fwDevice)
+        {
+            return true;
+        }
+        for (INT i = 0; i < WFS_CAM_CAMERAS_SIZE; i ++)
+        {
+            if (clStat.fwMedia[i] != fwMedia[i] ||
+                clStat.fwCameras[i] != fwCameras[i] ||
+                clStat.usPictures[i] != usPictures[i])
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // 用于复制
+    void Copy(CWfsCAMStatus clStat)
+    {
+        this->fwDevice = clStat.fwDevice;
+        for (INT i = 0; i < WFS_CAM_CAMERAS_SIZE; i ++)
+        {
+            this->fwMedia[i] = clStat.fwMedia[i];
+            this->fwCameras[i] = clStat.fwCameras[i];
+            this->usPictures[i] = clStat.usPictures[i];
+        }
+    }
+};
+
+class CWfsCAMCap : public WFSCAMCAPS
+{
+public:
+    CWfsCAMCap()
+    {
+        wClass                          = WFS_SERVICE_CLASS_CAM;
+        fwType                          = WFS_CAM_TYPE_CAM;
+        fwCameras[WFS_CAM_ROOM]         = WFS_CAM_NOT_AVAILABLE;
+        fwCameras[WFS_CAM_PERSON]       = WFS_CAM_AVAILABLE;
+        fwCameras[WFS_CAM_EXITSLOT]     = WFS_CAM_NOT_AVAILABLE;
+        fwCameras[WFS_CAM_EXTRA]        = WFS_CAM_NOT_AVAILABLE;
+        fwCameras[WFS_CAM_HIGHTCAMERA]  = WFS_CAM_NOT_AVAILABLE;
+        fwCameras[5]                    = WFS_CAM_NOT_AVAILABLE;
+        fwCameras[WFS_CAM_PANORAMIC]    = WFS_CAM_NOT_AVAILABLE;
+        fwCameras[7]                    = WFS_CAM_NOT_AVAILABLE;
+        usMaxPictures                   = 1000;
+        fwCamData                       = WFS_CAM_MANADD;
+        usMaxDataLength                 = 67;
+        fwCharSupport                   = WFS_CAM_ASCII;
+        lpszExtra                       = nullptr;
+        bPictureFile                    = TRUE;
+        bAntiFraudModule                = FALSE;
+    }
+};
+

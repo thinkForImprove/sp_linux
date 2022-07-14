@@ -29,14 +29,14 @@ INT CDevicePort::SearchVideoIdxFromVidPid(LPCSTR lpcVid, LPCSTR lpcPid)
     stUDev = udev_new();
     if (stUDev == nullptr)
     {
-        return -1;
+        return DP_RET_INST_ERR;
     }
 
     //
     stUDevEnumErate = udev_enumerate_new(stUDev);
     if (stUDevEnumErate == nullptr)
     {
-        return -2;
+        return DP_RET_INST_ERR;
     }
 
     //
@@ -70,11 +70,11 @@ INT CDevicePort::SearchVideoIdxFromVidPid(LPCSTR lpcVid, LPCSTR lpcPid)
         {
             udev_enumerate_unref(stUDevEnumErate);
             udev_unref(stUDev);
-            return -99;
+            return DP_RET_NOTHAVE;
         }
     }
 
-    return -99;
+    return DP_RET_NOTHAVE;
 }
 
 /*********************************************************************************

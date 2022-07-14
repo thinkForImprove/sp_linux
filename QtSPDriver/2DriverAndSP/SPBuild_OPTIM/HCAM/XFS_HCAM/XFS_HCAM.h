@@ -29,6 +29,7 @@
 #include "file_access.h"
 #include "opencv2/opencv.hpp"
 #include "ErrorDetail.h"
+#include "XfsHelper.h"
 
 #include "mainwindow.h"
 

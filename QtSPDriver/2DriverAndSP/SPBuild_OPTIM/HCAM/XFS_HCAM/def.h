@@ -102,6 +102,7 @@ typedef struct ST_VIDEO_PARAM
     DOUBLE duSaturation;    // 饱和度
     DOUBLE duHue;           // 色调
     DOUBLE duExposure;      // 曝光
+    INT nOtherParam[32];    // 其他参数(0用于镜像转换模式)
 
     ST_VIDEO_PARAM()
     {
@@ -125,6 +126,7 @@ typedef struct ST_CAM_INI_CONFIG
     WORD                    wDevNotFoundStat;                   // 设备未连接时状态显示
     WORD                    wFrameResoWidth;                    // 截取画面帧的分辨率(Width)
     WORD                    wFrameResoHeight;                   // 截取画面帧的分辨率(Height)
+    WORD                    wDisplayFlip;                       // 图像镜像模式转换
     // INI配置Open相关
     WORD                    wOpenFailRet;                       // Open失败时返回值
     // INI配置共享内存相关

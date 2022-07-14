@@ -56,9 +56,9 @@ HEADERS += \
 
 #配置依赖库目录
 CONFIG(debug, debug|release) {
-    LIBS += -lfile_accessd -ldata_convertord
+    LIBS += -lfile_accessd -ldata_convertord -ldevice_portd
 } else:CONFIG(release, debug|release) {
-    LIBS += -lfile_access -ldata_convertor
+    LIBS += -lfile_access -ldata_convertor -ldevice_port
 }
 
 #Opencv库依赖设定

@@ -177,6 +177,7 @@ extern "C" DEVCAM_EXPORT long CreateIDevCAM(LPCSTR lpDevType, IDevCAM *&p);
 
 #include <QtCore/qglobal.h>
 #include "QtTypeDef.h"
+#include "IDevDEF.h"
 #include <string.h>
 
 #include <XFSCAM.H>
@@ -216,162 +217,19 @@ extern "C" DEVCAM_EXPORT long CreateIDevCAM(LPCSTR lpDevType, IDevCAM *&p);
 #define ERR_CAM_SHAREDMEM               (-106)  // 共享内存错误
 
 
-//****************************************************************************
-// SetData/GetData 数据类型 (0~50为共通使用, 50以上为各模块自行定义)
-//****************************************************************************
-#define SET_DEV_INIT            0       // 设置初始化数据
-#define SET_LIB_PATH            1       // 设置动态库路径
-#define SET_DEV_OPENMODE        2       // 设置设备打开模式
-#define SET_GLIGHT_CONTROL      3       // 指示灯控制
-#define SET_BEEP_CONTROL        4       // 设备鸣响控制
-#define SET_DEV_RECON           5       // 设置断线重连标记
-#define GET_DEV_ERRCODE         6       // 取DevXXX错误码
+//***************************************************************************
+// 使用 IDevDEF.h 通用定义部分
+// 1. SetData/GetData 数据类型 (0~50为共通使用, 50以上为各模块自行定义)
+// 2. GetVersion 数据类型
+// 3. 设备打开方式结构体变量, 适用于 SET_DEV_OPENMODE 参数传递
+//***************************************************************************
 
-
-
-//****************************************************************************
-// GetVersion 数据类型
-//****************************************************************************
-#define GET_VER_FW              0       // 固件版本
-#define GET_VER_SOFT            1       // 软件版本
-#define GET_VER_LIB             2       // SDK动态库版本
-#define GET_VER_SERIAL          3       // 序列号
-
-
-//****************************************************************************
-// CEN标准Status/Capabilities命令扩展定义
-//****************************************************************************
-#define CAM_CAMERAS_SIZE     (8)
-class CWfsCAMStatus : public WFSCAMSTATUS
-{
-public:
-    CWfsCAMStatus()
-    {
-        Clear();
-    }
-
-    // 初始化
-    void Clear()
-    {
-        fwDevice    = WFS_CAM_DEVONLINE;
-        for (INT i = 0; i < WFS_CAM_CAMERAS_SIZE; i ++)
-        {
-            fwMedia[i] = WFS_CAM_MEDIANOTSUPP;
-        }
-        for (INT i = 0; i < WFS_CAM_CAMERAS_SIZE; i ++)
-        {
-            fwCameras[i] = WFS_CAM_CAMNOTSUPP;
-        }
-        for (INT i = 0; i < WFS_CAM_CAMERAS_SIZE; i ++)
-        {
-            usPictures[i] = 0;
-        }
-        lpszExtra = nullptr;
-        wAntiFraudModule = 0;
-    }
-
-    // 用于比较(true:有差别, false:无差别)
-    bool Diff(CWfsCAMStatus clStat)
-    {
-        if (fwDevice != clStat.fwDevice)
-        {
-            return true;
-        }
-        for (INT i = 0; i < CAM_CAMERAS_SIZE; i ++)
-        {
-            if (clStat.fwMedia[i] != fwMedia[i] ||
-                clStat.fwCameras[i] != fwCameras[i] ||
-                clStat.usPictures[i] != usPictures[i])
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    // 用于复制
-    void Copy(CWfsCAMStatus clStat)
-    {
-        this->fwDevice = clStat.fwDevice;
-        for (INT i = 0; i < CAM_CAMERAS_SIZE; i ++)
-        {
-            this->fwMedia[i] = clStat.fwMedia[i];
-            this->fwCameras[i] = clStat.fwCameras[i];
-            this->usPictures[i] = clStat.usPictures[i];
-        }
-    }
-};
-
-class CWfsCAMCap : public WFSCAMCAPS
-{
-public:
-    CWfsCAMCap()
-    {
-        wClass                          = WFS_SERVICE_CLASS_CAM;
-        fwType                          = WFS_CAM_TYPE_CAM;
-        fwCameras[WFS_CAM_ROOM]         = WFS_CAM_NOT_AVAILABLE;
-        fwCameras[WFS_CAM_PERSON]       = WFS_CAM_AVAILABLE;
-        fwCameras[WFS_CAM_EXITSLOT]     = WFS_CAM_NOT_AVAILABLE;
-        fwCameras[WFS_CAM_EXTRA]        = WFS_CAM_NOT_AVAILABLE;
-        fwCameras[WFS_CAM_HIGHTCAMERA]  = WFS_CAM_NOT_AVAILABLE;
-        fwCameras[5]                    = WFS_CAM_NOT_AVAILABLE;
-        fwCameras[WFS_CAM_PANORAMIC]    = WFS_CAM_NOT_AVAILABLE;
-        fwCameras[7]                    = WFS_CAM_NOT_AVAILABLE;
-        usMaxPictures                   = 1000;
-        fwCamData                       = WFS_CAM_MANADD;
-        usMaxDataLength                 = 67;
-        fwCharSupport                   = WFS_CAM_ASCII;
-        lpszExtra                       = nullptr;
-        bPictureFile                    = TRUE;
-        bAntiFraudModule                = FALSE;
-    }
-};
-
-
-//****************************************************************************
-// 结构体定义
-//****************************************************************************
-// 适用于 SET_DEV_OPENMODE 参数传递
-// 设备打开方式结构体变量 声明
-typedef struct st_Device_OpenMode
-{
-    WORD    wOpenMode;              // 设备打开方式(例如:1序号, 1VidPid, >1其他方式)
-    CHAR    szDevPath[8][64+1];     // 设备路径[最多可设置8组]
-    INT     nBaudRate[8];           // 设备串口波特率[最多可设置8组]
-    CHAR    szHidVid[8][32+1];      // 设备VID(字符串)[最多可设置8组]
-    CHAR    szHidPid[8][32+1];      // 设备PID(字符串)[最多可设置8组]
-    INT     nHidVid[8];             // 设备VID(整型)[最多可设置8组]
-    INT     nHidPid[8];             // 设备PID(整型)[最多可设置8组]
-    WORD    wProtocol[8];           // 通讯协议[最多可设置8组]
-    INT     nOtherParam[32];        // 其他参数(整型数组)
-    CHAR    szOtherParam[256];      // 其他参数(字符串)
-
-    st_Device_OpenMode()
-    {
-        Clear();
-    }
-    void Clear()
-    {
-        memset(this, 0x00, sizeof(st_Device_OpenMode));
-    }
-} STDEVICEOPENMODE, *LPSTDEVICEOPENMODE;
 
 //****************************************************************************
 // 设备状态相关定义
 //****************************************************************************
-//　Status.Device返回状态
-enum DEVCAM_DEVICE_STATUS
-{
-    CAM_DEVICE_STAT_ONLINE          = 0,    // 设备正常
-    CAM_DEVICE_STAT_OFFLINE         = 1,    // 设备脱机
-    CAM_DEVICE_STAT_POWEROFF        = 2,    // 设备断电
-    CAM_DEVICE_STAT_NODEVICE        = 3,    // 设备不存在
-    CAM_DEVICE_STAT_HWERROR         = 4,    // 设备故障
-    CAM_DEVICE_STAT_USERERROR       = 5,    // 用户操作错误
-    CAM_DEVICE_STAT_BUSY            = 6,    // 设备读写中(忙)
-    CAM_DEVICE_STAT_FRAUDAT         = 7,    // 设备出现欺诈企图
-    CAM_DEVICE_STAT_UNKNOWN         = 8,    // 设备状态未知
-};
+//　Status.Device返回状态(引用IDevDEF.h中已定义类型)
+typedef EN_DEVICE_STATUS    DEVCAM_DEVICE_STATUS;
 
 //　status.Media返回状态(介质状态)
 enum DEVCAM_MEDIA_STATUS
@@ -393,6 +251,7 @@ enum DEVCAM_CAMEAR_STATUS
 };
 
 // 设备状态结构体
+#define CAM_CAMERAS_SIZE    WFS_CAM_CAMERAS_SIZE
 typedef struct ST_DEV_CAM_STATUS   // 处理后的设备状态
 {
     WORD    wDevice;                            // 设备状态(参考enum DEVCAM_DEVICE_STATUS)
@@ -410,7 +269,7 @@ typedef struct ST_DEV_CAM_STATUS   // 处理后的设备状态
     void Clear()
     {
         memset(this, 0x00, sizeof(ST_DEV_CAM_STATUS));
-        wDevice = CAM_DEVICE_STAT_OFFLINE;
+        wDevice = DEVICE_STAT_OFFLINE;
         for (INT i = 0; i < CAM_CAMERAS_SIZE; i ++)
         {
             wMedia[i] = CAM_MEDIA_STAT_UNKNOWN;
@@ -590,14 +449,14 @@ public:
     {
         switch (wDevStat)
         {
-            case CAM_DEVICE_STAT_ONLINE     /* 设备正常 */     : return WFS_CAM_DEVONLINE;
-            case CAM_DEVICE_STAT_OFFLINE    /* 设备脱机 */     : return WFS_CAM_DEVOFFLINE;
-            case CAM_DEVICE_STAT_POWEROFF   /* 设备断电 */     : return WFS_CAM_DEVPOWEROFF;
-            case CAM_DEVICE_STAT_NODEVICE   /* 设备不存在 */    : return WFS_CAM_DEVNODEVICE;
-            case CAM_DEVICE_STAT_HWERROR    /* 设备故障 */     : return WFS_CAM_DEVHWERROR;
-            case CAM_DEVICE_STAT_USERERROR  /* 用户操作错误 */  : return WFS_CAM_DEVUSERERROR;
-            case CAM_DEVICE_STAT_BUSY       /* 设备读写中 */    : return WFS_CAM_DEVBUSY;
-            case CAM_DEVICE_STAT_FRAUDAT    /* 设备出现欺诈企图 */: return WFS_CAM_DEVFRAUDATTEMPT;
+            case DEVICE_STAT_ONLINE     /* 设备正常 */     : return WFS_CAM_DEVONLINE;
+            case DEVICE_STAT_OFFLINE    /* 设备脱机 */     : return WFS_CAM_DEVOFFLINE;
+            case DEVICE_STAT_POWEROFF   /* 设备断电 */     : return WFS_CAM_DEVPOWEROFF;
+            case DEVICE_STAT_NODEVICE   /* 设备不存在 */    : return WFS_CAM_DEVNODEVICE;
+            case DEVICE_STAT_HWERROR    /* 设备故障 */     : return WFS_CAM_DEVHWERROR;
+            case DEVICE_STAT_USERERROR  /* 用户操作错误 */  : return WFS_CAM_DEVUSERERROR;
+            case DEVICE_STAT_BUSY       /* 设备读写中 */    : return WFS_CAM_DEVBUSY;
+            case DEVICE_STAT_FRAUDAT    /* 设备出现欺诈企图 */: return WFS_CAM_DEVFRAUDATTEMPT;
             defaule: return WFS_CAM_DEVOFFLINE;
         }
     }

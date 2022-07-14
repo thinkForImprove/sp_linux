@@ -10,6 +10,10 @@
 * 文件版本：1.0.0.1
 ****************************************************************/
 
+#include "XfsHelper.h"
+
+/* 该部分内容已合并到 XfsHelper.h, 注销, 确认所有工程文件修改为引用 XfsHelper.h后, 该文件可以删除
+
 #pragma once
 
 #include "QtTypeDef.h"
@@ -362,3 +366,4 @@ protected:
     LPWFSIDCCARDDATA    pCardDatas[MAX_CARD_DATA_COUNT];
     CWFSIDCCardData datas[MAX_CARD_DATA_COUNT];
 };
+*/

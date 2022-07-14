@@ -482,6 +482,7 @@ extern "C" DEVIDC_EXPORT long CreateIDevIDC(LPCSTR lpDevType, IDevIDC *&pDev);
 #include "QtTypeDef.h"
 //#include "IDevCRD.h"
 #include "XFSIDC.H"
+#include "IDevDEF.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -567,48 +568,12 @@ extern "C" DEVIDC_EXPORT long CreateIDevIDC(LPCSTR lpDevType, IDevIDC *&pDev);
 #define ERR_IDC_DETEC_FRAUD         (-9902) // 检知有欺欺诈行为
 
 
-//****************************************************************************
-// SetData/GetData 数据类型 (0~50为共通使用, 50以上为各模块自行定义)
-//****************************************************************************
-#define SET_DEV_INIT            0       // 设置初始化数据
-#define SET_LIB_PATH            1       // 设置动态库路径
-#define SET_DEV_OPENMODE        2       // 设置设备打开模式
-#define SET_GLIGHT_CONTROL      3       // 指示灯控制
-#define SET_BEEP_CONTROL        4       // 设备鸣响控制
-#define SET_DEV_RECON           5       // 设置断线重连标记
-#define GET_DEV_ERRCODE         6       // 取DevXXX错误码
-
-// 适用于 SET_DEV_OPENMODE 参数传递
-// 设备打开方式结构体变量 声明
-typedef
-struct st_Device_OpenMode
-{
-    WORD    wOpenMode;          // 设备打开方式(0串口/1USB HID)
-    CHAR    szDevPath[64+1];    // 设备路径
-    WORD    wBaudRate;          // 设备串口波特率
-    CHAR    szHidVid[32+1];     // 设备VID
-    CHAR    szHidPid[32+1];     // 设备PID
-    WORD    wProtocol;          // 通讯协议
-    INT     nOtherParam[32];    // 其他参数
-
-    st_Device_OpenMode()
-    {
-        Clear();
-    }
-    void Clear()
-    {
-        memset(this, 0x00, sizeof(st_Device_OpenMode));
-    }
-} STDEVICEOPENMODE, *LPSTDEVICEOPENMODE;
-
-//****************************************************************************
-// GetVersion 数据类型
-//****************************************************************************
-#define GET_VER_FW              0       // 固件版本
-#define GET_VER_SOFT            1       // 软件版本
-#define GET_VER_LIB             2       // SDK动态库版本
-#define GET_VER_SERIAL          3       // 序列号
-
+//***************************************************************************
+// 使用 IDevDEF.h 通用定义部分
+// 1. SetData/GetData 数据类型 (0~50为共通使用, 50以上为各模块自行定义)
+// 2. GetVersion 数据类型
+// 3. 设备打开方式结构体变量, 适用于 SET_DEV_OPENMODE 参数传递
+//***************************************************************************
 
 //****************************************************************************
 // 设备状态相关定义
@@ -627,18 +592,8 @@ enum MEDIA_ACTION
     MEDIA_ACCEPT_IDCARD             = 8,    // 身份证进卡
 };
 
-//　Status.Device返回状态
-enum DEVIDC_DEVICE_STATUS
-{
-    DEVICE_STAT_ONLINE              = 0,    // 设备正常
-    DEVICE_STAT_OFFLINE             = 1,    // 设备脱机
-    DEVICE_STAT_POWEROFF            = 2,    // 设备断电
-    DEVICE_STAT_NODEVICE            = 3,    // 设备不存在
-    DEVICE_STAT_HWERROR             = 4,    // 设备故障
-    DEVICE_STAT_USERERROR           = 5,    //
-    DEVICE_STAT_BUSY                = 6,    // 设备读写中
-    DEVICE_STAT_FRAUDAT             = 7,    // 设备出现欺诈企图
-};
+//　Status.Device返回状态(引用IDevDEF.h中已定义类型)
+typedef EN_DEVICE_STATUS    DEVIDC_DEVICE_STATUS;
 
 //　status.Media返回状态(介质状态)
 enum DEVIDC_MEDIA_STATUS

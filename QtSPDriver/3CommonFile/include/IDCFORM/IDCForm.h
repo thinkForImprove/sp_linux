@@ -5,7 +5,7 @@
 #include "MultiString.h"
 #include "ReadString.h"
 #include "ProUtil.h"
-#include "IDCXfsHelper.h"
+#include "XfsHelper.h"
 #include "XfsRegValue.h"
 
 //注册表信息

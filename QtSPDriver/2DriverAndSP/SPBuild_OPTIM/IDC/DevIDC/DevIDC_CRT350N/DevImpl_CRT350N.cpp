@@ -1349,7 +1349,7 @@ INT CDevImpl_CRT350N::GetResponse(LPSTR lpResponse, INT nLen, LPCSTR lpFuncData,
         DWORD ulInOutLen = USB_READ_LENTH;
         MSET_0(szReply);
         nRet = m_pDev->Read(szReply, ulInOutLen, nTimeOut);
-        if (nRet <= ERR_DEVPORT_SUCCESS)
+        if (nRet != ERR_DEVPORT_SUCCESS || ulInOutLen < 1)
         {
             break;
         } else
@@ -1357,14 +1357,14 @@ INT CDevImpl_CRT350N::GetResponse(LPSTR lpResponse, INT nLen, LPCSTR lpFuncData,
             if (nIndex == 0)
             {
                // 第一个包
-               nIndex = nRet;
+               nIndex = ulInOutLen;
                memcpy(lpResponse, szReply, nIndex);
                nTimeOut = 50;
             } else
             {
                 // 多个包
-                memcpy(lpResponse + nIndex, szReply + 1, nRet - 1);
-                nIndex += nRet - 1;
+                memcpy(lpResponse + nIndex, szReply + 1, ulInOutLen - 1);
+                nIndex += ulInOutLen - 1;
             }
             if (szReply[0] == 0x04)
             {

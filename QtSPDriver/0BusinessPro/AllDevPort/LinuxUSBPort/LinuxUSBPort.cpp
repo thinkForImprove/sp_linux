@@ -175,7 +175,8 @@ long CLinuxUSBPort::Read(LPSTR lpReadData, DWORD &dwInOutReadLen, DWORD dwTimeOu
     m_cLog.NewLine().Log(szTmp).LogHex(lpReadData, nRetLen).EndLine();
 
     dwInOutReadLen = nRetLen;
-    return nRetLen;
+    //return nRetLen;
+    return ERR_PORT_SUCCESS;
 }
 
 long CLinuxUSBPort::SendAndRead(LPCSTR lpSendData, DWORD dwSendLen, LPSTR lpReadData, DWORD &dwInOutReadLen, DWORD dwTimeOut)

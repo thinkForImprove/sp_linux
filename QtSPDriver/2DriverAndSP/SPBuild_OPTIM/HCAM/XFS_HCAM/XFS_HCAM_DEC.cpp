@@ -118,6 +118,14 @@ INT CXFS_HCAM::InitConfig()
     // 截取画面帧的分辨率(Height),缺省0
     m_stConfig.wFrameResoHeight = m_cXfsReg.GetValue("CONFIG", "FrameResoHeight", (DWORD)0);
 
+    // 镜像转换, 0:不转换, 1:左右转换, 2:上下转换, 3:上下左右转换, 缺省0
+    m_stConfig.wDisplayFlip = m_cXfsReg.GetValue("CONFIG", "DisplayFlip", (DWORD)0);
+    if (m_stConfig.wDisplayFlip < 0 || m_stConfig.wDisplayFlip > 3)
+    {
+        m_stConfig.wDisplayFlip = 0;
+    }
+    m_stConfig.stVideoPar.nOtherParam[0] = m_stConfig.wDisplayFlip;
+
 
     // ------------------------[DEVICE_CONFIG]下参数读取------------------------
     // 设备类型
@@ -296,6 +304,7 @@ INT CXFS_HCAM::PrintIniData()
     PRINT_INI_BUF("\n\t\t\t\t 设备未连接时状态显示(0:NODEVICE,1:OFFLINE): CONFIG->DevNotFoundStat = %d", m_stConfig.wDevNotFoundStat);
     PRINT_INI_BUF("\n\t\t\t\t 截取画面帧的分辨率(Width): CONFIG->FrameResoWidth = %d", m_stConfig.wFrameResoWidth);
     PRINT_INI_BUF("\n\t\t\t\t 截取画面帧的分辨率(Height): CONFIG->FrameResoHeight = %d", m_stConfig.wFrameResoHeight);
+    PRINT_INI_BUF("\n\t\t\t\t 镜像转换(0:不转换,1:左右转换,2:上下转换,3:上下左右转换): CONFIG->DisplayFlip = %d", m_stConfig.wDisplayFlip);
     PRINT_INI_BUF("\n\t\t\t\t 设备类型: CONFIG->DriverType = %d", m_stConfig.wDeviceType);
     PRINT_INI_BUF2("\n\t\t\t\t 设备SDK库路径: DEVICE_SET_%d->SDK_Path = %s", m_stConfig.wDeviceType, m_stConfig.szSDKPath);
     PRINT_INI_BUF2("\n\t\t\t\t 打开方式(0:序列方式打开,1:VidPid打开): DEVICE_SET_%d->OpenMode = %d",
@@ -519,12 +528,15 @@ HRESULT CXFS_HCAM::InnerTakePicture(const WFSCAMTAKEPICT &stTakePict, DWORD dwTi
     WFSCAMTAKEPICTEX stCamTakePictEx;
 
     stCamTakePictEx.wCamera = stTakePict.wCamera;
-    MCPY_NOLEN(stCamTakePictEx.lpszCamData, stTakePict.lpszCamData);
+    //MCPY_NOLEN(stCamTakePictEx.lpszCamData, stTakePict.lpszCamData);
     //MCPY_NOLEN(stCamTakePictEx.lpszUNICODECamData, stTakePict.lpszUNICODECamData);
+    stCamTakePictEx.lpszCamData = stTakePict.lpszCamData;
+    stCamTakePictEx.lpszUNICODECamData = stTakePict.lpszUNICODECamData;
 
     if (strlen(m_stConfig.szTakePicDefSavePath) > 5)
     {
-        MCPY_NOLEN(stCamTakePictEx.lpszPictureFile, m_stConfig.szTakePicDefSavePath);
+        //MCPY_NOLEN(stCamTakePictEx.lpszPictureFile, m_stConfig.szTakePicDefSavePath);
+        stCamTakePictEx.lpszPictureFile = strdup(m_stConfig.szTakePicDefSavePath);
     } else
     {
         Log(ThisModule, __LINE__,
@@ -534,7 +546,13 @@ HRESULT CXFS_HCAM::InnerTakePicture(const WFSCAMTAKEPICT &stTakePict, DWORD dwTi
         return WFS_ERR_INVALID_DATA;
     }
 
-    return InnerTakePictureEx(stCamTakePictEx, dwTimeout);
+    HRESULT hRet = InnerTakePictureEx(stCamTakePictEx, dwTimeout);
+
+    stCamTakePictEx.lpszCamData = nullptr;
+    stCamTakePictEx.lpszUNICODECamData = nullptr;
+    free(stCamTakePictEx.lpszPictureFile);
+
+    return hRet;
 }
 
 // 拍照处理扩展

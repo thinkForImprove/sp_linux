@@ -1777,7 +1777,7 @@ INT CDevImpl_CRT730B::GetResponse(char *pszResponse, int nLen, int nTimeout, INT
         DWORD ulInOutLen = USB_READ_LENTH;
         memset(pszReply, 0, sizeof(pszReply));
         nRet = m_pDev->Read(pszReply, ulInOutLen, nTimeOut); // 返回值为数据长度
-        if (nRet <= 0)
+        if (nRet != ERR_DEVPORT_SUCCESS || ulInOutLen < 1)
         {
             break;
         } else
@@ -1785,7 +1785,7 @@ INT CDevImpl_CRT730B::GetResponse(char *pszResponse, int nLen, int nTimeout, INT
             // 接收数据记录到Log
             CHAR szTmp[12] = { 0x00 };
             std::string stdRcvData;
-            for (int i = 0; i < nRet; i ++)
+            for (int i = 0; i < ulInOutLen; i ++)
             {
                 sprintf(szTmp, "%02X ", (int)pszReply[i]);
                 stdRcvData.append(szTmp);
@@ -1795,32 +1795,32 @@ INT CDevImpl_CRT730B::GetResponse(char *pszResponse, int nLen, int nTimeout, INT
             {
                 Log(ThisModule, __LINE__, "RecvData To Device: %d|%s\n"
                                           "RecvData Byte[0] == %02X|ACK(确认下发CMD有效), 不做处理.",
-                    nRet, stdRcvData.c_str(), ACK);
+                    ulInOutLen, stdRcvData.c_str(), ACK);
                 continue;
             } else
             if (pszReply[0] == NAK)
             {
                 Log(ThisModule, __LINE__, "RecvData To Device: %d|%s\n"
                                           "RecvData Byte[0] == %02X|NAK(否认,下发命令无效), Return: %s.",
-                    nRet, stdRcvData.c_str(), ConvertErrCodeToStr(IMP_ERR_SNDDATA_INVALID));
+                    ulInOutLen, stdRcvData.c_str(), ConvertErrCodeToStr(IMP_ERR_SNDDATA_INVALID));
                 return IMP_ERR_SNDDATA_INVALID; // 无效下发数据
             } else
             {
                 Log(ThisModule, __LINE__, "RecvData To Device: %d|%s.",
-                    nRet, stdRcvData.c_str());
+                    ulInOutLen, stdRcvData.c_str());
             }
 
             if (nIndex == 0)
             {
                // 第一个包
-               nIndex = nRet;
+               nIndex = ulInOutLen;
                memcpy(pszResponse, pszReply, nIndex);
                nTimeOut = 50;
             } else
             {
                 // 多个包
-                memcpy(pszResponse + nIndex, pszReply, nRet);
-                nIndex += nRet; // 接收应答计数
+                memcpy(pszResponse + nIndex, pszReply, ulInOutLen);
+                nIndex += ulInOutLen; // 接收应答计数
             }
             continue;
         }
