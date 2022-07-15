@@ -12,8 +12,16 @@ DEFINES += SPBuild_OPTIM
 #-------------------------------------------------
 #指定使用命令系(CMD_BCR/CMD_BCR_IDC)
 #不设置缺省CMD_BCR
-DEFINES += CMD_BCR
+#DEFINES += CMD_BCR
 #DEFINES += CMD_BCR_IDC
+
+#建行(CCB)用的IDC命令系执行BCR
+contains(DEFINES, SET_BANK_CCB) {
+    DEFINES += CMD_BCR_IDC
+} else {
+    DEFINES += CMD_BCR
+}
+
 #-------------------------------------------------
 
 QT -= gui
