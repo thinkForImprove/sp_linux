@@ -85,20 +85,22 @@ enum EN_CODE_MODE
 {
     EN_CODE_Codabar                 = 0,        // Codabar
     EN_CODE_Code128                 = 1,        // Code 128
-    EN_CODE_Code3932                = 2,        // Code 39/Code3 2
-    EN_CODE_Code93                  = 3,        // Code 93
-    EN_CODE_DataMatrix              = 4,        // Data Matrix
-    EN_CODE_InterL2OF5              = 5,        // InterLeaved 2 of 5
-    EN_CODE_PDF417                  = 6,        // PDF417
-    EN_CODE_QR                      = 7,        // QR
-    EN_CODE_UPCA                    = 8,        // UPC-A
-    EN_CODE_UPCE                    = 9,        // UPC-E
-    EN_CODE_UPCE1                   = 10,       // UPC-E1
-    EN_CODE_UPCE8                   = 11,       // UPC-E8
-    EN_CODE_UPCE13                  = 12,       // UPC-E13
-    EN_CODE_Matrix2OF5              = 13,       // Matrix 2 of 5
-    EN_CODE_Indust2OF5              = 14,       // Industrial 2 of 5
+    EN_CODE_Code39                  = 2,        // Code 39
+    EN_CODE_Code32                  = 3,        // Code32
+    EN_CODE_Code93                  = 4,        // Code 93
+    EN_CODE_DataMatrix              = 5,        // Data Matrix
+    EN_CODE_InterL2OF5              = 6,        // InterLeaved 2 of 5
+    EN_CODE_PDF417                  = 7,        // PDF417
+    EN_CODE_QR                      = 8,        // QR
+    EN_CODE_UPCA                    = 9,        // UPC-A
+    EN_CODE_UPCE                    = 10,        // UPC-E
+    EN_CODE_UPCE1                   = 11,       // UPC-E1
+    EN_CODE_UPCE8                   = 12,       // UPC-E8
+    EN_CODE_UPCE13                  = 13,       // UPC-E13
+    EN_CODE_Matrix2OF5              = 14,       // Matrix 2 of 5
+    EN_CODE_Indust2OF5              = 15,       // Industrial 2 of 5
     EN_CODE_UNKNOWN                 = 99,       // 未知
+    EN_CODE_ALL                     = 100,      // 所有
 };
 
 /**************************************************************************
@@ -129,8 +131,11 @@ public: // 接口函数封装
     INT     GetVersion(WORD wType, LPSTR lpVerData, WORD wVerSize); // 取版本
     INT     ScanCodeStart(INT nMode = 0);                           // 开始扫码
     INT     ScanCodeEnd(INT nMode = 0);                             // 停止扫码
-    INT     GetScanCode(LPSTR lpCodeData, INT &nCodeDataSize,
+    INT     GetScanCode(LPSTR lpCodeData, DWORD &dwCodeDataSize,
                         INT &nCodeType, DWORD dwTimeOut);           // 获取扫码数据
+    INT     SetSymDistAllow(INT nCodeType);                         // 设置条码识别允许
+    INT     SetSymDistForbid(INT nCodeType);                        // 设置条码识别禁止
+    INT     SetSymScanMode(INT nMode);                              // 设置扫码识读模式
 
 private:    
     CQtDLLLoader<IAllDevPort>       m_pDev;                         // 硬件接口处理
@@ -153,7 +158,7 @@ private:
 private:    // 命令收发
     INT SendCmd(LPCSTR lpcCmd, INT nCmdLen, DWORD dwTimeOut,
                 LPCSTR lpFuncData, BOOL bIsPrtLog = TRUE);          // 下发数据
-    INT GetResponse(LPSTR lpRespData, INT nRespDataLen, DWORD dwTimeOut,
+    INT GetResponse(LPSTR lpRespData, DWORD dwRespDataLen, DWORD dwTimeOut,
                     LPCSTR lpFuncData, BOOL bIsPrtLog = TRUE);      // 接收数据
     DWORD GetCheckSum(LPCSTR lpcData, INT nDataLen, DWORD dwChkInit = CHECKVAL);// 取校验和
 

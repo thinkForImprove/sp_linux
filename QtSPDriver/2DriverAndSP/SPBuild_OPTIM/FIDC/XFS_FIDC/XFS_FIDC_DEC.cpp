@@ -147,15 +147,15 @@ void CXFS_FIDC::InitConfig()
             stDevOpenModeTmp.wOpenMode = 0;
         }
         // 设备路径(适用于串口和USBHID,缺省空)
-        strcpy(stDevOpenModeTmp.szDevPath, m_cXfsReg.GetValue(szIniAppName, "DevPath", ""));
+        strcpy(stDevOpenModeTmp.szDevPath[0], m_cXfsReg.GetValue(szIniAppName, "DevPath", ""));
         // 波特率(适用于串口,缺省9600)
-        stDevOpenModeTmp.wBaudRate = (WORD)m_cXfsReg.GetValue(szIniAppName, "BaudRate", (DWORD)9600);
+        stDevOpenModeTmp.wBaudRate[0] = (WORD)m_cXfsReg.GetValue(szIniAppName, "BaudRate", (DWORD)9600);
         // 设备VID(适用于USBHID,4位16进制字符,缺省空)
-        strcpy(stDevOpenModeTmp.szHidVid, m_cXfsReg.GetValue(szIniAppName, "VendorId", ""));
+        strcpy(stDevOpenModeTmp.szHidVid[0], m_cXfsReg.GetValue(szIniAppName, "VendorId", ""));
         // 设备PID(适用于USBHID,4位16进制字符,缺省空)
-        strcpy(stDevOpenModeTmp.szHidPid, m_cXfsReg.GetValue(szIniAppName, "ProductId", ""));
+        strcpy(stDevOpenModeTmp.szHidPid[0], m_cXfsReg.GetValue(szIniAppName, "ProductId", ""));
         // 通讯协议(0:拆分协议, 1:合并协议, 缺省0)
-        stDevOpenModeTmp.wProtocol = (WORD)m_cXfsReg.GetValue(szIniAppName, "Protocol", (DWORD)0);
+        stDevOpenModeTmp.wProtocol[0] = (WORD)m_cXfsReg.GetValue(szIniAppName, "Protocol", (DWORD)0);
         /*if (stDevOpenModeTmp.wProtocol != 0 && stDevOpenModeTmp.wProtocol != 1)
         {
             stDevOpenModeTmp.wProtocol = 0;

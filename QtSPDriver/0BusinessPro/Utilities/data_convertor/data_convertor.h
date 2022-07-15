@@ -82,7 +82,9 @@ public:
     static size_t d_mbstowcs(wchar_t *dest, const char *src, size_t n);
     static size_t d_wcstombs(char *dest, const wchar_t *src, size_t n);
     static size_t code_convert(char *from_charset, char *to_charset, const char *inbuf, int inlen, char *outbuf, int outlen);
-    static double str2number(char *str);
+    static double str2number(char *str);                                                        // 数字字串转换为整形浮点型(第一位为“-”转为负数)
+    static DWORD Ascii2Hex(LPCSTR lpcAscii, DWORD dwAsciiSize, LPSTR lpHex, DWORD dwHexSize);   // ASCII字串转换为16进制字串
+    static DWORD Hex2Ascii(LPCSTR lpcHex, DWORD dwHexSize, LPSTR lpAscii, DWORD dwAsciiSize);   // 16进制字串转换为ASCII字串
 };
 
 #endif // DATA_CONVERTOR_H

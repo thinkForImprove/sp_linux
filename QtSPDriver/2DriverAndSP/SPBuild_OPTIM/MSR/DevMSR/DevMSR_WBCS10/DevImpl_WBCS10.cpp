@@ -265,8 +265,8 @@ BOOL CDevImpl_WBCS10::IsDeviceExist(STDEVICEOPENMODE stDevExis, BOOL bAddLog)
             // 检查串口是否存在
             for(int i = 0; i < nCount; i ++)
             {
-                if (memcmp(stPortList[i].path, stDevExis.szDevPath, strlen(stDevExis.szDevPath)) == 0 &&
-                    memcmp(stPortList[i].path, stDevExis.szDevPath, strlen(stPortList[i].path)) == 0)
+                if (memcmp(stPortList[i].path, stDevExis.szDevPath[0], strlen(stDevExis.szDevPath[0])) == 0 &&
+                    memcmp(stPortList[i].path, stDevExis.szDevPath[0], strlen(stPortList[i].path)) == 0)
                 {
                     return TRUE;
                 }
@@ -290,7 +290,7 @@ BOOL CDevImpl_WBCS10::IsDeviceExist(STDEVICEOPENMODE stDevExis, BOOL bAddLog)
     } else
     if (stDevExis.wOpenMode == 1)   // USB HID
     {
-        nCount = nListHIDPort(stDevExis.szHidVid, stDevExis.szHidPid, bAddLog);      		// 4. 列出操作系统上连接指定厂商号和产品号的USB HID设备
+        nCount = nListHIDPort(stDevExis.szHidVid[0], stDevExis.szHidPid[0], bAddLog);      		// 4. 列出操作系统上连接指定厂商号和产品号的USB HID设备
         if (nCount < 1)
         {
             if (bAddLog == TRUE)
@@ -341,7 +341,7 @@ BOOL CDevImpl_WBCS10::OpenDevice(STDEVICEOPENMODE stOpenMode)
     // 打开设备
     if (stOpenMode.wOpenMode == 0)   // 串口
     {
-        if (bOpenPort(stOpenMode.szDevPath, stOpenMode.wBaudRate) != TRUE)
+        if (bOpenPort(stOpenMode.szDevPath[0], (INT)stOpenMode.wBaudRate[0]) != TRUE)
         {
             Log(ThisModule, __LINE__, "打开串口设备: OpenDevice()->bOpenPort(%s, %d) fail. ", stOpenMode.szDevPath, stOpenMode.wBaudRate);
             return FALSE;
@@ -352,8 +352,8 @@ BOOL CDevImpl_WBCS10::OpenDevice(STDEVICEOPENMODE stOpenMode)
     } else
     if (stOpenMode.wOpenMode == 1)   // USB HID
     {
-        int nIdx = nGetHidPortIdx(stOpenMode.szHidVid, stOpenMode.szHidPid);
-        if (bOpenPort(stOpenMode.szDevPath, nIdx) != TRUE)
+        int nIdx = nGetHidPortIdx(stOpenMode.szHidVid[0], stOpenMode.szHidPid[0]);
+        if (bOpenPort(stOpenMode.szDevPath[0], nIdx) != TRUE)
         {
             Log(ThisModule, __LINE__, "打开USB设备: OpenDevice()->bOpenPort(%s, %d) fail. ", stOpenMode.szDevPath, nIdx);
             return FALSE;

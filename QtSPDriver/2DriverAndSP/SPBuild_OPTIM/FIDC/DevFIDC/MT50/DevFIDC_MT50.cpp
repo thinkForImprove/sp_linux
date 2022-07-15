@@ -45,12 +45,12 @@ int CDevFIDC_MT50::Open(const char *pMode)
     INT nRet = IMP_SUCCESS;
 
     // 字符串VID/PID转数字
-    INT nVid = (INT)DataConvertor::string_to_ulong(m_stOpenMode.szHidVid,
-                                                   strlen(m_stOpenMode.szHidVid), 16);
-    INT nPid = (INT)DataConvertor::string_to_ulong(m_stOpenMode.szHidPid,
-                                                   strlen(m_stOpenMode.szHidPid), 16);
+    INT nVid = (INT)DataConvertor::string_to_ulong(m_stOpenMode.szHidVid[0],
+                                                   strlen(m_stOpenMode.szHidVid[0]), 16);
+    INT nPid = (INT)DataConvertor::string_to_ulong(m_stOpenMode.szHidPid[0],
+                                                   strlen(m_stOpenMode.szHidPid[0]), 16);
 
-    if ((nRet = m_pDevImpl.OpenDeviceUSB(nVid, nPid, m_stOpenMode.wProtocol)) != IMP_SUCCESS)
+    if ((nRet = m_pDevImpl.OpenDeviceUSB(nVid, nPid, m_stOpenMode.wProtocol[0])) != IMP_SUCCESS)
     {
         /*Log(ThisModule, __LINE__,
             "打开设备: ->OpenDevice(%s) Fail, ErrCode: %d, Return: %s",

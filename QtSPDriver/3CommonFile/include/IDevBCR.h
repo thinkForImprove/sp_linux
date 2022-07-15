@@ -164,14 +164,8 @@ enum DEVBCR_GUIDLIGHTS_STATUS
     GUIDL_STAT_WHITE                = 12,   // 白色
 };
 
-//　status.Device_Position返回状态(设备位置信息)
-enum DEVBCR_POSITION_STATUS
-{
-    POS_STAT_IN                     = 0,    // 设备处于可正常操作位置或固定位置
-    POS_STAT_NOTIN                  = 0,    // 设备从可正常操作位置或固定位置移除
-    POS_STAT_UNKNOWN                = 0,    // 设备位置未知
-    POS_STAT_NOTSUPP                = 0,    // 设备不支持位置检测
-};
+//　status.Device_Position返回状态(设备位置信息)(引用IDevDEF.h中已定义类型)
+typedef EN_DEVICE_POSITION_STATUS  DEVBCR_POSITION_STATUS;
 
 // 设备状态结构体
 typedef struct ST_DEV_BCR_STATUS   // 处理后的设备状态
@@ -179,7 +173,7 @@ typedef struct ST_DEV_BCR_STATUS   // 处理后的设备状态
     WORD wDevice;               // 设备状态(参考enum DEVBCR_DEVICE_STATUS)
     WORD wBcrScanner;           // 扫描状态(参考enum DEVBCR_SCANNER_STATUS)
     DWORD wGuidLights;          // 指示灯显示状态(参考enum DEVBCR_GUIDLIGHTS_STATUS)
-    WORD wPosition;             // 设备未知状态(参考enum DEVBCR_POSITION_STATUS)
+    WORD wPosition;             // 设备位置状态(参考enum DEVBCR_POSITION_STATUS)
     USHORT usPowerTime;         // 设备省电模式恢复秒数
     CHAR szErrCode[32];         // 错误码
     WORD wOtherCode[16];        // 其他状态值,用于非标准WFS/未定义值的返回
@@ -195,7 +189,7 @@ typedef struct ST_DEV_BCR_STATUS   // 处理后的设备状态
         wDevice = DEVICE_STAT_OFFLINE;
         wBcrScanner = SCAN_STAT_UNKNOWN;
         wGuidLights = GUIDL_STAT_NOTAVAILABLE;
-        wPosition = POS_STAT_UNKNOWN;
+        wPosition = DEVPOS_STAT_UNKNOWN;
         usPowerTime = 0;
     }
 
@@ -296,8 +290,8 @@ enum EN_SYM_TYPE
 // 扫码入参结构体
 typedef struct ST_Dev_BCR_ReadIn
 {
-    DWORD dwSymType;            // 条码类型
-    WORD wSymDataMode;          // 条码数据模式(0ASCII/1HEX)
+    WORD wSymType[255];         // 条码类型[可指定多个]
+    WORD wSymDataMode;          // 定义条码数据返回模式(0ASCII/1HEX)
     DWORD dwTimeOut;            // 超时时间
     INT nOtherParam[12];        // 其他参数
 
@@ -308,19 +302,23 @@ typedef struct ST_Dev_BCR_ReadIn
     void Clear()
     {
         memset(this, 0x00, sizeof(ST_Dev_BCR_ReadIn));
-        dwSymType = EN_SYM_ALL;
+        memset(wSymType, EN_SYM_ALL, sizeof(WORD) * 255);
         wSymDataMode = 1;
 
     }
 } STREADBCRIN, *LPSTREADBCRIN;
 
+// 条码数据模式宏定义
+#define SYMD_ASCII      0
+#define SYMD_HEX        1
+
 // 扫码回参结构体
 typedef struct ST_Dev_BCR_ReadOut
 {
-    DWORD dwSymType;            // 条码类型
-    CHAR szSymData[2048];       // 条码数据
+    WORD wSymType;              // 条码类型
+    CHAR szSymData[4096];       // 条码数据
     LPSTR lpSymData;            // 条码数据内存空间(需主动申请/释放)
-    INT  nSymDataSize;          // 条码数据有效大小
+    DWORD dwSymDataSize;        // 条码数据有效大小
     WORD wSymDataMode;          // 条码数据模式(0ASCII/1HEX)
 
     ST_Dev_BCR_ReadOut()
@@ -331,7 +329,7 @@ typedef struct ST_Dev_BCR_ReadOut
     void Clear()
     {
         memset(this, 0x00, sizeof(ST_Dev_BCR_ReadOut));
-        dwSymType = EN_SYM_UNKNOWN;
+        wSymType = EN_SYM_UNKNOWN;
         if (lpSymData != nullptr)
         {
             free(lpSymData);
@@ -559,6 +557,19 @@ public:
         }
     }
 
+    // Device_Position状态转换为WFS格式
+    WORD ConvertDevPosStatus2WFS(WORD wStat)
+    {
+        switch (wStat)
+        {
+            case DEVPOS_STAT_INPOS      /* 设备处于可正常操作位置或固定位置 */  : return WFS_BCR_DEVICEINPOSITION;
+            case DEVPOS_STAT_NOTINPOS   /* 设备从可正常操作位置或固定位置移除 */: return WFS_BCR_DEVICENOTINPOSITION;
+            case DEVPOS_STAT_UNKNOWN    /* 设备位置未知 */                  : return WFS_BCR_DEVICEPOSUNKNOWN;
+            case DEVPOS_STAT_NOTSUPP    /* 设备不支持位置检测 */             : return WFS_BCR_DEVICEPOSUNKNOWN;
+            default: return WFS_BCR_DEVICEPOSUNKNOWN;
+        }
+    }
+
     // 错误码转换为WFS格式
     LONG ConvertDevErrCode2WFS(INT nRet)
     {
@@ -706,6 +717,73 @@ public:
             case EN_SYM_CHINESEPOST         : return WFS_BCR_SYM_CHINESEPOST;       // Chinese Post
             case EN_SYM_KOREANPOST          : return WFS_BCR_SYM_KOREANPOST;        // Korean Post
             default                         : return WFS_BCR_SYM_UNKNOWN;           // 未知
+        }
+    }
+
+    // DevBCR条码类型转换为WFS类型
+    INT ConvertWFSSymDevToDev(INT nWFSSym)
+    {
+        switch(nWFSSym)
+        {
+            case WFS_BCR_SYM_EAN128             : return EN_SYM_EAN128;             // GS1-128
+            case WFS_BCR_SYM_EAN8               : return EN_SYM_EAN8;               // EAN-8
+            case WFS_BCR_SYM_EAN8_2             : return EN_SYM_EAN8_2;             // EAN-8 with 2 digit add-on
+            case WFS_BCR_SYM_EAN8_5             : return EN_SYM_EAN8_5;             // EAN-8 with 5 digit add-on
+            case WFS_BCR_SYM_EAN13              : return EN_SYM_EAN13;              // EAN13
+            case WFS_BCR_SYM_EAN13_2            : return EN_SYM_EAN13_2;            // EAN-13 with 2 digit add-on
+            case WFS_BCR_SYM_EAN13_5            : return EN_SYM_EAN13_5;            // EAN-13 with 5 digit add-on
+            case WFS_BCR_SYM_JAN13              : return EN_SYM_JAN13;              // JAN-13
+            case WFS_BCR_SYM_UPCA               : return EN_SYM_UPCA;               // UPC-A
+            case WFS_BCR_SYM_UPCE0              : return EN_SYM_UPCE0;              // UPC-E
+            case WFS_BCR_SYM_UPCE0_2            : return EN_SYM_UPCE0_2;            // UPC-E with 2 digit add-on
+            case WFS_BCR_SYM_UPCE0_5            : return EN_SYM_UPCE0_5;            // UPC-E with 5 digit add-on
+            case WFS_BCR_SYM_UPCE1              : return EN_SYM_UPCE1;              // UPC-E with leading 1
+            case WFS_BCR_SYM_UPCE1_2            : return EN_SYM_UPCE1_2;            // UPC-E with leading land 2 digit add-on
+            case WFS_BCR_SYM_UPCE1_5            : return EN_SYM_UPCE1_5;            // UPC-E with leading land 5 digit add-on
+            case WFS_BCR_SYM_UPCA_2             : return EN_SYM_UPCA_2;             // UPC-A with2 digit add-on
+            case WFS_BCR_SYM_UPCA_5             : return EN_SYM_UPCA_5;             // UPC-A with 5 digit add-on
+            case WFS_BCR_SYM_CODABAR            : return EN_SYM_CODABAR;            // CODABAR (NW-7)
+            case WFS_BCR_SYM_ITF                : return EN_SYM_ITF;                // Interleaved 2 of 5 (ITF)
+            case WFS_BCR_SYM_11                 : return EN_SYM_11;                 // CODE 11 (USD-8)
+            case WFS_BCR_SYM_39                 : return EN_SYM_39;                 // CODE 39
+            case WFS_BCR_SYM_49                 : return EN_SYM_49;                 // CODE 49
+            case WFS_BCR_SYM_93                 : return EN_SYM_93;                 // CODE 93
+            case WFS_BCR_SYM_128                : return EN_SYM_128;                // CODE 128
+            case WFS_BCR_SYM_MSI                : return EN_SYM_MSI;                // MSI
+            case WFS_BCR_SYM_PLESSEY            : return EN_SYM_PLESSEY;            // PLESSEY
+            case WFS_BCR_SYM_STD2OF5            : return EN_SYM_STD2OF5;            // STANDARD 2 of 5 (INDUSTRIAL 2 of 5 also)
+            case WFS_BCR_SYM_STD2OF5_IATA       : return EN_SYM_STD2OF5_IATA;       // STANDARD 2 of 5 (IATA Version)
+            case WFS_BCR_SYM_PDF_417            : return EN_SYM_PDF_417;            // PDF-417
+            case WFS_BCR_SYM_MICROPDF_417       : return EN_SYM_MICROPDF_417;       // MICROPDF-417
+            case WFS_BCR_SYM_DATAMATRIX         : return EN_SYM_DATAMATRIX;         // GS1 DataMatrix
+            case WFS_BCR_SYM_MAXICODE           : return EN_SYM_MAXICODE;           // MAXICODE
+            case WFS_BCR_SYM_CODEONE            : return EN_SYM_CODEONE;            // CODE ONE
+            case WFS_BCR_SYM_CHANNELCODE        : return EN_SYM_CHANNELCODE;        // CHANNEL CODE
+            case WFS_BCR_SYM_TELEPEN_ORIGINAL   : return EN_SYM_TELEPEN_ORIGINAL;   // Original TELEPEN
+            case WFS_BCR_SYM_TELEPEN_AIM        : return EN_SYM_TELEPEN_AIM;        // AIM version of TELEPEN
+            case WFS_BCR_SYM_RSS                : return EN_SYM_RSS;                // GS1 DataBar
+            case WFS_BCR_SYM_RSS_EXPANDED       : return EN_SYM_RSS_EXPANDED;       // Expanded GS1 DataBar
+            case WFS_BCR_SYM_RSS_RESTRICTED     : return EN_SYM_RSS_RESTRICTED;     // Restricted GS1 DataBar
+            case WFS_BCR_SYM_COMPOSITE_CODE_A   : return EN_SYM_COMPOSITE_CODE_A;   // Composite Code A Component
+            case WFS_BCR_SYM_COMPOSITE_CODE_B   : return EN_SYM_COMPOSITE_CODE_B;   // Composite Code B Component
+            case WFS_BCR_SYM_COMPOSITE_CODE_C   : return EN_SYM_COMPOSITE_CODE_C;   // Composite Code C Component
+            case WFS_BCR_SYM_POSICODE_A         : return EN_SYM_POSICODE_A;         // Posicode Variation A
+            case WFS_BCR_SYM_POSICODE_B         : return EN_SYM_POSICODE_B;         // Posicode Variation B
+            case WFS_BCR_SYM_TRIOPTIC_CODE_39   : return EN_SYM_TRIOPTIC_CODE_39;   // Trioptic Code 39
+            case WFS_BCR_SYM_CODABLOCK_F        : return EN_SYM_CODABLOCK_F;        // Codablock F
+            case WFS_BCR_SYM_CODE_16K           : return EN_SYM_CODE_16K;           // Code 16K
+            case WFS_BCR_SYM_QRCODE             : return EN_SYM_QRCODE;             // QR Code
+            case WFS_BCR_SYM_AZTEC              : return EN_SYM_AZTEC;              // Aztec Codes
+            case WFS_BCR_SYM_UKPOST             : return EN_SYM_UKPOST;             // UK Post
+            case WFS_BCR_SYM_PLANET             : return EN_SYM_PLANET;             // US Postal Planet
+            case WFS_BCR_SYM_POSTNET            : return EN_SYM_POSTNET;            // US Postal Postnet
+            case WFS_BCR_SYM_CANADIANPOST       : return EN_SYM_CANADIANPOST;       // Canadian Post
+            case WFS_BCR_SYM_NETHERLANDSPOST    : return EN_SYM_NETHERLANDSPOST;    // Netherlands Post
+            case WFS_BCR_SYM_AUSTRALIANPOST     : return EN_SYM_AUSTRALIANPOST;     // Australian Post
+            case WFS_BCR_SYM_JAPANESEPOST       : return EN_SYM_JAPANESEPOST;       // Japanese Post
+            case WFS_BCR_SYM_CHINESEPOST        : return EN_SYM_CHINESEPOST;        // Chinese Post
+            case WFS_BCR_SYM_KOREANPOST         : return EN_SYM_KOREANPOST;         // Korean Post
+            default:                              return EN_SYM_UNKNOWN;            // 未知
         }
     }
 };

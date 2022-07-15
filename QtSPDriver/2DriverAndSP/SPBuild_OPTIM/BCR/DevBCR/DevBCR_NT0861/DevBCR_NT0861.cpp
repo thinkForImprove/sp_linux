@@ -25,6 +25,7 @@ CDevBCR_NT0861::CDevBCR_NT0861(LPCSTR lpDevType) :
     m_bCancelReadBcr = FALSE;                       // 取消扫码标记初始化:F
     memset(m_nRetErrOLD, 0, sizeof(INT) * 8);
     m_nDevStatOLD = DEV_NOTFOUND;                   // 上一次记录设备状态
+    m_bIsReadBcrRunning = FALSE;                    // 是否处于读码中
 }
 
 CDevBCR_NT0861::~CDevBCR_NT0861()
@@ -54,6 +55,16 @@ int CDevBCR_NT0861::Open(const char *pMode)
             "打开设备: ->OpenDevice(%s) Fail, ErrCode: %d, Return: %s",
             pMode, nRet, ConvertDevErrCodeToStr(ConvertImplErrCode2BCR(nRet)));*/
         return ConvertImplErrCode2BCR(nRet);
+    } else
+    {
+        // 设置扫码识读模式
+        m_pDevImpl.SetSymScanMode(m_stOpenMode.nOtherParam[2]);
+
+        // 扫码读码时是否设置条码类型限制(0:不设置,按硬件所有类型识别)
+        if (m_stOpenMode.nOtherParam[3] == 0)
+        {
+            m_pDevImpl.SetSymDistAllow(EN_CODE_ALL);
+        }
     }
 
     return BCR_SUCCESS;
@@ -89,6 +100,11 @@ int CDevBCR_NT0861::Reset(unsigned short usParam)
     //THISMODULE(__FUNCTION__);
 
     //INT nRet = IMP_SUCCESS;
+
+    if (m_bIsReadBcrRunning == TRUE)    // 读码中
+    {
+        m_bCancelReadBcr = FALSE;
+    }
 
     return BCR_SUCCESS;
 }
@@ -127,14 +143,28 @@ int CDevBCR_NT0861::GetStatus(STDEVBCRSTATUS &stStatus)
     {
         case DEV_OK:
             stStatus.wDevice = DEVICE_STAT_ONLINE;
+            stStatus.wPosition = DEVPOS_STAT_INPOS;
+            stStatus.wBcrScanner = SCAN_STAT_ON;
+            if (m_bIsReadBcrRunning == TRUE)    // 读码中
+            {
+                stStatus.wDevice = DEVICE_STAT_BUSY;
+                stStatus.wBcrScanner = SCAN_STAT_ON;
+            } else
+            {
+                stStatus.wBcrScanner = SCAN_STAT_OFF;
+            }
             break;
         case DEV_NOTFOUND:
             //stStatus.wDevice = DEVICE_STAT_NODEVICE;
             //m_clErrorDet.SetDevErrCode((LPSTR)EC_DEV_DevNotFound);
             //break;
-        case DEV_OFFLINE:
+            //stStatus.wBcrScanner = SCAN_STAT_INOP;
+        case DEV_OFFLINE:        
+            //stStatus.wBcrScanner = SCAN_STAT_INOP;
         case DEV_NOTOPEN:
             stStatus.wDevice = DEVICE_STAT_OFFLINE;
+            stStatus.wPosition = DEVPOS_STAT_UNKNOWN;
+            stStatus.wBcrScanner = SCAN_STAT_UNKNOWN;
             m_clErrorDet.SetDevErrCode((LPSTR)EC_DEV_DevOffLine);
             break;
     }
@@ -152,20 +182,38 @@ int CDevBCR_NT0861::ReadBCR(STREADBCRIN stReadIn, STREADBCROUT &stReadOut)
     INT nRet = IMP_SUCCESS;
     DWORD dwTimeOut = stReadIn.dwTimeOut;           // 超时时间
     QTime qtTimeCurr = QTime::currentTime();        // 执行前时间
-    ULONG ulTimeCount = 0;                          // 超时计数
+    ULONG ulTimeCount = 0;                          // 超时计数    
+    INT nCodeType = 0;                              // 条码类型
+    CHAR szSymData[4096] = { 0x00 };
+    DWORD dwSymDataSize = sizeof(szSymData);
 
-    // 扫码
-    INT nCodeType = 0;
-    stReadOut.nSymDataSize = sizeof(stReadOut.szSymData);
+    m_bIsReadBcrRunning = FALSE;                    // 是否处于读码中
+
+    // 扫码读码时是否设置条码类型限制(1:实时设置)
+    if (m_stOpenMode.nOtherParam[3] == 1)
+    {
+        // 扫码前设置扫码类型禁止允许
+        if (stReadIn.wSymType[0] > 0)   // 需要明确指定条码类型扫码
+        {
+
+        } else  // 支持所有条码类型扫码
+        {
+            m_pDevImpl.SetSymDistAllow(EN_CODE_ALL);
+        }
+    }
+
+    // 开始扫码
     nRet = m_pDevImpl.ScanCodeStart();
     if(nRet != BCR_SUCCESS)
     {
         Log(ThisModule, __LINE__,
-            "扫码: ->ScanCodeStart() Fail, ErrCode: %d, Return: %s",
+            "开始扫码: ->ScanCodeStart() Fail, ErrCode: %d, Return: %s",
             nRet, ConvertDevErrCodeToStr(ConvertImplErrCode2BCR(nRet)));
         m_pDevImpl.ScanCodeEnd();
         return ConvertImplErrCode2BCR(nRet);
     }
+
+    m_bIsReadBcrRunning = TRUE;  // 处于读码中
 
     // 循环检测是否扫描成功
     while(1)
@@ -178,6 +226,7 @@ int CDevBCR_NT0861::ReadBCR(STREADBCRIN stReadIn, STREADBCROUT &stReadOut)
             Log(ThisModule, __LINE__,
                 "扫码中: 设备断线/异常, Return: %s", ConvertDevErrCodeToStr(ERR_BCR_DEV_HWERR));
             m_pDevImpl.ScanCodeEnd();
+            m_bIsReadBcrRunning = FALSE;
             return ERR_BCR_DEV_HWERR;
         }
 
@@ -188,6 +237,7 @@ int CDevBCR_NT0861::ReadBCR(STREADBCRIN stReadIn, STREADBCROUT &stReadOut)
             Log(ThisModule, __LINE__,
                 "扫码中: 命令取消, Return: %s", ConvertDevErrCodeToStr(ERR_BCR_USER_CANCEL));
             m_pDevImpl.ScanCodeEnd();
+            m_bIsReadBcrRunning = FALSE;
             return ERR_BCR_USER_CANCEL;
         }
 
@@ -201,14 +251,13 @@ int CDevBCR_NT0861::ReadBCR(STREADBCRIN stReadIn, STREADBCROUT &stReadOut)
                     "扫描中: 已等待时间[%d] > 指定超时时间[%d], TimeOut, Return: %s",
                     ulTimeCount, dwTimeOut, ConvertDevErrCodeToStr(ERR_BCR_TIMEOUT));
                 m_pDevImpl.ScanCodeEnd();
+                m_bIsReadBcrRunning = FALSE;
                 return ERR_BCR_TIMEOUT;
             }
         }
 
         // 获取扫码信息(等待时间200)
-        INT nCodeType = 0;
-        stReadOut.nSymDataSize = sizeof(stReadOut.szSymData);
-        nRet = m_pDevImpl.GetScanCode(stReadOut.szSymData, stReadOut.nSymDataSize, nCodeType, 200);
+        nRet = m_pDevImpl.GetScanCode(szSymData, dwSymDataSize, nCodeType, 200);
         if (nRet != BCR_SUCCESS)
         {
             if (m_nRetErrOLD[3] != nRet)
@@ -220,6 +269,19 @@ int CDevBCR_NT0861::ReadBCR(STREADBCRIN stReadIn, STREADBCROUT &stReadOut)
             }
         } else
         {
+            stReadOut.wSymType = ConvertSymImpl2Dev(nCodeType);
+            memcpy(stReadOut.szSymData, szSymData, dwSymDataSize);
+            stReadOut.dwSymDataSize = dwSymDataSize;
+            stReadOut.wSymDataMode = SYMD_ASCII;
+            /*if (stReadIn.wSymDataMode == SYMD_HEX)  // 返回为ASCII,转换为HEX
+            {
+                stReadOut.dwSymDataSize = DataConvertor::Ascii2HexAscii2Hex(szSymData,dwSymDataSize,
+                                                                            stReadOut.szSymData, sizeof(stReadOut.szSymData));
+            } else
+            {
+                memcpy(stReadOut.szSymData, szSymData, dwSymDataSize);
+                stReadOut.dwSymDataSize = dwSymDataSize;
+            }*/
             break;
         }
 
@@ -228,6 +290,7 @@ int CDevBCR_NT0861::ReadBCR(STREADBCRIN stReadIn, STREADBCROUT &stReadOut)
 
 
     m_pDevImpl.ScanCodeEnd();
+    m_bIsReadBcrRunning = FALSE;
 
     return BCR_SUCCESS;
 }
@@ -408,6 +471,55 @@ INT CDevBCR_NT0861::ConvertImplErrCode2ErrDetail(INT nRet)
     }
 
     return BCR_SUCCESS;
+}
+
+// 条码类型Impl转换为Dev格式
+WORD CDevBCR_NT0861::ConvertSymImpl2Dev(INT nSym)
+{
+    switch(nSym)
+    {
+        case EN_CODE_Codabar:       return EN_SYM_CODABAR;      // Codabar
+        case EN_CODE_Code128:       return EN_SYM_128;          // Code 128
+        case EN_CODE_Code39:        return EN_SYM_39;           // Code 39
+        case EN_CODE_Code32:        return EN_SYM_39;           // Code 32
+        case EN_CODE_Code93:        return EN_SYM_93;           // Code 93
+        case EN_CODE_DataMatrix:    return EN_SYM_DATAMATRIX;   // Data Matrix
+        case EN_CODE_InterL2OF5:    return EN_SYM_ITF;          // InterLeaved 2 of 5
+        case EN_CODE_PDF417:        return EN_SYM_PDF_417;      // PDF417
+        case EN_CODE_QR:            return EN_SYM_QRCODE;       // QR
+        case EN_CODE_UPCA:          return EN_SYM_UPCA;         // UPC-A
+        case EN_CODE_UPCE:          return EN_SYM_UPCE0;        // UPC-E
+        case EN_CODE_UPCE1:         return EN_SYM_UPCE1;        // UPC-E1
+        case EN_CODE_UPCE8:         return EN_SYM_UPCE1_2;      // UPC-E8
+        case EN_CODE_UPCE13:        return EN_SYM_UPCE1_5;      // UPC-E13
+        case EN_CODE_Matrix2OF5:    return EN_SYM_DATAMATRIX;   // Matrix 2 of 5
+        case EN_CODE_Indust2OF5:    return EN_SYM_STD2OF5;      // Industrial 2 of 5
+        default:                    return EN_SYM_UNKNOWN;
+    }
+}
+
+// 条码类型Dev转换为Impl格式
+WORD CDevBCR_NT0861::ConvertSymDev2Impl(INT nSym)
+{
+    switch(nSym)
+    {
+        case EN_SYM_CODABAR:        return EN_CODE_Codabar;     // Codabar
+        case EN_SYM_128:            return EN_CODE_Code128;     // Code 128
+        case EN_SYM_39:             return EN_CODE_Code39;      // Code 39
+        case EN_SYM_93:             return EN_CODE_Code93;      // Code 93
+        case EN_SYM_DATAMATRIX:     return EN_CODE_DataMatrix;  // Data Matrix
+        case EN_SYM_ITF:            return EN_CODE_InterL2OF5;  // InterLeaved 2 of 5
+        case EN_SYM_PDF_417:        return EN_CODE_PDF417;      // PDF417
+        case EN_SYM_QRCODE:         return EN_CODE_QR;          // QR
+        case EN_SYM_UPCA:           return EN_CODE_UPCA;        // UPC-A
+        case EN_SYM_UPCE0:          return EN_CODE_UPCE;        // UPC-E
+        case EN_SYM_UPCE1:          return EN_CODE_UPCE1;       // UPC-E1
+        case EN_SYM_UPCE1_2:        return EN_CODE_UPCE8;       // UPC-E8
+        case EN_SYM_UPCE1_5:        return EN_CODE_UPCE13;      // UPC-E13
+        //case EN_SYM_DATAMATRIX:     return EN_CODE_Matrix2OF5;  // Matrix 2 of 5
+        case EN_SYM_STD2OF5:        return EN_CODE_Indust2OF5;  // Industrial 2 of 5
+        default:                    return EN_CODE_UNKNOWN;
+    }
 }
 
 // -------------------------------- END -----------------------------------

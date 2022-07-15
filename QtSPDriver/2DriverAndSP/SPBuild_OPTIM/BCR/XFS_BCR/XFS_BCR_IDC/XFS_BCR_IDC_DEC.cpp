@@ -93,6 +93,15 @@ INT CXFS_BCR::InitConfig()
     CHAR    szBuffer[MAX_PATH];
     INT     nTmp;
 
+
+    /*********************************************************************
+     * STDEVICEOPENMODE.nOtherParam[32]: 设备Open模式结构体.其他参数 类别说明
+     *   [0]: 命令下发超时时间
+     *   [1]: 命令接收超时时间
+     *   [2]: 扫码识读模式
+     *   [3]: 扫码读码时是否设置条码类型限制
+    *********************************************************************/
+
     // DevBCR动态库名
     strcpy(m_stConfig.szDevDllNameBCR, m_cXfsReg.GetValue("BCRDriverDllName", ""));
 
@@ -133,6 +142,30 @@ INT CXFS_BCR::InitConfig()
         stDevOpenModeTmp.nOtherParam[1] =
                 (WORD)m_cXfsReg.GetValue(szIniAppName, "RcvTimeOut", (DWORD)0);
 
+        // 扫码识读模式(0:硬件默认, 1:手动识读, 2:命令连续识读, 3:上电连续识读, 4:感应识读, 缺省0)
+        stDevOpenModeTmp.nOtherParam[2] =
+                (WORD)m_cXfsReg.GetValue(szIniAppName, "ScanSymMode", (DWORD)0);
+        if (stDevOpenModeTmp.nOtherParam[2] < 0 || stDevOpenModeTmp.nOtherParam[2] > 4)
+        {
+            stDevOpenModeTmp.nOtherParam[2] = 0;
+        }
+
+        // 扫码读码时是否设置条码类型限制(0:不设置,按硬件所有类型识别, 1:根据入参设置类型识别限制, 缺省0)
+        stDevOpenModeTmp.nOtherParam[3] =
+                (WORD)m_cXfsReg.GetValue(szIniAppName, "ReadBcrSymModeSet", (DWORD)0);
+        if (stDevOpenModeTmp.nOtherParam[3] != 0 &&
+            stDevOpenModeTmp.nOtherParam[3] != 1)
+        {
+            stDevOpenModeTmp.nOtherParam[3] = 0;
+        }
+
+        // 设备是否支持识别条码类型(0:不支持, 1:支持, 缺省0)
+        m_stConfig.wDistSymModeSup = m_cXfsReg.GetValue(szIniAppName, "DistSymModeSup", (DWORD)0);
+        if (m_stConfig.wOpenFailRet != 0 && m_stConfig.wOpenFailRet != 1)
+        {
+            m_stConfig.wOpenFailRet = 0;
+        }
+
         memcpy(&(m_stConfig.stDevOpenMode), &stDevOpenModeTmp, sizeof(STDEVICEOPENMODE));
     }
 
@@ -154,7 +187,15 @@ INT CXFS_BCR::InitConfig()
         m_stConfig.wResetFailReturn = 0;
     }
 
+
     //------------------------[BCR_COFNIG]下参数------------------------
+    // 扫码读码返回数据格式(0:16进制, 1:ASCII, 缺省0)
+    m_stConfig.wReadBcrRetDataMode = (WORD)m_cXfsReg.GetValue("BCR_COFNIG", "ReadBcrRetDataMode", (DWORD)0);
+    if (m_stConfig.wReadBcrRetDataMode != 0 &&
+        m_stConfig.wReadBcrRetDataMode != 1)
+    {
+        m_stConfig.wReadBcrRetDataMode = 0;
+    }
 
 
     //------------------------[TESTER_CONFIG]下参数------------------------
@@ -197,8 +238,12 @@ INT CXFS_BCR::PrintIniBCR()
     PRINT_INI_BUF2("\n\t\t\t\t 通讯协议: DEVICE_SET_%d->Protocol = %d", m_stConfig.wDeviceType, m_stConfig.stDevOpenMode.wProtocol[0]);
     PRINT_INI_BUF2("\n\t\t\t\t 命令下发超时时间(单位:毫秒): DEVICE_SET_%d->SndTimeOut = %d", m_stConfig.wDeviceType, m_stConfig.stDevOpenMode.nOtherParam[0]);
     PRINT_INI_BUF2("\n\t\t\t\t 命令接收超时时间(单位:毫秒): DEVICE_SET_%d->RcvTimeOut = %d", m_stConfig.wDeviceType, m_stConfig.stDevOpenMode.nOtherParam[1]);
+    PRINT_INI_BUF2("\n\t\t\t\t 扫码识读模式(0:硬件默认,1:手动识读,2:命令连续识读,3:上电连续识读,4:感应识读): DEVICE_SET_%d->ScanSymMode = %d", m_stConfig.wDeviceType, m_stConfig.stDevOpenMode.nOtherParam[2]);
+    PRINT_INI_BUF2("\n\t\t\t\t 扫码读码时是否设置条码类型限制(0:不设置,按硬件所有类型识别,1:根据入参设置类型识别限制): DEVICE_SET_%d->ReadBcrSymModeSet = %d", m_stConfig.wDeviceType, m_stConfig.stDevOpenMode.nOtherParam[3]);
+    PRINT_INI_BUF2("\n\t\t\t\t 设备是否支持识别条码类型(0:不支持,1:支持): DEVICE_SET_%d->DistSymModeSup = %d", m_stConfig.wDeviceType, m_stConfig.wDistSymModeSup);
     PRINT_INI_BUF("\n\t\t\t\t Open失败时返回值(0原样返回/1返回SUCCESS): OPEN_CONFIG->OpenFailRet = %d", m_stConfig.wOpenFailRet);
     PRINT_INI_BUF("\n\t\t\t\t Reset失败时返回标准(0原样返回/1忽略失败和错误返回成功): RESET_CONFIG->ResetFailReturn = %d", m_stConfig.wResetFailReturn);
+    PRINT_INI_BUF("\n\t\t\t\t 扫码读码返回数据格式(0:16进制,1:ASCII): BCR_COFNIG->ReadBcrRetDataMode = %d", m_stConfig.wReadBcrRetDataMode);
     PRINT_INI_BUF("\n\t\t\t\t 是否启用测试模式(0:不启用,1:启用): TESTER_CONFIG->TestModeIsSup = %d",m_stConfig.wTestModeIsSup);
 
     Log(ThisModule, __LINE__, "BCRIDC INI配置取得如下: %s", qsIniPrt.toStdString().c_str());
@@ -251,7 +296,7 @@ void CXFS_BCR::UpdateExtra()
     //m_cStatExtra.Clear();
     m_cStatExtra.AddExtra("VRTCount", "2");
     m_cStatExtra.AddExtra("VRTDetail[00]", (LPCSTR)byXFSVRTU);
-    m_cStatExtra.AddExtra("VRTDetail[01]", (LPCSTR)byDevIDCVRTU);
+    m_cStatExtra.AddExtra("VRTDetail[01]", (LPCSTR)byDevBCRVRTU);
 
     // 取固件版本写入扩展数据
     MCPY_NOLEN(szFWVersion, "FW:");
@@ -398,26 +443,66 @@ HRESULT CXFS_BCR::InnerAcceptAndReadTrack(DWORD dwReadOption, DWORD dwTimeOut)
     // 扫码
     STREADBCRIN stReadBcrIn;
     STREADBCROUT stReadBcrOut;
+    CHAR szReadOutSymData[4096] = { 0x00 };
+    DWORD dwReadOutSymSize = 0;
+
+    // 组织入参
     stReadBcrIn.dwTimeOut = dwTimeOut;
-    stReadBcrIn.wSymDataMode = 1;       // 返回条码数据模式(1Hex)
+    if (m_stConfig.wReadBcrRetDataMode == 0)    // INI配置返回条码数据模式(Hex)
+    {
+        stReadBcrIn.wSymDataMode = SYMD_HEX;
+    } else
+    {
+        stReadBcrIn.wSymDataMode = SYMD_ASCII;
+    }
+
+    // 执行扫码读码
     nRet = m_pBCRDev->ReadBCR(stReadBcrIn, stReadBcrOut);
     if (nRet != BCR_SUCCESS)
     {
-        Log(ThisModule, __LINE__, "读卡(扫码): ->MediaReadWrite() Fail, ErrCode: %d, Return: %d",
+        Log(ThisModule, __LINE__, "读卡(扫码读码): ->MediaReadWrite() Fail, ErrCode: %d, Return: %d",
             nRet, ConvertDevErrCode2WFS(nRet));
         SetErrorDetail();
         return ConvertDevErrCode2WFS(nRet);
     }
 
+    // 条码数据Ascii/Hex转换
+    if (m_stConfig.wReadBcrRetDataMode == 0)    // INI配置返回条码数据模式为Hex
+    {
+        if (stReadBcrOut.wSymDataMode == SYMD_HEX)  // 返回条码数据为HEX(不转换)
+        {
+            dwReadOutSymSize = stReadBcrOut.dwSymDataSize;
+            memcpy(szReadOutSymData, stReadBcrOut.szSymData, stReadBcrOut.dwSymDataSize);
+        } else                                      // 返回条码数据为ASCII, 转换为HEX
+        {
+            dwReadOutSymSize =
+                    DataConvertor::Ascii2Hex(stReadBcrOut.szSymData, stReadBcrOut.dwSymDataSize,
+                                             szReadOutSymData, sizeof(szReadOutSymData));
+        }
+    } else                                      // INI配置返回条码数据模式为Ascii
+    {
+        if (stReadBcrOut.wSymDataMode == SYMD_HEX)  // 返回条码数据为HEX, 转换为ASCII
+        {
+            dwReadOutSymSize =
+                    DataConvertor::Hex2Ascii(stReadBcrOut.szSymData, stReadBcrOut.dwSymDataSize,
+                                             szReadOutSymData, sizeof(szReadOutSymData));
+        } else  // 返回条码数据为ASCII, 不转换为
+        {
+            dwReadOutSymSize = stReadBcrOut.dwSymDataSize;
+            memcpy(szReadOutSymData, stReadBcrOut.szSymData, stReadBcrOut.dwSymDataSize);
+
+        }
+    }
+    stReadBcrOut.Clear();
+
     // 组织应答数据
-    if (stReadBcrOut.nSymDataSize == 0)
+    if (dwReadOutSymSize == 0)
     {
         SetTrackInfo(WFS_IDC_TRACK_WM, WFS_IDC_DATAMISSING, 0, nullptr);
     } else
     {
         SetTrackInfo(WFS_IDC_TRACK_WM, WFS_IDC_DATAOK,
-                     (ULONG)stReadBcrOut.nSymDataSize, (LPBYTE)stReadBcrOut.szSymData);
-        stReadBcrOut.Clear();
+                     (ULONG)dwReadOutSymSize, (LPBYTE)szReadOutSymData);
     }
 
     return WFS_SUCCESS;

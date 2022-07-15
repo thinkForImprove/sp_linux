@@ -130,13 +130,13 @@ int CXFS_MSR::InitConfig()
             stDevOpenModeTmp.wOpenMode = 0;
         }
         // 设备路径(适用于串口和USBHID,缺省空)
-        strcpy(stDevOpenModeTmp.szDevPath, m_cXfsReg.GetValue(szIniAppName, "DevPath", ""));
+        strcpy(stDevOpenModeTmp.szDevPath[0], m_cXfsReg.GetValue(szIniAppName, "DevPath", ""));
         // 波特率(适用于串口,缺省9600)
-        stDevOpenModeTmp.wBaudRate = (WORD)m_cXfsReg.GetValue(szIniAppName, "BaudRate", (DWORD)9600);
+        stDevOpenModeTmp.wBaudRate[0] = (WORD)m_cXfsReg.GetValue(szIniAppName, "BaudRate", (DWORD)9600);
         // 设备VID(适用于USBHID,4位16进制字符,缺省空)
-        strcpy(stDevOpenModeTmp.szHidVid, m_cXfsReg.GetValue(szIniAppName, "VendorId", ""));
+        strcpy(stDevOpenModeTmp.szHidVid[0], m_cXfsReg.GetValue(szIniAppName, "VendorId", ""));
         // 设备PID(适用于USBHID,4位16进制字符,缺省空)
-        strcpy(stDevOpenModeTmp.szHidPid, m_cXfsReg.GetValue(szIniAppName, "ProductId", ""));
+        strcpy(stDevOpenModeTmp.szHidPid[0], m_cXfsReg.GetValue(szIniAppName, "ProductId", ""));
         // 是否启用动态库底层处理日志记录(0不启用/1启用,缺省0)
         stDeviceLogTmp.wEnableLog = (WORD)m_cXfsReg.GetValue(szIniAppName, "IsEnableDevLog", (DWORD)1);
         if (stDeviceLogTmp.wEnableLog < 0 && stDeviceLogTmp.wEnableLog > 1)

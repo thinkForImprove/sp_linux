@@ -5,7 +5,8 @@ CONFIG += ordered
 
 # 子项目，一起编译时，是按此顺序编译
 SUBDIRS += \
-    SPBuild/BCRBuild.pro \
+    #SPBuild/BCRBuild.pro \
+    SPBuild_OPTIM/BCRBuild.pro \
     SPBuild/BRMBuild.pro \
     SPBuild/CAMBuild.pro \
     SPBuild_OPTIM/FIDCBuild.pro \

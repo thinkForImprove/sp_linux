@@ -401,7 +401,7 @@ INT CDevImpl_NT0861::ScanCodeEnd(INT nMode)
  *      dwTimeOut   入参 超时时间(毫秒)
  * 返回值: 参考错误码
 ***************************************************************************/
-INT CDevImpl_NT0861::GetScanCode(LPSTR lpCodeData, INT &nCodeDataSize, INT &nCodeType, DWORD dwTimeOut)
+INT CDevImpl_NT0861::GetScanCode(LPSTR lpCodeData, DWORD &dwCodeDataSize, INT &nCodeType, DWORD dwTimeOut)
 {
     THISMODULE(__FUNCTION__);
     //AutoLogFuncBeginEnd();
@@ -409,7 +409,7 @@ INT CDevImpl_NT0861::GetScanCode(LPSTR lpCodeData, INT &nCodeDataSize, INT &nCod
 
     CHAR szRcvData[2068] = { 0x00 };
     INT nRcvSize = 0;
-    INT nCodeDataLenTmp = nCodeDataSize;
+    DWORD dwCodeDataLenTmp = dwCodeDataSize;
     nCodeType = EN_CODE_UNKNOWN;         // 条码类型初始未知
 
     // USB/COM动态库句柄检查
@@ -447,11 +447,333 @@ INT CDevImpl_NT0861::GetScanCode(LPSTR lpCodeData, INT &nCodeDataSize, INT &nCod
     {
         nCodeType = ConvertSymMode(szRcvData);      // 条码类型
         // 条码数据处理
-        nCodeDataSize = (nCodeDataLenTmp > (nRcvSize - 1) ? (nRcvSize - 1) : nCodeDataLenTmp - 1);
-        MCPY_LEN(lpCodeData, szRcvData + 1, nCodeDataSize);
+        dwCodeDataSize = (dwCodeDataLenTmp > (nRcvSize - 1) ? (nRcvSize - 1) : dwCodeDataLenTmp - 1);
+        MCPY_LEN(lpCodeData, szRcvData + 1, dwCodeDataSize);
     } else
     {
-        nCodeDataSize = 0;
+        dwCodeDataSize = 0;
+    }
+
+    return IMP_SUCCESS;
+}
+
+/***************************************************************************
+ * 功能: 设置条码识别允许
+ * 参数: nCodeType   入参 条码类型
+ * 返回值: 参考错误码
+***************************************************************************/
+INT CDevImpl_NT0861::SetSymDistAllow(INT nCodeType)
+{
+    THISMODULE(__FUNCTION__);
+    //AutoLogFuncBeginEnd();
+    LOGDEVACTION();
+
+    INT nRet = IMP_SUCCESS;
+    CHAR    szRcvData[2068] = { 0x00 };
+    INT     nRcvSize = sizeof(szRcvData);
+    INT     nSymListNo = -1;
+    CHAR    szPrtLog[1024] = { 0x00 };
+
+    // USB/COM动态库句柄检查
+    CHK_DEVHANDLE(m_pDev);
+
+    if (nCodeType == EN_CODE_ALL)       // 所有
+    {
+        // 命令收发检查(开启所有一维码识读)
+        nRet = SndRcvToChk(SND_CMD_BARDIST_ALLOW, szRcvData, nRcvSize, TRUE, "设置条码识别允许(开启所有一维码识读)");
+        if (nRet != IMP_SUCCESS)
+        {
+            Log(ThisModule, __LINE__,
+                "设置条码识别允许(开启所有一维码识读): 命令收发: ->SndRcvToChk(%d, TRUE)失败, ErrCode: %d, Return: %s",
+                SND_CMD_BARDIST_ALLOW, nRet, ConvertCode_Impl2Str(nRet));
+            return nRet;
+        }
+
+        // 命令收发检查(开启所有二维码识读)
+        nRet = SndRcvToChk(SND_CMD_QRDIST_ALLOW, szRcvData, nRcvSize, TRUE, "设置条码识别允许(开启所有二维码识读)");
+        if (nRet != IMP_SUCCESS)
+        {
+            Log(ThisModule, __LINE__,
+                "设置条码识别允许(开启所有二维码识读): 命令收发: ->SndRcvToChk(%d, TRUE)失败, ErrCode: %d, Return: %s",
+                SND_CMD_BARDIST_ALLOW, nRet, ConvertCode_Impl2Str(nRet));
+            return nRet;
+        }
+    } else
+    {
+        switch(nCodeType)
+        {
+            case EN_CODE_Codabar:       // Codabar
+                    nSymListNo = SND_CMD_Codabar_ALLOW;
+                    sprintf(szPrtLog, "设置条码识别允许(Codabar)");
+                    break;
+            case EN_CODE_Code128:// Code 128
+                    nSymListNo = SND_CMD_Code128_ALLOW;
+                    sprintf(szPrtLog, "设置条码识别允许(Code 128)");
+                    break;
+            case EN_CODE_Code39:// Code 39
+                    nSymListNo = SND_CMD_Code39_ALLOW;
+                    sprintf(szPrtLog, "设置条码识别允许(Code 39)");
+                    break;
+            case EN_CODE_Code32:// Code 32
+                    nSymListNo = SND_CMD_Code32_ALLOW;
+                    sprintf(szPrtLog, "设置条码识别允许(Code 32)");
+                    break;
+            case EN_CODE_Code93:// Code 93
+                    nSymListNo = SND_CMD_Code93_ALLOW;
+                    sprintf(szPrtLog, "设置条码识别允许(Code 93)");
+                    break;
+            case EN_CODE_DataMatrix:// Data Matrix
+                    nSymListNo = SND_CMD_DataMatrix_ALLOW;
+                    sprintf(szPrtLog, "设置条码识别允许(Data Matrix)");
+                    break;
+            case EN_CODE_InterL2OF5:// InterLeaved 2 of 5
+                    nSymListNo = SND_CMD_InterL2OF5_ALLOW;
+                    sprintf(szPrtLog, "设置条码识别允许(InterLeaved 2 of 5)");
+                    break;
+            case EN_CODE_PDF417:// PDF417
+                    nSymListNo = SND_CMD_PDF417_ALLOW;
+                    sprintf(szPrtLog, "设置条码识别允许(PDF417)");
+                    break;
+            case EN_CODE_QR:// QR
+                    nSymListNo = SND_CMD_QR_ALLOW;
+                    sprintf(szPrtLog, "设置条码识别允许(QR)");
+                    break;
+            case EN_CODE_UPCA:// UPC-A
+                    nSymListNo = SND_CMD_UPCA_ALLOW;
+                    sprintf(szPrtLog, "设置条码识别允许(UPC-A)");
+                    break;
+            case EN_CODE_UPCE:// UPC-E
+                    nSymListNo = SND_CMD_UPCE_ALLOW;
+                    sprintf(szPrtLog, "设置条码识别允许(UPC-E)");
+                    break;
+            case EN_CODE_UPCE1:// UPC-E1
+                    nSymListNo = SND_CMD_UPCE1_ALLOW;
+                    sprintf(szPrtLog, "设置条码识别允许(UPC-E1)");
+                    break;
+            case EN_CODE_UPCE8:// UPC-E8
+                    nSymListNo = SND_CMD_UPCE8_ALLOW;
+                    sprintf(szPrtLog, "设置条码识别允许(UPC-E8)");
+                    break;
+            case EN_CODE_UPCE13:// UPC-E13
+                    nSymListNo = SND_CMD_UPCE13_ALLOW;
+                    sprintf(szPrtLog, "设置条码识别允许(UPC-E13)");
+                    break;
+            case EN_CODE_Matrix2OF5:// Matrix 2 of 5
+                    nSymListNo = SND_CMD_Matrix2OF5_ALLOW;
+                    sprintf(szPrtLog, "设置条码识别允许(Matrix 2 of 5)");
+                    break;
+            case EN_CODE_Indust2OF5:// Industrial 2 of 5
+                    nSymListNo = SND_CMD_Indust2OF5_ALLOW;
+                    sprintf(szPrtLog, "设置条码识别允许(Industrial 2 of 5)");
+                    break;
+            default:
+                Log(ThisModule, __LINE__,
+                    "设置条码识别允许: 未知条码类型编码[%d], 不设置, Return %s.",
+                    SND_CMD_SCAN_E, nRet, ConvertCode_Impl2Str(IMP_SUCCESS));
+                return IMP_SUCCESS;
+        }
+
+        // 命令收发检查
+        nRet = SndRcvToChk(nSymListNo, szRcvData, nRcvSize, TRUE, szPrtLog);
+        if (nRet != IMP_SUCCESS)
+        {
+            Log(ThisModule, __LINE__,
+                "%s: 命令收发: ->SndRcvToChk(%d, TRUE)失败, ErrCode: %d, Return %s.",
+                szPrtLog, nSymListNo, nRet, ConvertCode_Impl2Str(nRet));
+            return nRet;
+        }
+    }
+
+    return IMP_SUCCESS;
+}
+
+/***************************************************************************
+ * 功能: 设置条码识别禁止
+ * 参数: nCodeType   入参 条码类型
+ * 返回值: 参考错误码
+***************************************************************************/
+INT CDevImpl_NT0861::SetSymDistForbid(INT nCodeType)
+{
+    THISMODULE(__FUNCTION__);
+    //AutoLogFuncBeginEnd();
+    LOGDEVACTION();
+
+    INT nRet = IMP_SUCCESS;
+    CHAR    szRcvData[2068] = { 0x00 };
+    INT     nRcvSize = sizeof(szRcvData);
+    INT     nSymListNo = -1;
+    CHAR    szPrtLog[1024] = { 0x00 };
+
+    // USB/COM动态库句柄检查
+    CHK_DEVHANDLE(m_pDev);
+
+    if (nCodeType == EN_CODE_ALL)       // 所有
+    {
+        // 命令收发检查(关闭所有一维码识读)
+        nRet = SndRcvToChk(SND_CMD_BARDIST_FORBID, szRcvData, nRcvSize, TRUE, "设置条码识别禁止(关闭所有一维码识读)");
+        if (nRet != IMP_SUCCESS)
+        {
+            Log(ThisModule, __LINE__,
+                "设置条码识别禁止(关闭所有一维码识读): 命令收发: ->SndRcvToChk(%d, TRUE)失败, ErrCode: %d, Return: %s",
+                SND_CMD_BARDIST_FORBID, nRet, ConvertCode_Impl2Str(nRet));
+            return nRet;
+        }
+
+        // 命令收发检查(关闭所有二维码识读)
+        nRet = SndRcvToChk(SND_CMD_QRDIST_FORBID, szRcvData, nRcvSize, TRUE, "设置条码识别禁止(关闭所有二维码识读)");
+        if (nRet != IMP_SUCCESS)
+        {
+            Log(ThisModule, __LINE__,
+                "设置条码识别禁止(关闭所有二维码识读): 命令收发: ->SndRcvToChk(%d, TRUE)失败, ErrCode: %d, Return: %s",
+                SND_CMD_BARDIST_FORBID, nRet, ConvertCode_Impl2Str(nRet));
+            return nRet;
+        }
+    } else
+    {
+        switch(nCodeType)
+        {
+            case EN_CODE_Codabar:       // Codabar
+                    nSymListNo = SND_CMD_Codabar_FORBID;
+                    sprintf(szPrtLog, "设置条码识别禁止(Codabar)");
+                    break;
+            case EN_CODE_Code128:// Code 128
+                    nSymListNo = SND_CMD_Code128_FORBID;
+                    sprintf(szPrtLog, "设置条码识别禁止(Code 128)");
+                    break;
+            case EN_CODE_Code39:// Code 39
+                    nSymListNo = SND_CMD_Code39_FORBID;
+                    sprintf(szPrtLog, "设置条码识别禁止(Code 39)");
+                    break;
+            case EN_CODE_Code32:// Code 32
+                    nSymListNo = SND_CMD_Code32_FORBID;
+                    sprintf(szPrtLog, "设置条码识别禁止(Code 32)");
+                    break;
+            case EN_CODE_Code93:// Code 93
+                    nSymListNo = SND_CMD_Code93_FORBID;
+                    sprintf(szPrtLog, "设置条码识别禁止(Code 93)");
+                    break;
+            case EN_CODE_DataMatrix:// Data Matrix
+                    nSymListNo = SND_CMD_DataMatrix_FORBID;
+                    sprintf(szPrtLog, "设置条码识别禁止(Data Matrix)");
+                    break;
+            case EN_CODE_InterL2OF5:// InterLeaved 2 of 5
+                    nSymListNo = SND_CMD_InterL2OF5_FORBID;
+                    sprintf(szPrtLog, "设置条码识别禁止(InterLeaved 2 of 5)");
+                    break;
+            case EN_CODE_PDF417:// PDF417
+                    nSymListNo = SND_CMD_PDF417_FORBID;
+                    sprintf(szPrtLog, "设置条码识别禁止(PDF417)");
+                    break;
+            case EN_CODE_QR:// QR
+                    nSymListNo = SND_CMD_QR_FORBID;
+                    sprintf(szPrtLog, "设置条码识别禁止(QR)");
+                    break;
+            case EN_CODE_UPCA:// UPC-A
+                    nSymListNo = SND_CMD_UPCA_FORBID;
+                    sprintf(szPrtLog, "设置条码识别禁止(UPC-A)");
+                    break;
+            case EN_CODE_UPCE:// UPC-E
+                    nSymListNo = SND_CMD_UPCE_FORBID;
+                    sprintf(szPrtLog, "设置条码识别禁止(UPC-E)");
+                    break;
+            case EN_CODE_UPCE1:// UPC-E1
+                    nSymListNo = SND_CMD_UPCE1_FORBID;
+                    sprintf(szPrtLog, "设置条码识别禁止(UPC-E1)");
+                    break;
+            case EN_CODE_UPCE8:// UPC-E8
+                    nSymListNo = SND_CMD_UPCE8_FORBID;
+                    sprintf(szPrtLog, "设置条码识别禁止(UPC-E8)");
+                    break;
+            case EN_CODE_UPCE13:// UPC-E13
+                    nSymListNo = SND_CMD_UPCE13_FORBID;
+                    sprintf(szPrtLog, "设置条码识别禁止(UPC-E13)");
+                    break;
+            case EN_CODE_Matrix2OF5:// Matrix 2 of 5
+                    nSymListNo = SND_CMD_Matrix2OF5_FORBID;
+                    sprintf(szPrtLog, "设置条码识别禁止(Matrix 2 of 5)");
+                    break;
+            case EN_CODE_Indust2OF5:// Industrial 2 of 5
+                    nSymListNo = SND_CMD_Indust2OF5_FORBID;
+                    sprintf(szPrtLog, "设置条码识别禁止(Industrial 2 of 5)");
+                    break;
+            default:
+                Log(ThisModule, __LINE__,
+                    "设置条码识别禁止: 未知条码类型编码[%d], 不设置, Return %s.",
+                    SND_CMD_SCAN_E, nRet, ConvertCode_Impl2Str(IMP_SUCCESS));
+                return IMP_SUCCESS;
+        }
+
+        // 命令收发检查
+        nRet = SndRcvToChk(nSymListNo, szRcvData, nRcvSize, TRUE, szPrtLog);
+        if (nRet != IMP_SUCCESS)
+        {
+            Log(ThisModule, __LINE__,
+                "%s: 命令收发: ->SndRcvToChk(%d, TRUE)失败, ErrCode: %d, Return %s.",
+                szPrtLog, nSymListNo, nRet, ConvertCode_Impl2Str(nRet));
+            return nRet;
+        }
+    }
+
+    return IMP_SUCCESS;
+}
+
+/***************************************************************************
+ * 功能: 设置扫码识读模式
+ * 参数: nMode 入参 扫码识读模式(0:硬件默认, 1:手动识读, 2:命令连续识读, 3:上电连续识读, 4:感应识读)
+ * 返回值: 参考错误码
+***************************************************************************/
+INT CDevImpl_NT0861::SetSymScanMode(INT nMode)
+{
+    THISMODULE(__FUNCTION__);
+    //AutoLogFuncBeginEnd();
+    LOGDEVACTION();
+
+    INT nRet = IMP_SUCCESS;
+    CHAR    szRcvData[2068] = { 0x00 };
+    INT     nRcvSize = sizeof(szRcvData);
+    INT     nSymListNo = -1;
+
+    // USB/COM动态库句柄检查
+    CHK_DEVHANDLE(m_pDev);
+
+    if (nMode == 0)
+    {
+        Log(ThisModule, __LINE__,
+            "设置扫码识读模式: 入参 == 0(使用硬件默认), 不处理, Return: %s",
+            nMode, ConvertCode_Impl2Str(IMP_SUCCESS));
+        return IMP_SUCCESS;
+    } else
+    if (nMode == 1)
+    {
+        nSymListNo = SND_CMD_SCANM_MANUAL;
+    } else
+    if (nMode == 2)
+    {
+        nSymListNo = SND_CMD_SCANM_CMDCONT;
+    } else
+    if (nMode == 3)
+    {
+        nSymListNo = SND_CMD_SCANM_POWCONT;
+    } else
+    if (nMode == 4)
+    {
+        nSymListNo = SND_CMD_SCANM_INDUCT;
+    } else
+    {
+        Log(ThisModule, __LINE__,
+            "设置扫码识读模式: 入参[%d != 0/1/2/3]无效, Return: %s",
+            nMode, ConvertCode_Impl2Str(IMP_ERR_PARAM_INVALID));
+        return IMP_ERR_PARAM_INVALID;
+    }
+
+    // 命令收发检查
+    nRet = SndRcvToChk(nSymListNo, szRcvData, nRcvSize, TRUE, "设置扫码识读模式");
+    if (nRet != IMP_SUCCESS)
+    {
+        Log(ThisModule, __LINE__,
+            "设置扫码识读模式: 命令收发: ->SndRcvToChk(%d, TRUE)失败, ErrCode: %d, Return %s.",
+            nSymListNo, nRet, ConvertCode_Impl2Str(nRet));
+        return nRet;
     }
 
     return IMP_SUCCESS;
@@ -516,24 +838,24 @@ INT CDevImpl_NT0861::SendCmd(LPCSTR lpcCmd, INT nCmdLen, DWORD dwTimeOut,
 /***************************************************************************
  * 功能: 读取设备的返回数据
  * 参数: lpRespData  回参 返回数据的缓冲区
- *      nRespDataLen 入参 缓冲区长度
+ *      dwRespDataLen 入参 缓冲区长度
  *      dwTimeOut   入参 超时时间(毫秒)
  *      lpFuncData  入参 日志输出字串
  *      bIsPrtLog   入参 是否打印日志
  * 返回: >=0数据长度，<0错误
 ***************************************************************************/
-INT CDevImpl_NT0861::GetResponse(LPSTR lpRespData, INT nRespDataLen, DWORD dwTimeOut,
+INT CDevImpl_NT0861::GetResponse(LPSTR lpRespData, DWORD dwRespDataLen, DWORD dwTimeOut,
                                  LPCSTR lpFuncData, BOOL bIsPrtLog)
 {
     THISMODULE(__FUNCTION__);
     //AutoLogFuncBeginEnd();
 
-    Q_UNUSED(nRespDataLen)
+    Q_UNUSED(dwRespDataLen)
 
     INT nRet = IMP_SUCCESS;
     CHAR szReplyData[65536];        // 接收数据缓存
     DWORD dwReplySize = 0;          // 接收数据长度
-    INT nRetDataSize = 0;           // 返回的数据长度    
+    DWORD dwRetDataSize = 0;        // 返回的数据长度
 
     while (TRUE)
     {
@@ -551,9 +873,9 @@ INT CDevImpl_NT0861::GetResponse(LPSTR lpRespData, INT nRespDataLen, DWORD dwTim
             return nRet;
         } else  // 数据接收成功
         {
-            nRetDataSize = (dwReplySize > nRespDataLen ? nRespDataLen - 1 : dwReplySize);
-            MCPY_LEN(lpRespData, szReplyData, nRetDataSize);
-            return nRetDataSize; // 结束循环返回
+            dwRetDataSize = (dwReplySize > dwRespDataLen ? dwRespDataLen - 1 : dwReplySize);
+            MCPY_LEN(lpRespData, szReplyData, dwRetDataSize);
+            return dwRetDataSize; // 结束循环返回
         }
     }
 }
@@ -808,7 +1130,8 @@ INT CDevImpl_NT0861::ConvertSymMode(LPSTR lpSymData)
 
     SYM_NT0861_TO_IMPL(lpSymData, SYM_FLAG_Codabar, EN_CODE_Codabar)        // Codabar
     SYM_NT0861_TO_IMPL(lpSymData, SYM_FLAG_Code128, EN_CODE_Code128)        // Code 128
-    SYM_NT0861_TO_IMPL(lpSymData, SYM_FLAG_Code3932, EN_CODE_Code3932)      // Code 39/Code3 2
+    SYM_NT0861_TO_IMPL(lpSymData, SYM_FLAG_Code3932, EN_CODE_Code39)        // Code 39
+    SYM_NT0861_TO_IMPL(lpSymData, SYM_FLAG_Code3932, EN_CODE_Code32)        // Code 32
     SYM_NT0861_TO_IMPL(lpSymData, SYM_FLAG_Code93, EN_CODE_Code93)          // Code 93
     SYM_NT0861_TO_IMPL(lpSymData, SYM_FLAG_DataMatrix, EN_CODE_DataMatrix)  // Data Matrix
     SYM_NT0861_TO_IMPL(lpSymData, SYM_FLAG_InterL2OF5, EN_CODE_InterL2OF5)  // InterLeaved 2 of 5

@@ -1,6 +1,6 @@
 ﻿/***************************************************************
 * 文件名称: XFS_BCR_FIRE.cpp
-* 文件描述: 二维码模块子命令事件消息子处理接口(IDC命令系)
+* 文件描述: 条码阅读模块子命令事件消息子处理接口(IDC命令系)
 *
 * 版本历史信息
 * 变更说明: 建立文件
@@ -20,38 +20,21 @@ void CXFS_BCR::FireStatusChanged(WORD wStatus)
     m_pBase->FireStatusChanged(wStatus);
 }
 
-void CXFS_BCR::FireCardInserted()
+void CXFS_BCR::FireSetDevicePosition(WORD wPosition)
 {
-    m_pBase->FireEvent(WFS_EXECUTE_EVENT, WFS_EXEE_IDC_MEDIAINSERTED, nullptr);
+    m_pBase->FireBarCodePosition(wPosition);
 }
 
-void CXFS_BCR::FireMediaRemoved()
+void CXFS_BCR::FireSetGuidAnceLight()
 {
-    m_pBase->FireEvent(WFS_SERVICE_EVENT, WFS_SRVE_IDC_MEDIAREMOVED, nullptr);
+
 }
 
-void CXFS_BCR::FireMediaRetained()
+void CXFS_BCR::FirePowerSaveControl(WORD wPowerSaveTime)
 {
-    m_pBase->FireEvent(WFS_EXECUTE_EVENT, WFS_EXEE_IDC_MEDIARETAINED, nullptr);
-}
-
-void CXFS_BCR::FireRetainBinThreshold(WORD wReBin)
-{
-    m_pBase->FireEvent(WFS_USER_EVENT, WFS_USRE_IDC_RETAINBINTHRESHOLD, (LPVOID)&wReBin);
-}
-
-void CXFS_BCR::FireMediaDetected(WORD ResetOut)
-{
-    m_pBase->FireEvent(WFS_SERVICE_EVENT, WFS_SRVE_IDC_MEDIADETECTED, (LPVOID)&ResetOut);
-}
-
-void CXFS_BCR::FireInvalidTrackData(WORD wStatus, LPSTR pTrackName, LPSTR pTrackData)
-{
-    WFSIDCTRACKEVENT data;
-    data.fwStatus   = wStatus;
-    data.lpstrTrack = pTrackName;
-    data.lpstrData  = pTrackData;
-    m_pBase->FireEvent(WFS_EXECUTE_EVENT, WFS_EXEE_IDC_INVALIDTRACKDATA, &data);
+    WFSBCRPOWERSAVECHANGE stPowSave;
+    stPowSave.usPowerSaveRecoveryTime = wPowerSaveTime;
+    m_pBase->FireEvent(WFS_SERVICE_EVENT, WFS_SRVE_BCR_POWER_SAVE_CHANGE, &stPowSave);
 }
 
 // -------------------------------------- END --------------------------------------

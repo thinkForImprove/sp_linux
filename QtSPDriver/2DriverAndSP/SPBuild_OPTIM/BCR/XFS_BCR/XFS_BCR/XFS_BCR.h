@@ -1,12 +1,12 @@
-﻿/***************************************************************
+﻿/***************************************************************************
 * 文件名称: XFS_BCR.h
-* 文件描述: 条码阅读模块命令处理接口(IDC命令系) 头文件
+* 文件描述: 条码阅读模块命令处理接口头文件
 *
 * 版本历史信息
 * 变更说明: 建立文件
-* 变更日期: 2019年7月6日
+* 变更日期: 2022年7月13日
 * 文件版本: 1.0.0.1
-****************************************************************/
+***************************************************************************/
 #pragma once
 
 #include "IDevBCR.h"
@@ -15,10 +15,11 @@
 #include "ErrorDetail.h"
 #include "XfsHelper.h"
 #include "def.h"
+#include "data_convertor.h"
 
-/*************************************************************************
+/***************************************************************************
 // 宏定义
-*************************************************************************/
+***************************************************************************/
 // INI中指定[int型]设备类型 转换为 STR型
 #define DEVTYPE2STR(n) \
     (n == XFS_NT0861 ? IDEV_NT0861_STR : "")
@@ -48,9 +49,9 @@ enum WAIT_TAKEN_FLAG
 };
 
 
-/*************************************************************************
-// 主处理类                                                               *
-*************************************************************************/
+/***************************************************************************
+// 主处理类                                                                 *
+***************************************************************************/
 class CXFS_BCR : public ICmdFunc, public CLogManage,
                  public ConvertVarBCR
 {
@@ -69,9 +70,6 @@ public: // 基本接口
     virtual HRESULT OnCancelAsyncRequest();
     virtual HRESULT OnUpdateDevPDL();
 
-    // BCR类型接口
-
-
 public: // BCR类型接口
     // 查询命令
     virtual HRESULT GetStatus(LPWFSBCRSTATUS &lpstStatus);
@@ -80,8 +78,8 @@ public: // BCR类型接口
     virtual HRESULT ReadBCR(const WFSBCRREADINPUT &stReadInput, LPWFSBCRREADOUTPUT *&lppReadOutput,
                             DWORD dwTimeOut);
     virtual HRESULT Reset();
-    virtual HRESULT SetGuidLight(const WFSBCRSETGUIDLIGHT &stLight);
-    virtual HRESULT PowerSaveControl(const WFSBCRPOWERSAVECONTROL &stPowerCtrl);
+    //virtual HRESULT SetGuidLight(const WFSBCRSETGUIDLIGHT &stLight);
+    //virtual HRESULT PowerSaveControl(const WFSBCRPOWERSAVECONTROL &stPowerCtrl);
 
 protected:  // XFS_BCR.cpp 子处理相关接口
     HRESULT InnerOpen(BOOL bReConn = FALSE);                        // Open设备及初始化相关子处理
@@ -92,8 +90,7 @@ protected:  // XFS_BCR.cpp 子处理相关接口
     void InitCaps();                                                // 能力值结构体实例初始化
     void UpdateExtra();                                             // 更新扩展数据
     WORD UpdateDeviceStatus();                                      // 设备状态实时更新
-    HRESULT InnerReadBcr(DWORD dwReadOption, DWORD dwTimeOut);  // 读卡子处理(扫码)
-    HRESULT InnerReset(WORD wAction);                               // 复位子处理
+    HRESULT InnerReadBcr(LPWORD lpwSymList, DWORD dwTimeOut);       // 扫码读码子处理
 
 private:    // XFS_BCR_DEC.cpp 数据处理相关接口
     void SetTrackInfo(WORD wSource, WORD wStatus, ULONG uLen, LPBYTE pData);  // 读卡应答数据处理
@@ -103,12 +100,9 @@ private:    // XFS_BCR_DEC.cpp 数据处理相关接口
 private:    // XFS_BCR_FIRE.cpp 事件消息子处理相关接口
     void FireHWEvent(DWORD dwHWAct, char *pErr);
     void FireStatusChanged(WORD wStatus);
-    void FireCardInserted();
-    void FireMediaRemoved();
-    void FireMediaRetained();
-    void FireMediaDetected(WORD ResetOut);
-    void FireRetainBinThreshold(WORD wReBin);
-    void FireInvalidTrackData(WORD wStatus, LPSTR pTrackName, LPSTR pTrackData);
+    void FireSetDevicePosition(WORD wPosition);
+    void FireSetGuidAnceLight();
+    void FirePowerSaveControl(WORD wPowerSaveTime);
 
 private:    // 变量定义
     STINICONFIG                     m_stConfig;                     // INI结构体
@@ -128,6 +122,7 @@ private:    // 变量定义
     CErrorDetail                    m_clErrorDet;                   // ErrorDetail处理类实例
 
 private:    // 命令应答数据变量
+    CWFSBCRREADOUTPUTHelper         m_clReadBcrOut;                 // ReacBCR命令回参
 };
 
 // -------------------------------------- END --------------------------------------

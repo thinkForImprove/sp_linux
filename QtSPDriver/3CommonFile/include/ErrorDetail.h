@@ -89,6 +89,7 @@
 #define EC_XFS_ShareMemCrt                  "191"               // 共享内存建立错误
 #define EC_XFS_ShareMemRW                   "192"               // 共享内存读写错误
 #define EX_XFS_FilePathCrtErr               "193"               // 文件目录创建失败
+#define EX_XFS_MemoryApply                  "194"               // 内存空间申请失败
 
 
 //--------------------------DevXXX相关--------------------------

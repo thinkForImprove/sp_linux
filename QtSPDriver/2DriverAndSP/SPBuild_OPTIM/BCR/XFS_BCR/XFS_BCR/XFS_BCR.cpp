@@ -185,6 +185,8 @@ HRESULT CXFS_BCR::GetStatus(LPWFSBCRSTATUS &lpStatus)
     THISMODULE(__FUNCTION__);
     AutoLogFuncBeginEnd();
 
+    UpdateDeviceStatus();
+
     m_cStatExtra.AddExtra("ErrorDetail", m_clErrorDet.GetSPErrCode());
     m_cStatExtra.AddExtra("LastErrorDetail", m_clErrorDet.GetSPErrCodeLast());
 
@@ -203,7 +205,7 @@ HRESULT CXFS_BCR::GetCapabilities(LPWFSBCRCAPS &lpCaps)
     return WFS_SUCCESS;
 }
 
-// 读卡
+// 扫码读码
 HRESULT CXFS_BCR::ReadBCR(const WFSBCRREADINPUT &stReadInput, LPWFSBCRREADOUTPUT *&lppReadOutput,
                           DWORD dwTimeOut)
 {
@@ -215,39 +217,41 @@ HRESULT CXFS_BCR::ReadBCR(const WFSBCRREADINPUT &stReadInput, LPWFSBCRREADOUTPUT
     // 检查设备状态
     DEV_STAT_RET_HWERR(m_stStatus.fwDevice);
 
-    // 入参Check
 
-
-    m_CardDatas.Clear();
-    lppCardData = nullptr;
-    HRESULT hRet = InnerReadBcr(wOption, dwTimeOut);
+    HRESULT hRet = InnerReadBcr(stReadInput.lpwSymbologies, dwTimeOut);
     if (hRet != WFS_SUCCESS)
     {
-        Log(ThisModule, __LINE__, "读卡(扫码): ->InnerAcceptAndReadTrack(%d, %d) Fail, Return: %d",
-            wOption, dwTimeOut, hRet);
+        Log(ThisModule, __LINE__, "扫码读码: ->InnerReadBcr(%d) Fail, Return: %d",
+            dwTimeOut, hRet);
         return hRet;
     }
-    lppCardData = (LPWFSBCRCARDDATA *)m_CardDatas;
+    lppReadOutput = (LPWFSBCRREADOUTPUT*)m_clReadBcrOut.GetData();
 
     return WFS_SUCCESS;
 }
 
 // 复位
-HRESULT CXFS_BCR::Reset(LPWORD lpResetIn)
+HRESULT CXFS_BCR::Reset()
 {
     THISMODULE(__FUNCTION__);
     AutoLogFuncBeginEnd();
 
-    HRESULT hRet = InnerReset(*lpResetIn);
-    if (hRet == WFS_SUCCESS)
+    INT nRet = BCR_SUCCESS;
+
+    // 执行复位
+    nRet = m_pBCRDev->Reset();
+    if (nRet != BCR_SUCCESS)    // 复位失败
     {
-        Log(ThisModule, __LINE__, "复位: ->InnerReset(%d) Fail, ErrCode: %d",
-            *lpResetIn, hRet);
-        m_clErrorDet.SetErrCodeInit();
-    }
-    if (m_stConfig.wResetFailReturn == 0)   // Reset结果原样返回
-    {
-        return hRet;
+        if (m_stConfig.wResetFailReturn == 0)   // Reset结果原样返回
+        {
+            Log(ThisModule, __LINE__, "复位: ->Reset() Fail, ErrCode: %s, Return: %d",
+                ConvertDevErrCodeToStr(nRet), ConvertDevErrCode2WFS(nRet));
+            SetErrorDetail();
+        } else
+        {
+            Log(ThisModule, __LINE__, "复位: ->Reset() Fail, ErrCode: %s, INI指定返回SUCCESS",
+                ConvertDevErrCodeToStr(nRet));
+        }
     }
 
     return WFS_SUCCESS;

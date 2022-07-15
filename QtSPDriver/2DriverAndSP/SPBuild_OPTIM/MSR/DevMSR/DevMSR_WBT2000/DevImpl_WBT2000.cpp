@@ -275,12 +275,12 @@ INT CDevImpl_WBT2000::IsDeviceExist(STDEVICEOPENMODE stDevExis, BOOL bAddLog)
             }
 
             // 指定串口路径为空
-            if (strlen(stDevExis.szDevPath) < 1)
+            if (strlen(stDevExis.szDevPath[0]) < 1)
             {
                 if (bAddLog == TRUE)
                 {
                     Log(ThisModule, __LINE__,
-                        "检查指定设备是否存在: 指定串口[%s]为空, Return: 1", stDevExis.szDevPath);
+                        "检查指定设备是否存在: 指定串口[%s]为空, Return: 1", stDevExis.szDevPath[0]);
                 }
                 return 1;
             }
@@ -288,7 +288,7 @@ INT CDevImpl_WBT2000::IsDeviceExist(STDEVICEOPENMODE stDevExis, BOOL bAddLog)
             // 检查串口是否存在
             for(int i = 0; i < m_wPortListCnt; i ++)
             {
-                if (MCMP_IS0(m_stPortList[i].path, stDevExis.szDevPath))
+                if (MCMP_IS0(m_stPortList[i].path, stDevExis.szDevPath[0]))
                 {
                     return 0;
                 }
@@ -296,7 +296,7 @@ INT CDevImpl_WBT2000::IsDeviceExist(STDEVICEOPENMODE stDevExis, BOOL bAddLog)
             if (bAddLog == TRUE)
             {
                 Log(ThisModule, __LINE__,
-                    "检查指定设备是否存在: IsDeviceExist() fail. 指定串口[%s]不存在, Return: -2", stDevExis.szDevPath);
+                    "检查指定设备是否存在: IsDeviceExist() fail. 指定串口[%s]不存在, Return: -2", stDevExis.szDevPath[0]);
             }
             return -2;
         } else
@@ -352,7 +352,7 @@ INT CDevImpl_WBT2000::OpenDevice(STDEVICEOPENMODE stOpenMode)
     // 打开设备
     if (stOpenMode.wOpenMode == 0)   // 串口
     {
-        if (strlen(stOpenMode.szDevPath) < 1)
+        if (strlen(stOpenMode.szDevPath[0]) < 1)
         {
             m_DeviceId = OpenPort(nullptr, 0);
             if (m_DeviceId <= 0)
@@ -369,7 +369,7 @@ INT CDevImpl_WBT2000::OpenDevice(STDEVICEOPENMODE stOpenMode)
             }
         } else
         {
-            m_DeviceId = OpenPort(stOpenMode.szDevPath, stOpenMode.wBaudRate);
+            m_DeviceId = OpenPort(stOpenMode.szDevPath[0], stOpenMode.wBaudRate[0]);
             if (m_DeviceId <= 0)
             {
                 Log(ThisModule, __LINE__, "打开指定设备端口(串口): ->OpenPort(%s, %d) fail. DeviceId: %d, Return: %s",

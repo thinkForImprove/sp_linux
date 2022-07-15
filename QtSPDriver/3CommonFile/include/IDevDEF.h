@@ -80,6 +80,15 @@ enum DEVICE_STATUS
     DEVICE_STAT_FRAUDAT             = 7,    // 设备出现欺诈企图
 } EN_DEVICE_STATUS;
 
+//　status.DevicePosition: 指定设备位置状态
+typedef
+enum DEVICE_POSITION_STATUS
+{
+    DEVPOS_STAT_INPOS               = 0,    // 设备处于正常工作位置或固定位置
+    DEVPOS_STAT_NOTINPOS            = 1,    // 设备不在正常工作位置或固定位置移除
+    DEVPOS_STAT_UNKNOWN             = 2,    // 设备位置未知
+    DEVPOS_STAT_NOTSUPP             = 3,    // 不支持状态查询/位置检测
+} EN_DEVICE_POSITION_STATUS;
 
 #endif // IDEVDEF_H
 

@@ -12,7 +12,8 @@ DEFINES += SPBuild_OPTIM
 #-------------------------------------------------
 #指定使用命令系(CMD_BCR/CMD_BCR_IDC)
 #不设置缺省CMD_BCR
-DEFINES += CMD_BCR_IDC
+DEFINES += CMD_BCR
+#DEFINES += CMD_BCR_IDC
 #-------------------------------------------------
 
 QT -= gui
@@ -62,6 +63,13 @@ contains(DEFINES, CMD_BCR_IDC) {
             XFS_BCR/XFS_BCR.h \
             IDevIDC.h \
             ISPBaseIDC.h
+}
+
+#配置依赖库目录
+CONFIG(debug, debug|release) {
+    LIBS += -lfile_accessd -ldata_convertord
+}else:CONFIG(release, debug|release) {
+    LIBS += -lfile_access -ldata_convertor
 }
 
 # Default rules for deployment.

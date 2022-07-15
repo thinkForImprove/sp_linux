@@ -437,6 +437,84 @@ public:
     }
 };
 
+// 封装ReadBcr命令回参处理
+class CWFSBCRREADOUTPUTHelper
+{
+public:
+    CWFSBCRREADOUTPUTHelper() : m_pszOutput(nullptr), m_uSize(0) { }
+    ~CWFSBCRREADOUTPUTHelper() { Release(); }
+    bool NewBuff(UINT uSize, UINT uDataMemSize = 4096)
+    {
+        m_uSize = uSize;
+        m_uDataMemSize = m_uDataMemSize;
+        m_ppOutput = new LPWFSBCRREADOUTPUT[m_uSize + 1];
+        if (m_ppOutput == nullptr)
+            return false;
+        memset(m_ppOutput, 0x00, sizeof(LPWFSBCRREADOUTPUT) * (m_uSize + 1));
+
+        m_pszOutput = new WFSBCRREADOUTPUT[m_uSize];
+        if (m_pszOutput == nullptr)
+            return false;
+        memset(m_pszOutput, 0x00, sizeof(WFSBCRREADOUTPUT) * m_uSize);
+        for (UINT i = 0; i < m_uSize; i++)
+        {
+            m_ppOutput[i] = &m_pszOutput[i];
+        }
+
+        for (UINT i = 0; i < m_uSize; i++)
+        {
+            m_pszOutput[i].lpxBarcodeData = new WFSBCRXDATA;
+            if (m_pszOutput[i].lpxBarcodeData == nullptr)
+                return false;
+
+            m_pszOutput[i].lpxBarcodeData->usLength = 0;
+            m_pszOutput[i].lpxBarcodeData->lpbData = new BYTE[m_uDataMemSize];
+            if (m_pszOutput[i].lpxBarcodeData->lpbData == nullptr)
+                return false;
+
+            m_pszOutput[i].lpxBarcodeData->lpbData[0] = 0x00;
+        }
+        return true;
+    }
+    void Release()
+    {
+        if (m_pszOutput != nullptr)
+        {
+            for (UINT i = 0; i < m_uSize; i++)
+            {
+                if (m_pszOutput[i].lpxBarcodeData != nullptr)
+                {
+                    if (m_pszOutput[i].lpxBarcodeData->lpbData != nullptr)
+                    {
+                        delete[]m_pszOutput[i].lpxBarcodeData->lpbData;
+                        m_pszOutput[i].lpxBarcodeData->lpbData = nullptr;
+                    }
+
+                    delete m_pszOutput[i].lpxBarcodeData;
+                    m_pszOutput[i].lpxBarcodeData = nullptr;
+                }
+            }
+            delete[]m_pszOutput;
+            m_pszOutput = nullptr;
+        }
+    }
+    LPWFSBCRREADOUTPUT GetBuff(UINT uIndex)
+    {
+        if (uIndex < m_uSize)
+            return &m_pszOutput[uIndex];
+        else
+            return nullptr;
+    }
+    LPWFSBCRREADOUTPUT *GetData() { return m_ppOutput; }
+    UINT GetSize() { return m_uSize; }
+    UINT GetDataMemSize() { return m_uDataMemSize; }
+private:
+    LPWFSBCRREADOUTPUT m_pszOutput;
+    LPWFSBCRREADOUTPUT *m_ppOutput;
+    UINT m_uSize;
+    UINT m_uDataMemSize;
+};
+
 
 //**************************************************************************
 // --------------------------- CAM命令系结构体封装 ---------------------------

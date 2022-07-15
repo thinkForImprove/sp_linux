@@ -15,10 +15,7 @@
 #include "IDCFORM/IDCForm.h"
 #include "ErrorDetail.h"
 #include "def.h"
-
-#include <unistd.h>
-#include <queue>
-#include <qthread.h>
+#include "data_convertor.h"
 
 /***************************************************************************
 // 宏定义

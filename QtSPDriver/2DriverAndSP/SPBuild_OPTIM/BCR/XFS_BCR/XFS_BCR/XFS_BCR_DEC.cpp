@@ -93,6 +93,14 @@ INT CXFS_BCR::InitConfig()
     CHAR    szBuffer[MAX_PATH];
     INT     nTmp;
 
+    /*********************************************************************
+     * STDEVICEOPENMODE.nOtherParam[32]: 设备Open模式结构体.其他参数 类别说明
+     *   [0]: 命令下发超时时间
+     *   [1]: 命令接收超时时间
+     *   [2]: 扫码识读模式
+     *   [3]: 扫码读码时是否设置条码类型限制
+    *********************************************************************/
+
     // DevBCR动态库名
     strcpy(m_stConfig.szDevDllNameBCR, m_cXfsReg.GetValue("BCRDriverDllName", ""));
 
@@ -125,13 +133,37 @@ INT CXFS_BCR::InitConfig()
         // 设备PID(适用于USBHID,4位16进制字符,缺省空)
         strcpy(stDevOpenModeTmp.szHidPid[0], m_cXfsReg.GetValue(szIniAppName, "ProductId", ""));
         // 通讯协议(0:拆分协议, 1:合并协议, 缺省0)
-        stDevOpenModeTmp.wProtocol = (WORD)m_cXfsReg.GetValue(szIniAppName, "Protocol", (DWORD)0);
+        stDevOpenModeTmp.wProtocol[0] = (WORD)m_cXfsReg.GetValue(szIniAppName, "Protocol", (DWORD)0);
         // 命令下发超时时间,缺省0,单位:毫秒
         stDevOpenModeTmp.nOtherParam[0] =
                 (WORD)m_cXfsReg.GetValue(szIniAppName, "SndTimeOut", (DWORD)0);
         // 命令接收超时时间,缺省0,单位:毫秒
         stDevOpenModeTmp.nOtherParam[1] =
                 (WORD)m_cXfsReg.GetValue(szIniAppName, "RcvTimeOut", (DWORD)0);
+
+        // 扫码识读模式(0:硬件默认, 1:手动识读, 2:命令连续识读, 3:上电连续识读, 4:感应识读, 缺省0)
+        stDevOpenModeTmp.nOtherParam[2] =
+                (WORD)m_cXfsReg.GetValue(szIniAppName, "ScanSymMode", (DWORD)0);
+        if (stDevOpenModeTmp.nOtherParam[2] < 0 || stDevOpenModeTmp.nOtherParam[2] > 4)
+        {
+            stDevOpenModeTmp.nOtherParam[2] = 0;
+        }
+
+        // 扫码读码时是否设置条码类型限制(0:不设置,按硬件所有类型识别, 1:根据入参设置类型识别限制, 缺省0)
+        stDevOpenModeTmp.nOtherParam[3] =
+                (WORD)m_cXfsReg.GetValue(szIniAppName, "ReadBcrSymModeSet", (DWORD)0);
+        if (stDevOpenModeTmp.nOtherParam[3] != 0 &&
+            stDevOpenModeTmp.nOtherParam[3] != 1)
+        {
+            stDevOpenModeTmp.nOtherParam[3] = 0;
+        }
+
+        // 设备是否支持识别条码类型(0:不支持, 1:支持, 缺省0)
+        m_stConfig.wDistSymModeSup = m_cXfsReg.GetValue(szIniAppName, "DistSymModeSup", (DWORD)0);
+        if (m_stConfig.wOpenFailRet != 0 && m_stConfig.wOpenFailRet != 1)
+        {
+            m_stConfig.wOpenFailRet = 0;
+        }
 
         memcpy(&(m_stConfig.stDevOpenMode), &stDevOpenModeTmp, sizeof(STDEVICEOPENMODE));
     }
@@ -154,7 +186,15 @@ INT CXFS_BCR::InitConfig()
         m_stConfig.wResetFailReturn = 0;
     }
 
+
     //------------------------[BCR_COFNIG]下参数------------------------
+    // 扫码读码返回数据格式(0:16进制, 1:ASCII, 缺省0)
+    m_stConfig.wReadBcrRetDataMode = (WORD)m_cXfsReg.GetValue("BCR_COFNIG", "ReadBcrRetDataMode", (DWORD)0);
+    if (m_stConfig.wReadBcrRetDataMode != 0 &&
+        m_stConfig.wReadBcrRetDataMode != 1)
+    {
+        m_stConfig.wReadBcrRetDataMode = 0;
+    }
 
 
     //------------------------[TESTER_CONFIG]下参数------------------------
@@ -194,11 +234,15 @@ INT CXFS_BCR::PrintIniBCR()
     PRINT_INI_BUF2("\n\t\t\t\t 波特率: DEVICE_SET_%d->DevPath = %d", m_stConfig.wDeviceType, m_stConfig.stDevOpenMode.wBaudRate[0]);
     PRINT_INI_BUF2("\n\t\t\t\t 设备VID: DEVICE_SET_%d->VendorId = %s", m_stConfig.wDeviceType, m_stConfig.stDevOpenMode.szHidVid[0]);
     PRINT_INI_BUF2("\n\t\t\t\t 设备PID: DEVICE_SET_%d->ProductId = %s", m_stConfig.wDeviceType, m_stConfig.stDevOpenMode.szHidPid[0]);
-    PRINT_INI_BUF2("\n\t\t\t\t 通讯协议: DEVICE_SET_%d->Protocol = %d", m_stConfig.wDeviceType, m_stConfig.stDevOpenMode.wProtocol);
+    PRINT_INI_BUF2("\n\t\t\t\t 通讯协议: DEVICE_SET_%d->Protocol = %d", m_stConfig.wDeviceType, m_stConfig.stDevOpenMode.wProtocol[0]);
     PRINT_INI_BUF2("\n\t\t\t\t 命令下发超时时间(单位:毫秒): DEVICE_SET_%d->SndTimeOut = %d", m_stConfig.wDeviceType, m_stConfig.stDevOpenMode.nOtherParam[0]);
     PRINT_INI_BUF2("\n\t\t\t\t 命令接收超时时间(单位:毫秒): DEVICE_SET_%d->RcvTimeOut = %d", m_stConfig.wDeviceType, m_stConfig.stDevOpenMode.nOtherParam[1]);
+    PRINT_INI_BUF2("\n\t\t\t\t 扫码识读模式(0:硬件默认,1:手动识读,2:命令连续识读,3:上电连续识读,4:感应识读): DEVICE_SET_%d->ScanSymMode = %d", m_stConfig.wDeviceType, m_stConfig.stDevOpenMode.nOtherParam[2]);
+    PRINT_INI_BUF2("\n\t\t\t\t 扫码读码时是否设置条码类型限制(0:不设置,按硬件所有类型识别,1:根据入参设置类型识别限制): DEVICE_SET_%d->ReadBcrSymModeSet = %d", m_stConfig.wDeviceType, m_stConfig.stDevOpenMode.nOtherParam[3]);
+    PRINT_INI_BUF2("\n\t\t\t\t 设备是否支持识别条码类型(0:不支持,1:支持): DEVICE_SET_%d->DistSymModeSup = %d", m_stConfig.wDeviceType, m_stConfig.wDistSymModeSup);
     PRINT_INI_BUF("\n\t\t\t\t Open失败时返回值(0原样返回/1返回SUCCESS): OPEN_CONFIG->OpenFailRet = %d", m_stConfig.wOpenFailRet);
     PRINT_INI_BUF("\n\t\t\t\t Reset失败时返回标准(0原样返回/1忽略失败和错误返回成功): RESET_CONFIG->ResetFailReturn = %d", m_stConfig.wResetFailReturn);
+    PRINT_INI_BUF("\n\t\t\t\t 扫码读码返回数据格式(0:16进制,1:ASCII): BCR_COFNIG->ReadBcrRetDataMode = %d", m_stConfig.wReadBcrRetDataMode);
     PRINT_INI_BUF("\n\t\t\t\t 是否启用测试模式(0:不启用,1:启用): TESTER_CONFIG->TestModeIsSup = %d",m_stConfig.wTestModeIsSup);
 
     Log(ThisModule, __LINE__, "BCRBCR INI配置取得如下: %s", qsIniPrt.toStdString().c_str());
@@ -211,12 +255,7 @@ void CXFS_BCR::InitStatus()
     THISMODULE(__FUNCTION__);
     AutoLogFuncBeginEnd();
 
-    m_stStatus.fwChipPower  = WFS_BCR_CHIPNODEVICE;
-    m_stStatus.fwMedia = WFS_BCR_MEDIANOTPRESENT;
-    m_stStatus.fwSecurity = WFS_BCR_SECNOTSUPP;
-    m_stStatus.lpszExtra = nullptr;
-    m_stStatus.usCards = 0;
-    m_stStatus.fwRetainBin = WFS_BCR_RETAINNOTSUPP;
+    m_stStatus.Clear();
 }
 
 void CXFS_BCR::InitCaps()
@@ -224,21 +263,16 @@ void CXFS_BCR::InitCaps()
     THISMODULE(__FUNCTION__);
     AutoLogFuncBeginEnd();
 
-    m_stCaps.wClass = WFS_SERVICE_CLASS_BCR;
-    m_stCaps.fwType = WFS_BCR_TYPEMOTOR;
-    m_stCaps.bCompound = FALSE;
-    m_stCaps.fwReadTracks = WFS_BCR_TRACK_WM;
-    m_stCaps.fwWriteTracks = WFS_BCR_NOTSUPP;
-    m_stCaps.fwChipProtocols = WFS_BCR_NOTSUPP;
-    m_stCaps.usCards = 0;
-    m_stCaps.fwSecType = WFS_BCR_SECNOTSUPP;
-    m_stCaps.fwPowerOnOption = WFS_BCR_NOACTION;
-    m_stCaps.fwPowerOffOption = WFS_BCR_NOACTION;
-    m_stCaps.bFluxSensorProgrammable = FALSE;
-    m_stCaps.bReadWriteAccessFollowingEject = FALSE;
-    m_stCaps.fwWriteMode = WFS_BCR_NOTSUPP;
-    m_stCaps.fwChipPower = WFS_BCR_NOTSUPP;
-    m_stCaps.lpszExtra = nullptr;
+    // 设备是否支持识别条码类型(0:不支持, 1:支持)
+    if (m_stConfig.wDistSymModeSup == 1)
+    {
+        m_stCaps.bCanFilterSymbologies = TRUE;
+    } else
+    {
+        m_stCaps.bCanFilterSymbologies = FALSE;
+        m_stCaps.lpwSymbologies = nullptr;
+    }
+
 }
 
 // 更新扩展数据
@@ -280,8 +314,7 @@ WORD CXFS_BCR::UpdateDeviceStatus()
 
     BOOL    bNeedFireStatusChanged  = FALSE;
     BOOL    bNeedFireHWError        = FALSE;
-    BOOL    bNeedFireTaken          = FALSE;
-    BOOL    bNeedFireMediaInserted  = FALSE;
+    BOOL    bNeedFireDevPosition    = FALSE;
 
     // 取设备状态
     STDEVBCRSTATUS stDevStatus;
@@ -296,28 +329,17 @@ WORD CXFS_BCR::UpdateDeviceStatus()
 
     //----------------------Device状态处理----------------------
     m_stStatus.fwDevice = ConvertDeviceStatus2WFS(stDevStatus.wDevice);
-    if (m_stStatus.fwDevice == WFS_BCR_DEVOFFLINE)
-    {
-        m_stStatus.fwMedia = WFS_BCR_MEDIAUNKNOWN;
-    }
 
-    // Device == ONLINE && 有命令在执行中,设置Device = BUSY
-    /*if (m_stStatus.fwDevice == WFS_PTR_DEVONLINE && m_bCmdRuning == TRUE)    // 命令执行中
-    {
-        m_stStatus.fwDevice == WFS_PTR_DEVBUSY;
-    }*/
+    //----------------------wBcrScanner状态处理----------------------
+    m_stStatus.fwBCRScanner = ConvertScannerStatus2WFS(stDevStatus.wBcrScanner);
 
-    //----------------------Media状态处理----------------------
-    m_stStatus.fwMedia = WFS_BCR_MEDIANOTSUPP;
+    //----------------------wGuidLights状态处理----------------------
+    
+    //----------------------wPosition状态处理----------------------
+    m_stStatus.wDevicePosition = ConvertDevPosStatus2WFS(stDevStatus.wPosition);
 
-    //----------------------RetainBin状态处理----------------------
-    m_stStatus.fwRetainBin = WFS_BCR_RETAINNOTSUPP;
-
-    //----------------------Security状态处理----------------------
-    m_stStatus.fwSecurity = WFS_BCR_SECNOTSUPP;
-
-    //----------------------ChipPower状态处理----------------------
-    m_stStatus.fwChipPower = WFS_BCR_NOTSUPP;
+    //----------------------usPowerSaveRecoveryTime状态处理----------------------
+    m_stStatus.usPowerSaveRecoveryTime = stDevStatus.usPowerTime;
 
     //----------------------状态检查----------------------
     // Device状态变化检查
@@ -330,15 +352,11 @@ WORD CXFS_BCR::UpdateDeviceStatus()
         }
     }
 
-    // Media状态变化检查
-    if (m_enWaitTaken == WTF_TAKEN)   // Taken事件检查
+    //----------------------设备未知检查----------------------
+    // 设备位置状态变化检查
+    if (m_stStatus.wDevicePosition != m_stStatusOLD.wDevicePosition)
     {
-        // 当前状态无卡 && 上一次内部或出口有卡,则卡被取走
-        if (m_stStatus.fwMedia == WFS_BCR_MEDIANOTPRESENT &&
-            (m_stStatusOLD.fwMedia == WFS_BCR_MEDIAPRESENT || m_stStatusOLD.fwMedia == WFS_BCR_MEDIAENTERING))
-        {
-            bNeedFireTaken = TRUE;  // 设置上报Taken事件标记
-        }
+        bNeedFireDevPosition = TRUE;
     }
 
     //----------------------事件上报----------------------
@@ -356,34 +374,26 @@ WORD CXFS_BCR::UpdateDeviceStatus()
         sprintf(szFireBuffer + strlen(szFireBuffer), "StatusChange:%d|",  m_stStatus.fwDevice);
     }
 
-    // 介质插入事件
-    if (bNeedFireMediaInserted == TRUE /*&& m_bCmdRuning == TRUE*/)
+    // 设备位置变化事件
+    if (bNeedFireDevPosition)
     {
-        FireCardInserted();
-        Log(ThisModule, __LINE__, "介质插入");
-        sprintf(szFireBuffer + strlen(szFireBuffer), "MediaInsert|");
-    }
-
-    // Taken事件
-    if (bNeedFireTaken)
-    {
-        FireMediaRemoved();
-        m_enWaitTaken = WTF_NONE;     // Taken标记复位
-        Log(ThisModule, __LINE__, "介质取走");
-        sprintf(szFireBuffer + strlen(szFireBuffer), "MediaRemoved|");
+        FireSetDevicePosition(m_stStatus.wDevicePosition);
+        sprintf(szFireBuffer + strlen(szFireBuffer), "DevicePosition:%d|",  m_stStatus.wDevicePosition);
     }
 
     // 比较两次状态记录LOG
     if (m_stStatus.Diff(m_stStatusOLD) == true)
     {
-        Log(ThisModule, __LINE__, "状态结果比较: Device:%d->%d%s|Media:%d->%d%s|RetainBin:%d->%d%s|"
-                            "Security:%d->%d%s|usCards:%d->%d%s|ChipPower:%d->%d%s|; 事件上报记录: %s.",
-            m_stStatusOLD.fwDevice, m_stStatus.fwDevice, (m_stStatusOLD.fwDevice != m_stStatus.fwDevice ? " *" : ""),
-            m_stStatusOLD.fwMedia, m_stStatus.fwMedia, (m_stStatusOLD.fwMedia != m_stStatus.fwMedia ? " *" : ""),
-            m_stStatusOLD.fwRetainBin, m_stStatus.fwRetainBin, (m_stStatusOLD.fwRetainBin != m_stStatus.fwRetainBin ? " *" : ""),
-            m_stStatusOLD.fwSecurity, m_stStatus.fwSecurity, (m_stStatusOLD.fwSecurity != m_stStatus.fwSecurity ? " *" : ""),
-            m_stStatusOLD.usCards, m_stStatus.usCards, (m_stStatusOLD.usCards != m_stStatus.usCards ? " *" : ""),
-            m_stStatusOLD.fwChipPower, m_stStatus.fwChipPower, (m_stStatusOLD.fwChipPower != m_stStatus.fwChipPower ? " *" : ""),
+        Log(ThisModule, __LINE__, "状态结果比较: Device:%d->%d%s|Scanner:%d->%d%s|Position:%d->%d%s|"
+                            "PowerRecTime:%d->%d%s|; 事件上报记录: %s.",
+            m_stStatusOLD.fwDevice, m_stStatus.fwDevice,
+            (m_stStatusOLD.fwDevice != m_stStatus.fwDevice ? " *" : ""),
+            m_stStatusOLD.fwBCRScanner, m_stStatus.fwBCRScanner,
+            (m_stStatusOLD.fwBCRScanner != m_stStatus.fwBCRScanner ? " *" : ""),
+            m_stStatusOLD.wDevicePosition, m_stStatus.wDevicePosition,
+            (m_stStatusOLD.wDevicePosition != m_stStatus.wDevicePosition ? " *" : ""),
+            m_stStatusOLD.usPowerSaveRecoveryTime, m_stStatus.usPowerSaveRecoveryTime,
+            (m_stStatusOLD.usPowerSaveRecoveryTime != m_stStatus.usPowerSaveRecoveryTime ? " *" : ""),
             szFireBuffer);
         m_stStatusOLD.Copy(m_stStatus);
     }
@@ -391,8 +401,8 @@ WORD CXFS_BCR::UpdateDeviceStatus()
     return 0;
 }
 
-// 读卡子处理
-HRESULT CXFS_BCR::InnerAcceptAndReadTrack(DWORD dwReadOption, DWORD dwTimeOut)
+// 扫码读码子处理
+HRESULT CXFS_BCR::InnerReadBcr(LPWORD lpwSymList, DWORD dwTimeOut)
 {
     THISMODULE(__FUNCTION__);
 
@@ -401,86 +411,96 @@ HRESULT CXFS_BCR::InnerAcceptAndReadTrack(DWORD dwReadOption, DWORD dwTimeOut)
     // 扫码
     STREADBCRIN stReadBcrIn;
     STREADBCROUT stReadBcrOut;
+
+    // 组织入参
     stReadBcrIn.dwTimeOut = dwTimeOut;
-    stReadBcrIn.wSymDataMode = 1;       // 返回条码数据模式(1Hex)
+    if (m_stConfig.wReadBcrRetDataMode == 0)    // INI配置返回条码数据模式(Hex)
+    {
+        stReadBcrIn.wSymDataMode = SYMD_HEX;
+    } else
+    {
+        stReadBcrIn.wSymDataMode = SYMD_ASCII;
+    }
+
+    // 扫码列表处理
+    if (m_stCaps.bCanFilterSymbologies == TRUE)
+    {
+        if (lpwSymList != nullptr)
+        {
+            for (INT i = 0; ; i++)
+            {
+                if (lpwSymList[i] == 0)
+                {
+                    break;
+                }
+                stReadBcrIn.wSymType[i + 1] = ConvertWFSSymDevToDev(lpwSymList[i]);
+                stReadBcrIn.wSymType[0] ++;
+            }
+        }
+    }
+
+    // 执行扫码读码
     nRet = m_pBCRDev->ReadBCR(stReadBcrIn, stReadBcrOut);
     if (nRet != BCR_SUCCESS)
     {
-        Log(ThisModule, __LINE__, "读卡(扫码): ->MediaReadWrite() Fail, ErrCode: %d, Return: %d",
+        Log(ThisModule, __LINE__, "扫码读码: ->ReadBCR() Fail, ErrCode: %d, Return: %d",
             nRet, ConvertDevErrCode2WFS(nRet));
         SetErrorDetail();
         return ConvertDevErrCode2WFS(nRet);
     }
 
     // 组织应答数据
-    if (stReadBcrOut.nSymDataSize == 0)
+    UINT uCount = 1;
+    if (m_clReadBcrOut.GetSize() == 0)
     {
-        SetTrackInfo(WFS_BCR_TRACK_WM, WFS_BCR_DATAMISSING, 0, nullptr);
-    } else
+        if (m_clReadBcrOut.NewBuff(uCount) != TRUE)
+        {
+            Log(ThisModule, __LINE__, "扫码读码: 命令执行成功: 申请应答Buffer失败, Return: %d",
+                WFS_ERR_OUT_OF_MEMORY);
+            SetErrorDetail((LPSTR)EX_XFS_MemoryApply);
+            return WFS_ERR_OUT_OF_MEMORY;
+        }
+    }
+
+    LPWFSBCRREADOUTPUT pData = nullptr;
+    for (UINT i = 0; i < uCount; i++)
     {
-        SetTrackInfo(WFS_BCR_TRACK_WM, WFS_BCR_DATAOK,
-                     (ULONG)stReadBcrOut.nSymDataSize, (LPBYTE)stReadBcrOut.lpSymData);
-        stReadBcrOut.Clear();
+        pData = m_clReadBcrOut.GetBuff(i);
+        if (pData != nullptr)
+        {
+            pData->wSymbology = stReadBcrOut.wSymType;
+            pData->lpszSymbologyName = nullptr;
+
+            if (m_stConfig.wReadBcrRetDataMode == 0)    // INI配置返回条码数据模式为Hex
+            {
+                if (stReadBcrOut.wSymDataMode == SYMD_HEX)  // 返回条码数据为HEX(不转换)
+                {
+                    pData->lpxBarcodeData->usLength = (WORD)stReadBcrOut.dwSymDataSize;
+                    memcpy(pData->lpxBarcodeData->lpbData, stReadBcrOut.szSymData, stReadBcrOut.dwSymDataSize);
+                } else                                      // 返回条码数据为ASCII, 转换为HEX
+                {
+                    pData->lpxBarcodeData->usLength =
+                            DataConvertor::Ascii2Hex(stReadBcrOut.szSymData, stReadBcrOut.dwSymDataSize,
+                                                     (LPSTR)pData->lpxBarcodeData->lpbData, m_clReadBcrOut.GetDataMemSize());
+                }
+            } else                                      // INI配置返回条码数据模式为Ascii
+            {
+                if (stReadBcrOut.wSymDataMode == SYMD_HEX)  // 返回条码数据为HEX, 转换为ASCII
+                {
+                    pData->lpxBarcodeData->usLength =
+                            DataConvertor::Hex2Ascii(stReadBcrOut.szSymData, stReadBcrOut.dwSymDataSize,
+                                                     (LPSTR)pData->lpxBarcodeData->lpbData, m_clReadBcrOut.GetDataMemSize());
+                } else  // 返回条码数据为ASCII, 不转换为
+                {
+                    pData->lpxBarcodeData->usLength = (WORD)stReadBcrOut.dwSymDataSize;
+                    memcpy(pData->lpxBarcodeData->lpbData, stReadBcrOut.szSymData, stReadBcrOut.dwSymDataSize);
+
+                }
+            }
+        }
     }
 
     return WFS_SUCCESS;
-}
-
-// 复位子处理
-HRESULT CXFS_BCR::InnerReset(WORD wAction)
-{
-    THISMODULE(__FUNCTION__);
-    AutoLogFuncBeginEnd();
-
-    INT nRet = BCR_SUCCESS;
-
-    // 执行复位
-    nRet = m_pBCRDev->Reset(wAction);
-    if (nRet != BCR_SUCCESS)    // 复位失败
-    {
-        Log(ThisModule, __LINE__, "复位: ->Reset(%d) Fail, ErrCode: %s, Return: %d",
-            wAction, ConvertDevErrCodeToStr(nRet), ConvertDevErrCode2WFS(nRet));
-        SetErrorDetail();
-        return ConvertDevErrCode2WFS(nRet);
-    }
-
-    return WFS_SUCCESS;
-}
-
-// 读卡应答数据处理
-void CXFS_BCR::SetTrackInfo(WORD wSource, WORD wStatus, ULONG uLen, LPBYTE pData)
-{
-    WFSBCRCARDDATA data;
-    data.wDataSource    = wSource;
-    data.wStatus        = wStatus;
-    data.ulDataLength   = uLen;
-    data.lpbData        = pData;
-    data.fwWriteMethod  = 0;
-
-    m_CardDatas.SetAt(wSource, data);
-    return;
-}
-
-// 读卡应答数据处理
-bool CXFS_BCR::GetTrackInfo(WORD wSource, ULONG *pLen, LPBYTE pData, WORD *pWriteMetho)
-{
-    LPWFSBCRCARDDATA pCardData = m_CardDatas.GetAt(wSource);
-    if (!pCardData)
-    {
-        *pLen = 0;
-        return FALSE;
-    }
-
-    if (*pLen < pCardData->ulDataLength)
-    {
-        *pLen = pCardData->ulDataLength;
-        return false;
-    }
-
-    *pLen           = pCardData->ulDataLength;
-    *pWriteMetho    = pCardData->fwWriteMethod;
-    memcpy(pData, pCardData->lpbData, *pLen);
-    return true;
 }
 
 // 设置ErrorDetail错误码

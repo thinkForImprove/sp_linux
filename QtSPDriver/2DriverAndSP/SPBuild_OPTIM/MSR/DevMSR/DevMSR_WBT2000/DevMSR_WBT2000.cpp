@@ -88,7 +88,7 @@ int CDevMSR_WBT2000::Open(LPCSTR lpMode)
             // INI未指定设备路径, 需通过设备连接符反推设备路径名
             if (nExistRet == 1)
             {
-                LPSTR lpDevPath = m_stMsrDevInitParam.stDeviceOpenMode.szDevPath;
+                LPSTR lpDevPath = m_stMsrDevInitParam.stDeviceOpenMode.szDevPath[0];
                 nRet = m_pDevWBT2000.nGetPortName(lpDevPath, 64);
                 if (nRet != IMP_SUCCESS)
                 {

@@ -62,12 +62,15 @@ private:
     INT                 m_nRetErrOLD[8];                            // 处理错误值保存(0:USB动态库/1:设备连接/
                                                                     //  2:设备初始化/3取扫码数据/4)
     INT                 m_nDevStatOLD;                              // 上一次记录设备状态
+    BOOL                m_bIsReadBcrRunning;                        // 是否处于读码中
 
 private:
     INT ControlLight(STGLIGHTSCONT stLignt);                        // 指示灯控制
     INT ControlBeep(STBEEPCONT stBeep);                             // 鸣响控制
     INT ConvertImplErrCode2BCR(INT nRet);                           // Impl错误码转换为BCR错误码
     INT ConvertImplErrCode2ErrDetail(INT nRet);                     // 根据Impl错误码设置错误错误码字符串
+    WORD ConvertSymImpl2Dev(INT nSym);                              // 条码类型Impl转换为Dev格式
+    WORD ConvertSymDev2Impl(INT nSym);                              // 条码类型Dev转换为Impl格式
 };
 
 

@@ -12,7 +12,7 @@
 //----------宏定义----------------------------------------------------
 
 static const BYTE byXFSVRTU[17] = {"BCR00020100"};          // XFS_BCR 版本号
-static const BYTE byDevIDCVRTU[17] = {"DevBCR020100"};      // DevBCR 版本号
+static const BYTE byDevBCRVRTU[17] = {"DevBCR020100"};      // DevBCR 版本号
 
 // SetData()/GetData()使用执行类别(50以上为各模块自行定义)
 #define SET_DEV_PREIC           51              // 进卡检查模式
@@ -31,11 +31,13 @@ struct st_idc_ini_config
     WORD                wDeviceType;                        // 设备类型
     STDEVICEOPENMODE    stDevOpenMode;                      // 设备打开模式
     CHAR                szSDKPath[256];                     // 设备SDK库路径
+    WORD                wDistSymModeSup;                    // 设备是否支持识别条码类型
     // INI配置Open相关
     WORD                wOpenFailRet;                       // Open失败时返回值
     // INI配置复位相关
     WORD                wResetFailReturn;                   // Reset失败时返回标准
     // INI配置通用相关
+    WORD                wReadBcrRetDataMode;                // 扫码读码返回数据格式
     // INI配置测试模式相关
     WORD                wTestModeIsSup;                     // 是否启用测试模式
     INT                 nTestInsertComplete;                //

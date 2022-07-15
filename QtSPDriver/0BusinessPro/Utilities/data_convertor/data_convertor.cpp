@@ -1694,6 +1694,11 @@ size_t DataConvertor::code_convert(char *from_charset, char *to_charset, const c
     return outlen_tmp;
 }
 
+/**
+ @功能：	数字字串转换为整形浮点型(第一位为“-”转为负数)
+ @参数：	str: 转换源字串
+ @返回：	转换成功, 返回转换的浮点型变量, 字串无效或不成功返回0.0
+ */
 double DataConvertor::str2number(char *str)
 {
     double duRet = 0.0;
@@ -1766,5 +1771,128 @@ double DataConvertor::str2number(char *str)
     {
         return (double)duRet;
     }
+}
+
+/**
+ @功能：	ASCII字串转换为16进制字串
+ @参数：	 lpAscii: 转换源字串(ASCII)   dwAsciiSize: : 转换源字串大小
+ @       lpHex: 返回转换后16进制字串空间  dwHexSizestr: 返回转换后16进制字串大小
+ @返回：	转换成功, 返回转换的字串长度, 字串无效或不成功返回0
+ */
+DWORD DataConvertor::Ascii2Hex(LPCSTR lpcAscii, DWORD dwAsciiSize, LPSTR lpHex, DWORD dwHexSize)
+{
+    DWORD dwHexChgLen = 0;
+    WORD wHex = 0;
+
+    if (lpcAscii == nullptr || dwAsciiSize == 0)
+    {
+        return 0;
+    }
+
+    if (lpHex == nullptr || dwHexSize == 0)
+    {
+        return 0;
+    }
+
+    for (INT i = 0; i < dwAsciiSize; i ++)
+    {
+        if (dwHexChgLen + 2 >= dwHexSize)
+        {
+            break;
+        }
+
+        wHex = (lpcAscii[i] / 16);
+        if (wHex < 10)
+        {
+            lpHex[dwHexChgLen ++] = wHex + 0x30;
+        } else
+        {
+            lpHex[dwHexChgLen ++] = wHex + 0x41;
+        }
+
+        wHex = (lpcAscii[i] % 16);
+        if (wHex < 10)
+        {
+            lpHex[dwHexChgLen ++] = wHex + 0x30;
+        } else
+        {
+            lpHex[dwHexChgLen ++] = wHex + 0x41;
+        }
+    }
+
+    return dwHexChgLen;
+}
+
+/**
+ @功能：	16进制字串转换为ASCII字串
+ @参数：	 lpHex: 转换源字串(16进制)   dwHexSize: : 转换源字串大小
+ @       lpAscii: 返回转换后ASCII字串空间  dwAsciiSize: 返回转换后ASCII字串大小
+ @返回：	转换成功, 返回转换的字串长度, 字串无效或不成功返回0
+ */
+DWORD DataConvertor::Hex2Ascii(LPCSTR lpcHex, DWORD dwHexSize, LPSTR lpAscii, DWORD dwAsciiSize)
+{
+    DWORD dwAsciiChgSize = 0;
+
+    if (lpcHex == nullptr || dwHexSize == 0)
+    {
+        return 0;
+    }
+
+    if (lpAscii == nullptr || dwAsciiSize == 0)
+    {
+        return 0;
+    }
+
+    // 检查 转换源字串是否有效的16进制串
+    for (INT i = 0; i < dwHexSize; i ++)
+    {
+        if (lpcHex[i] < '0' ||
+            (lpcHex[i] > '9' && lpcHex[i] < 'A') ||
+            (lpcHex[i] > 'F' && lpcHex[i] < 'a') ||
+            lpcHex[i] > 'f')
+        {
+            return 0;
+        }
+    }
+
+    DWORD dwH = 0, dwL = 0;
+
+    for (INT i = 0; i < dwAsciiSize / 2 ; i ++)
+    {
+        if (dwAsciiChgSize + 1 >= dwAsciiSize)
+        {
+            break;
+        }
+
+        dwH = dwL = 0;
+
+        if (lpcHex[i * 2] >= '0' && lpcHex[i * 2] <= '9')
+        {
+            dwH = (lpcHex[i * 2] - 48);
+        } else
+        if (lpcHex[i * 2] >= 'A' && lpcHex[i * 2] <= 'F')
+        {
+            dwH = (lpcHex[i * 2] - 65 + 10);
+        } else
+        {
+            dwH = (lpcHex[i * 2] - 97 + 10);
+        }
+
+        if (lpcHex[i * 2 + 1] >= '0' && lpcHex[i * 2 + 1] <= '9')
+        {
+            dwL = (lpcHex[i * 2 + 1] - 48);
+        } else
+        if (lpcHex[i * 2 + 1] >= 'A' && lpcHex[i * 2 + 1] <= 'F')
+        {
+            dwL = (lpcHex[i * 2 + 1] - 65 + 10);
+        } else
+        {
+            dwL = (lpcHex[i * 2 + 1] - 97 + 10);
+        }
+
+        lpAscii[i] = (dwH * 16 + dwL);
+    }
+
+    return dwAsciiChgSize;
 }
 
