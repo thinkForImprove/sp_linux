@@ -51,7 +51,7 @@ struct st_Device_OpenMode
     INT     nHidPid[8];             // 设备PID(整型)[最多可设置8组]
     WORD    wProtocol[8];           // 通讯协议[最多可设置8组]
     INT     nOtherParam[32];        // 其他参数(整型数组)
-    CHAR    szOtherParam[256];      // 其他参数(字符串)
+    CHAR    szOtherParams[32][256]; // 其他参数(多组字符串)
 
     st_Device_OpenMode()
     {

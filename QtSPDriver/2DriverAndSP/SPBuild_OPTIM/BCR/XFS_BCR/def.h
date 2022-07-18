@@ -32,6 +32,7 @@ struct st_idc_ini_config
     STDEVICEOPENMODE    stDevOpenMode;                      // 设备打开模式
     CHAR                szSDKPath[256];                     // 设备SDK库路径
     WORD                wDistSymModeSup;                    // 设备是否支持识别条码类型
+    WORD                wSymSuppList[256];                  // 设备支持的条码类型列表
     // INI配置Open相关
     WORD                wOpenFailRet;                       // Open失败时返回值
     // INI配置复位相关
@@ -51,6 +52,7 @@ struct st_idc_ini_config
     void Clear()
     {
         memset(this, 0x00, sizeof(st_idc_ini_config));
+        memset(wSymSuppList, 0, sizeof(WORD) * 256);
     }
 } STINICONFIG, LPSTINICONFIG;
 

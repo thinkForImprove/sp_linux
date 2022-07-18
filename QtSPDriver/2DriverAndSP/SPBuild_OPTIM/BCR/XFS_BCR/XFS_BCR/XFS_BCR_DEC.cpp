@@ -90,7 +90,7 @@ BOOL CXFS_BCR::LoadDevBCRDll(LPCSTR ThisModule)
 INT CXFS_BCR::InitConfig()
 {
     CHAR    szIniAppName[MAX_PATH];
-    CHAR    szBuffer[MAX_PATH];
+    CHAR    szBuffer[1024] = { 0x00 };
     INT     nTmp;
 
     /*********************************************************************
@@ -163,6 +163,30 @@ INT CXFS_BCR::InitConfig()
         if (m_stConfig.wOpenFailRet != 0 && m_stConfig.wOpenFailRet != 1)
         {
             m_stConfig.wOpenFailRet = 0;
+        }
+
+        // 设备支持的条码类型, 空值或不设置为使用硬件默认支持, 缺省空
+        strcpy(szBuffer, m_cXfsReg.GetValue(szIniAppName, "SymSuppList", ""));
+        if (strlen(szBuffer) > 0)
+        {
+            // 解析数据
+            ULONG ulArraySize = DataConvertor::split_string(szBuffer, ',', nullptr, 0);
+            if (ulArraySize > 0)
+            {
+                CHAR szArray[ulArraySize][CONST_VALUE_260];
+                DataConvertor::split_string(szBuffer, ',', szArray, ulArraySize);
+
+                INT nIdx = 0;
+                for (INT i = 0; i < ulArraySize; i ++)
+                {
+                    if ((nTmp = DataConvertor::str2number(szArray[i])) > 0)
+                    {
+                        nIdx ++;
+                        m_stConfig.wSymSuppList[nIdx] = nTmp;
+                    }
+                }
+                m_stConfig.wSymSuppList[0] = nIdx;
+            }
         }
 
         memcpy(&(m_stConfig.stDevOpenMode), &stDevOpenModeTmp, sizeof(STDEVICEOPENMODE));
@@ -267,12 +291,28 @@ void CXFS_BCR::InitCaps()
     if (m_stConfig.wDistSymModeSup == 1)
     {
         m_stCaps.bCanFilterSymbologies = TRUE;
+
+        if (m_stCaps.lpwSymbologies != nullptr)
+        {
+            delete [] m_stCaps.lpwSymbologies;
+            m_stCaps.lpwSymbologies = nullptr;
+        }
+
+        if (m_stConfig.wSymSuppList[0] > 1)
+        {
+            INT nSize = m_stConfig.wSymSuppList[0] + 2;
+            m_stCaps.lpwSymbologies = new WORD[nSize];
+            memset(m_stCaps.lpwSymbologies, 0x00, sizeof(WORD) * nSize);
+            for (INT i = 0; i < m_stConfig.wSymSuppList[0]; i++)
+            {
+                m_stCaps.lpwSymbologies[i] = m_stConfig.wSymSuppList[i + 1];
+            }
+        }
     } else
     {
         m_stCaps.bCanFilterSymbologies = FALSE;
         m_stCaps.lpwSymbologies = nullptr;
     }
-
 }
 
 // 更新扩展数据

@@ -268,34 +268,34 @@ INT CDevImpl_NT0861::GetVersion(WORD wType, LPSTR lpVerData, WORD wVerSize)
 
         // 解析数据
         ULONG ulArraySize = DataConvertor::split_string(szRcvData, '\n', nullptr, 0);
-        char szFieldNameArray[ulArraySize][CONST_VALUE_260];
-        DataConvertor::split_string(szRcvData, '\n', szFieldNameArray, ulArraySize);
+        char szArray[ulArraySize][CONST_VALUE_260];
+        DataConvertor::split_string(szRcvData, '\n', szArray, ulArraySize);
 
         for (INT i = 0; i < ulArraySize; i ++)
         {
-            DataConvertor::trim_string_by_end_char(szFieldNameArray[i], '\r', szFieldNameArray[i], CONST_VALUE_260);
-            if (memcmp(szFieldNameArray[i], "Firmware Version:", strlen("Firmware Version:")) == 0)  // FW
+            DataConvertor::trim_string_by_end_char(szArray[i], '\r', szArray[i], CONST_VALUE_260);
+            if (memcmp(szArray[i], "Firmware Version:", strlen("Firmware Version:")) == 0)  // FW
             {
                 MSET_0(m_szVersion[0]);
-                DataConvertor::trim_string(szFieldNameArray[i] + strlen("Firmware Version:"),
+                DataConvertor::trim_string(szArray[i] + strlen("Firmware Version:"),
                                            m_szVersion[0], sizeof(m_szVersion[0]));
             } else
-            if (memcmp(szFieldNameArray[i], "P/N:", strlen("P/N:")) == 0)  // PN
+            if (memcmp(szArray[i], "P/N:", strlen("P/N:")) == 0)  // PN
             {
                 MSET_0(m_szVersion[1]);
-                DataConvertor::trim_string(szFieldNameArray[i] + strlen("P/N:"),
+                DataConvertor::trim_string(szArray[i] + strlen("P/N:"),
                                            m_szVersion[1], sizeof(m_szVersion[1]));
             } else
-            if (memcmp(szFieldNameArray[i], "S/N:", strlen("S/N:")) == 0)  // SN
+            if (memcmp(szArray[i], "S/N:", strlen("S/N:")) == 0)  // SN
             {
                 MSET_0(m_szVersion[2]);
-                DataConvertor::trim_string(szFieldNameArray[i] + strlen("S/N:"),
+                DataConvertor::trim_string(szArray[i] + strlen("S/N:"),
                                            m_szVersion[2], sizeof(m_szVersion[2]));
             } else
-            if (memcmp(szFieldNameArray[i], "C/N:", strlen("C/N:")) == 0)  // CN
+            if (memcmp(szArray[i], "C/N:", strlen("C/N:")) == 0)  // CN
             {
                 MSET_0(m_szVersion[3]);
-                DataConvertor::trim_string(szFieldNameArray[i] + strlen("C/N:"),
+                DataConvertor::trim_string(szArray[i] + strlen("C/N:"),
                                            m_szVersion[3], sizeof(m_szVersion[3]));
             }
         }

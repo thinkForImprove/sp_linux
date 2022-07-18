@@ -350,6 +350,9 @@ enum GUID_LIGHTS_TYPE
     GLIGHTS_TYPE_BLUE       = 2,    // 蓝灯
     GLIGHTS_TYPE_GREEN      = 4,    // 绿灯
     GLIGHTS_TYPE_RED        = 8,    // 红灯
+    GLIGHTS_TYPE_BLUDGREEN  = 16,   // 蓝绿灯
+    GLIGHTS_TYPE_REDMAGENTA = 32,   // 红紫灯
+    GLIGHTS_TYPE_WHITE      = 64,   // 白灯
 };
 
 // LED灯控制
@@ -357,7 +360,9 @@ enum GUID_LIGHTS_ACTION
 {
     GLIGHTS_ACT_OPEN        = 0,    // 打开
     GLIGHTS_ACT_CLOSE       = 1,    // 关闭
-    GLIGHTS_ACT_FLASH       = 2,    // 闪烁
+    GLIGHTS_ACT_FLASH_SLOW  = 2,    // 闪烁(慢闪)
+    GLIGHTS_ACT_FLASH_MED   = 3,    // 闪烁(中闪)
+    GLIGHTS_ACT_FLASH_QUICK = 4,    // 闪烁(快闪)
 };
 
 // 指示灯控制结构体
