@@ -67,6 +67,8 @@ public: // 接口函数封装
     BOOL bOpenCameraEx(LPSTR vid, LPSTR pid, SHORT deviceMode, SHORT width, SHORT height);
     // 1.11 关闭当前程序打开的所有相机设备
     BOOL bCloseAllCameras();
+    // 1.12 枚举当前设备上的所有相机
+    BOOL bEnumCameras(CWCameraDevice **cameraLists);// 30-00-00-00(FT#0031)
     // 1.15 开启活体检测
     BOOL bStartLiveDetect(BOOL isContinue);
     //  1.16 停止连续活体检测
@@ -112,6 +114,7 @@ private: // 动态库接口定义
     pcwEngineOpenCamera             cwEngineOpenCamera;             // 1.9 依据相机在设备显示的序号开启相机
     pcwEngineOpenCameraEx           cwEngineOpenCameraEx;           // 1.10 依据相机硬件信息开启相机
     pcwEngineCloseAllCameras        cwEngineCloseAllCameras;        // 1.11 关闭当前程序打开的所有相机设备
+    pcwEngineEnumCameras            cwEngineEnumCameras;            // 1.12 枚举当前设备上的所有相机
     pcwEngineStartLiveDetect        cwEngineStartLiveDetect;        // 1.15 开启活体检测
     pcwEngineStopLiveDetect         cwEngineStopLiveDetect;         // 1.16 停止连续活体检测
     pcwEngineGetBestFace            cwEngineGetBestFace;            // 1.20 获取本次活体检测最佳人脸图像

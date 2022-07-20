@@ -89,6 +89,9 @@ private:
     ST_CAM_OPENTYPE             m_stCamOpenType;
     ST_CAM_CW_INIT_PARAM        m_stCamCwInitParam;
     ST_CAM_SAVEIMAGE_CFG        m_stCamSaveImageCfg;
+    INT                         m_nRetErrOLD[8];                    // 处理错误值保存
+    DEVCAMSTATUS                m_DevStatusOLD;                     // 记录上一次设备状态
+
 
     WORD                        wBankNo;
 };

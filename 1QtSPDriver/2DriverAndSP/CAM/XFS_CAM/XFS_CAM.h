@@ -10,7 +10,7 @@
 #include "ISPBaseCAM.h"
 #include "QtTypeInclude.h"
 #include "ComInfo.h"
-
+#include "libudev.h"
 #include "mainwindow.h"
 
 #define DEVTYPE_CHG(a)  a == 0 ? IDEV_TYPE_CW1 : "CAM"
@@ -45,6 +45,7 @@ protected:
     virtual HRESULT Display(const WFSCAMDISP &stTakePict, DWORD dwTimeout);
     virtual HRESULT Reset();
 
+
 protected:
     // 读INI
     void InitConifig();
@@ -62,6 +63,8 @@ protected:
     void vDeleteDirectory(LPSTR lpDirName);
     void SharedMemRelease();    // 销毁摄像共享内存
     BOOL bCreateSharedMemory(LPSTR lpMemName, ULONG ulSize); // 创建摄像共享内存
+    INT SearchVideoIdxFromVidPid(LPSTR lpVid, LPSTR lpPid);
+    HRESULT StartOpen();                                            // 30-00-00-00(FT#0031)
 private:
     ST_CAM_INI_CONFIG                       m_sCamIniConfig;
     ST_CAM_DEV_INIT_PARAM                   m_stDevInitParam;
@@ -83,6 +86,8 @@ private:
     CSimpleMutex                           *m_pMutexGetStatus;
 
     BOOL                                    bDisplyOK;
+    BOOL                                    m_bIsOpenOk;            // 30-00-00-00(FT#0031)
+    WORD                                    m_wVRTCount;
 
     MainWindow                              *showWin;   // 摄像窗口
     QSharedMemory                           *m_qSharedMemData;// 摄像数据共享内存

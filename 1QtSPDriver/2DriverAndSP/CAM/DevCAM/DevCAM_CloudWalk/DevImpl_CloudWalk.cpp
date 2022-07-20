@@ -28,6 +28,7 @@ CDevImpl_CloudWalk::CDevImpl_CloudWalk()
     cwEngineOpenCamera = NULL;             // 1.9 依据相机在设备显示的序号开启相机
     cwEngineOpenCameraEx = NULL;           // 1.10 依据相机硬件信息开启相机
     cwEngineCloseAllCameras = NULL;        // 1.11 关闭当前程序打开的所有相机设备
+    cwEngineEnumCameras = NULL;            // 1.12 枚举当前设备上的所有相机	// 30-00-00-00(FT#0031)
     cwEngineStartLiveDetect = NULL;        // 1.15 开启活体检测
     cwEngineStopLiveDetect = NULL;         // 1.16 停止连续活体检测
     cwEngineGetBestFace = NULL;            // 1.20获取本次活体检测最佳人脸图像
@@ -127,6 +128,9 @@ BOOL CDevImpl_CloudWalk::LoadCloudWalkIntf()
     cwEngineCloseAllCameras = (pcwEngineCloseAllCameras)m_CloudWalkLibrary.resolve("cwEngineCloseAllCameras");
     FUNC_POINTER_ERROR_RETURN(cwEngineCloseAllCameras, "cwEngineCloseAllCameras");
 
+    // 1.12 枚举当前设备上的所有相机	// 30-00-00-00(FT#0031)
+    cwEngineEnumCameras = (pcwEngineEnumCameras)m_CloudWalkLibrary.resolve("cwEngineEnumCameras");
+    FUNC_POINTER_ERROR_RETURN(cwEngineEnumCameras, "cwEngineEnumCameras");
     // 1.15 开启活体检测
     cwEngineStartLiveDetect = (pcwEngineStartLiveDetect)m_CloudWalkLibrary.resolve("cwEngineStartLiveDetect");
     FUNC_POINTER_ERROR_RETURN(cwEngineStartLiveDetect, "cwEngineStartLiveDetect");
@@ -425,7 +429,18 @@ BOOL CDevImpl_CloudWalk::bCloseAllCameras()
 
     return TRUE;
 }
+// 1.12 枚举当前设备上的所有相机 // 30-00-00-00(FT#0031)
+BOOL CDevImpl_CloudWalk::bEnumCameras(CWCameraDevice **cameraLists)
+{
+    LONG code = cwEngineEnumCameras(m_cwDetector, cameraLists);
+    if(code != CW_LIVENESS_SUCCESSFUL)
+    {
+        Log(ThisFile, 1, "枚举当前设备上的所有相机: bEnumCameras()->cwEngineEnumCameras() fail. ReturnCode:%s", GetErrorStr(code));
+        return FALSE;
+    }
 
+    return TRUE;
+}
 // 1.15 开启活体检测
 BOOL CDevImpl_CloudWalk::bStartLiveDetect(BOOL isContinue)  // 是否连续检测(TRUE连续,FALSE单次)
 {

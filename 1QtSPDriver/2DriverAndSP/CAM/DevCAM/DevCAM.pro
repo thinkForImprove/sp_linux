@@ -55,8 +55,6 @@ HEADERS += \
         DevCAM_CloudWalk/DevCAM_CloudWalk.h \
         DevCAM_CloudWalk/cloudwalk.h
 
-
-
 unix {
     target.path = /usr/lib
     INSTALLS += target

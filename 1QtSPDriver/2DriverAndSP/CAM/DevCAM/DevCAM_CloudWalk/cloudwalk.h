@@ -220,6 +220,28 @@ struct CWLiveImage
     long timestamp;             // 输入图像的进入时间戳
 };
 
+// 相机链表	新增	// 30-00-00-00(FT#0031)
+#pragma pack(1)
+typedef struct tagCWCameraDevice
+{
+    short index;    // 相机序号
+    char name[32];  // 相机名称
+    char vid[32];   // VID
+    char pid[32];   // PID
+    struct tagCWCameraDevice* next; // 链表指针
+}CWCameraDevice, LPCWCameraDevice;
+#pragma pack()
+
+#pragma pack(1)
+//分辨率链表
+typedef struct tagCWResolution
+{
+    short width;
+    short height;
+    struct tagCWResolution* next;
+}CWResolution;
+#pragma pack()
+
 // 回调函数类型定义
 typedef void (*preview_func)(void* handle, const short mode, const char* frame, const short width,
                             const short height, const short channel);
@@ -291,6 +313,10 @@ typedef long (CALL_MODE *pcwEngineOpenCameraEx)(HANDLE handle, const char* vid, 
                                                const short deviceMode, const short width, const short height);
 // 1.11 关闭当前程序打开的所有相机设备
 typedef long (CALL_MODE *pcwEngineCloseAllCameras)(HANDLE handle);
+// 1.12 枚举当前设备上的所有相机
+typedef long (CALL_MODE *pcwEngineEnumCameras)(HANDLE handle, CWCameraDevice **cameraLists);// 30-00-00-00(FT#0031)
+// 1.13 枚举相机支持的所有分辨率(序号)
+typedef long (CALL_MODE *pcwEngineEnumResolutions)(HANDLE handle, const short deviceIndex, CWResolution** resolutionLists);
 // 1.15 开启活体检测
 typedef long (CALL_MODE *pcwEngineStartLiveDetect)(HANDLE handle, bool isContinue);
 // 1.16 停止连续活体检测

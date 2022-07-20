@@ -24,6 +24,7 @@ CXFS_CAM::CXFS_CAM(): m_pMutexGetStatus(nullptr)
     memset(&m_stStatusOld, 0x00, sizeof(WFSCAMSTATUS));
     memset(&m_stCaps, 0x00, sizeof(WFSCAMCAPS));
     bDisplyOK = FALSE;
+    m_bIsOpenOk = FALSE;						// 30-00-00-00(FT#0031)
 
     m_qSharedMemData = nullptr;
     showWin = nullptr;
@@ -120,12 +121,6 @@ HRESULT CXFS_CAM::OnOpen(LPCSTR lpLogicalName)
 
 
     m_pDev->SetData(&(m_stDevInitParam), DATATYPE_INIT);
-
-    QByteArray strFile(m_sCamIniConfig.szCamCheckOpenFile);
-    CINIFileReader m_cINI;
-    m_cINI.LoadINIFile(strFile.constData());
-    CINIWriter cPR = m_cINI.GetWriterSection("default");
-    cPR.SetValue("provider","");
     /*
     if(m_cINI.IsNeedUpdateINI() == false)
     {
@@ -140,10 +135,85 @@ HRESULT CXFS_CAM::OnOpen(LPCSTR lpLogicalName)
         Log(ThisModule, __LINE__, "打开设备连接失败．ReturnCode:%d", hRet);
         //return WFS_ERR_HARDWARE_ERROR;
         //hRet = OnStatus();
-        cPR.SetValue("provider","NODEVICE");
+        int i;
+        char vid_1[5] = {0};
+        for(i=0; i < 4; i++)
+        {
+            if(m_sCamIniConfig.stCamOpenType.szNisVid[i] > 'A' && m_sCamIniConfig.stCamOpenType.szNisVid[i] < 'Z')
+            {
+                vid_1[i] = m_sCamIniConfig.stCamOpenType.szNisVid[i] + 32;
+            }
+            else
+            {
+                vid_1[i] = m_sCamIniConfig.stCamOpenType.szNisVid[i];
+            }
+        }
+        Log(ThisModule, __LINE__, "sec : %s", vid_1);
+
+        char pid_1[5] = {0};
+        for(i=0; i < 4; i++)
+        {
+            if(m_sCamIniConfig.stCamOpenType.szNisPid[i] > 'A' && m_sCamIniConfig.stCamOpenType.szNisPid[i] < 'Z')
+            {
+                pid_1[i] = m_sCamIniConfig.stCamOpenType.szNisPid[i] + 32;
+            }
+            else
+            {
+                pid_1[i] = m_sCamIniConfig.stCamOpenType.szNisPid[i];
+            }
+        }
+        Log(ThisModule, __LINE__, "sec : %s", pid_1);
+
+        char vid_2[5] = {0};
+        for(i=0; i < 4; i++)
+        {
+            if(m_sCamIniConfig.stCamOpenType.szVisVid[i] > 'A' && m_sCamIniConfig.stCamOpenType.szVisVid[i] < 'Z')
+            {
+                vid_2[i] = m_sCamIniConfig.stCamOpenType.szVisVid[i] + 32;
+            }
+            else
+            {
+                vid_2[i] = m_sCamIniConfig.stCamOpenType.szVisVid[i];
+            }
+        }
+        Log(ThisModule, __LINE__, "sec : %s", vid_2);
+
+        char pid_2[5] = {0};
+        for(i=0; i < 4; i++)
+        {
+            if(m_sCamIniConfig.stCamOpenType.szVisPid[i] > 'A' && m_sCamIniConfig.stCamOpenType.szVisPid[i] < 'Z')
+            {
+                pid_2[i] = m_sCamIniConfig.stCamOpenType.szVisPid[i] + 32;
+            }
+            else
+            {
+                pid_2[i] = m_sCamIniConfig.stCamOpenType.szVisPid[i];
+            }
+        }
+        Log(ThisModule, __LINE__, "sec : %s", pid_2);
+
+        int nRet = SearchVideoIdxFromVidPid(vid_1, pid_1);
+        Log(ThisModule, __LINE__, "di yi gen:%d", nRet);
+
+        int rRet = SearchVideoIdxFromVidPid(vid_2, pid_2);
+        Log(ThisModule, __LINE__, "di er gen:%d", rRet);
+
+        int count = nRet + rRet;
+        if(count < 2 && count != 1)
+        {
+            if(m_sCamIniConfig.szCamCheckOpenFile != nullptr)
+            {
+                Log(ThisModule, __LINE__, "打开设备连接失败2222．ReturnCode:%s", m_sCamIniConfig.szCamCheckOpenFile);
+
+                QByteArray strFile(m_sCamIniConfig.szCamCheckOpenFile);
+                CINIFileReader m_cINI;
+                m_cINI.LoadINIFile(strFile.constData());
+                CINIWriter cPR = m_cINI.GetWriterSection("default");
+                cPR.SetValue("provider","NODEVICE");
+            }
+        }
         return hErrCodeChg(hRet);
     }
-    cPR.SetValue("provider","");
     // 更新扩展状态
     CHAR szDevCAMVer[MAX_PATH] = { 0x00 };
     m_pDev->GetVersion(szDevCAMVer, sizeof(szDevCAMVer) - 1, 1);
@@ -167,6 +237,69 @@ HRESULT CXFS_CAM::OnOpen(LPCSTR lpLogicalName)
     return WFS_SUCCESS;
 }
 
+INT CXFS_CAM::SearchVideoIdxFromVidPid(LPSTR lpVid, LPSTR lpPid)
+{
+    THISMODULE(__FUNCTION__);
+    AutoLogFuncBeginEnd();
+#define MCMP_IS0(a, b) \
+    (memcmp(a, b, strlen(b)) == 0 && memcmp(a, b, strlen(a)) == 0)
+    struct udev *stUDev = nullptr;
+    struct udev_enumerate *stUDevEnumErate = nullptr;
+    struct udev_list_entry *stUDevList = nullptr;
+    INT nVideoIdx = 0;
+    int count = 0;
+    // 实例化
+    stUDev = udev_new();
+    if (stUDev == nullptr)
+    {
+        return -1;
+    }
+
+    //
+    stUDevEnumErate = udev_enumerate_new(stUDev);
+    if (stUDevEnumErate == nullptr)
+    {
+        return -2;
+    }
+
+    //
+    udev_enumerate_add_match_subsystem(stUDevEnumErate, "video4linux");
+    udev_enumerate_scan_devices(stUDevEnumErate);
+    udev_list_entry_foreach(stUDevList, udev_enumerate_get_list_entry(stUDevEnumErate))
+    {
+        struct udev_device *stDevice = nullptr;
+        stDevice = udev_device_new_from_syspath(udev_enumerate_get_udev(stUDevEnumErate),
+                                                udev_list_entry_get_name(stUDevList));
+        const char *szBuffer = udev_device_get_property_value(stDevice, "ID_MODEL_ID");
+        if (stDevice != nullptr)
+        {
+            CHAR *szGetVid = nullptr, *szGetPid = nullptr;
+            szGetVid = (CHAR*)udev_device_get_property_value(stDevice, "ID_VENDOR_ID");
+            szGetPid = (CHAR*)udev_device_get_property_value(stDevice, "ID_MODEL_ID");
+            if (szGetVid != nullptr && szGetVid != nullptr)
+            {
+                if (MCMP_IS0(szGetVid, lpVid) && MCMP_IS0(szGetPid, lpPid))
+                {
+                    count++;
+                    nVideoIdx = atoi(udev_device_get_sysnum(stDevice));
+                    udev_device_unref(stDevice);
+                    udev_enumerate_unref(stUDevEnumErate);
+                    udev_unref(stUDev);
+                    return count;
+                }
+            }
+            udev_device_unref(stDevice);
+        } else
+        {
+            udev_enumerate_unref(stUDevEnumErate);
+            udev_unref(stUDev);
+            return 0;
+        }
+    }
+
+    return 0;
+}
+
 HRESULT CXFS_CAM::OnClose()
 {
     THISMODULE(__FUNCTION__);
@@ -185,6 +318,7 @@ HRESULT CXFS_CAM::OnClose()
         showWin = nullptr;
     }
 
+    m_bIsOpenOk = FALSE;			// 30-00-00-00(FT#0031)
     return WFS_SUCCESS;
 }
 
@@ -194,16 +328,63 @@ HRESULT CXFS_CAM::OnStatus()
     //AutoLogFuncBeginEnd();
 
     // 空闲更新状态
+    // 空闲更新状态
     DEVCAMSTATUS stStatus;
     if (m_pDev != nullptr)
     {
-        m_pDev->GetStatus(stStatus);
+        INT nRet = m_pDev->GetStatus(stStatus);		// 30-00-00-00(FT#0031)
+        if (m_bIsOpenOk == FALSE &&					// 30-00-00-00(FT#0031)
+            stStatus.fwDevice == DEVICE_ONLINE)		// 30-00-00-00(FT#0031)
+        {											// 30-00-00-00(FT#0031)
+            StartOpen();    // 重连					// 30-00-00-00(FT#0031)
+        }											// 30-00-00-00(FT#0031)
     }
     UpdateStatus(stStatus);
 
     return WFS_SUCCESS;
 }
+// 新增Open处理,初始Open和断线重连Open	// 30-00-00-00(FT#0031)
+HRESULT CXFS_CAM::StartOpen()
+{
+    THISMODULE(__FUNCTION__);
+    //AutoLogFuncBeginEnd();
 
+    HRESULT hRet = CAM_SUCCESS;
+
+    // 打开连接
+    hRet = m_pDev->Open(nullptr);
+    if (hRet != 0)
+    {
+        Log(ThisModule, __LINE__, "打开设备连接失败．ReturnCode:%d", hRet);
+        //return WFS_ERR_HARDWARE_ERROR;
+        return WFS_SUCCESS; //hErrCodeChg(hRet);
+    }
+
+    // 更新扩展状态
+    CHAR szDevCAMVer[MAX_PATH] = { 0x00 };
+    m_pDev->GetVersion(szDevCAMVer, sizeof(szDevCAMVer) - 1, 1);
+
+    CHAR szFWVer[MAX_PATH] = { 0x00 };
+    m_pDev->GetVersion(szFWVer, sizeof(szFWVer) - 1, 2);
+
+    CHAR szDevOtherVer[MAX_PATH] = { 0x00 };
+    m_pDev->GetVersion(szDevOtherVer, sizeof(szDevOtherVer) - 1, 3);
+
+
+    m_cExtra.AddExtra("VRTCount", "4");
+    m_cExtra.AddExtra("VRTDetail[00]", (char*)byVRTU);
+    m_cExtra.AddExtra("VRTDetail[01]", szDevCAMVer);
+    m_cExtra.AddExtra("VRTDetail[02]", szFWVer);
+    m_cExtra.AddExtra("VRTDetail[03]", szDevOtherVer);
+
+    m_bIsOpenOk = TRUE;
+
+    // 更新一次状态
+    OnStatus();
+
+    Log(ThisModule, __LINE__, "打开设备连接成功, Extra=%s", m_cExtra.GetExtraInfo().c_str());
+    return WFS_SUCCESS;
+}
 HRESULT CXFS_CAM::OnCancelAsyncRequest()
 {
     THISMODULE(__FUNCTION__);
@@ -730,12 +911,11 @@ void CXFS_CAM::InitConifig()
         memcpy(m_sCamIniConfig.stCamSaveImageCfg.byImageInfoFile, IMAGEINFOFILE, strlen(IMAGEINFOFILE));
     }
 
-    strcpy(m_sCamIniConfig.szCamCheckOpenFile, m_cXfsReg.GetValue("Camera_Info", "CheckOpen", CHECKOPENFILE));
+    strcpy(m_sCamIniConfig.szCamCheckOpenFile, m_cXfsReg.GetValue("Camera_Info", "CheckOpen", ""));
     if (strlen((char*)m_sCamIniConfig.szCamCheckOpenFile) < 2 ||
         m_sCamIniConfig.szCamCheckOpenFile[0] != '/') {
         memset(m_sCamIniConfig.szCamCheckOpenFile, 0x00,
                sizeof(m_sCamIniConfig.szCamCheckOpenFile));
-        memcpy(m_sCamIniConfig.szCamCheckOpenFile, CHECKOPENFILE, strlen(CHECKOPENFILE));
     }
     // CameraPic备份保存全路径	BASE64
     strcpy(m_sCamIniConfig.stCamSaveImageCfg.byImageSavePathBASE64, m_cXfsReg.GetValue("Camera_Info", "ImageSavePathBASE64", IMAGESAVEPATH_BASE64));
