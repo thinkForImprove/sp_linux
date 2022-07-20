@@ -113,7 +113,7 @@ INT CDevImpl_NT0861::OpenDevice(LPSTR lpMode)
             m_nRetErrOLD[1] = lRet;
         }
 
-        return ConvertCode_USB2Impl(lRet);
+        return IMP_ERR_DEVPORT_NOTOPEN;//ConvertCode_USB2Impl(lRet);
     }
 
     // 取设备名(用于查询设备是否断线)
