@@ -135,85 +135,104 @@ HRESULT CXFS_CAM::OnOpen(LPCSTR lpLogicalName)
         Log(ThisModule, __LINE__, "打开设备连接失败．ReturnCode:%d", hRet);
         //return WFS_ERR_HARDWARE_ERROR;
         //hRet = OnStatus();
-        int i;
-        char vid_1[5] = {0};
-        for(i=0; i < 4; i++)
+        if(m_sCamIniConfig.szCamOpenSetLogicName == 1)
         {
-            if(m_sCamIniConfig.stCamOpenType.szNisVid[i] > 'A' && m_sCamIniConfig.stCamOpenType.szNisVid[i] < 'Z')
+            int i;
+            char vid_1[5] = {0};
+            for(i=0; i < 4; i++)
             {
-                vid_1[i] = m_sCamIniConfig.stCamOpenType.szNisVid[i] + 32;
+                if(m_sCamIniConfig.stCamOpenType.szNisVid[i] > 'A' && m_sCamIniConfig.stCamOpenType.szNisVid[i] < 'Z')
+                {
+                    vid_1[i] = m_sCamIniConfig.stCamOpenType.szNisVid[i] + 32;
+                }
+                else
+                {
+                    vid_1[i] = m_sCamIniConfig.stCamOpenType.szNisVid[i];
+                }
             }
-            else
-            {
-                vid_1[i] = m_sCamIniConfig.stCamOpenType.szNisVid[i];
-            }
-        }
-        Log(ThisModule, __LINE__, "sec : %s", vid_1);
+            Log(ThisModule, __LINE__, "sec : %s", vid_1);
 
-        char pid_1[5] = {0};
-        for(i=0; i < 4; i++)
-        {
-            if(m_sCamIniConfig.stCamOpenType.szNisPid[i] > 'A' && m_sCamIniConfig.stCamOpenType.szNisPid[i] < 'Z')
+            char pid_1[5] = {0};
+            for(i=0; i < 4; i++)
             {
-                pid_1[i] = m_sCamIniConfig.stCamOpenType.szNisPid[i] + 32;
+                if(m_sCamIniConfig.stCamOpenType.szNisPid[i] > 'A' && m_sCamIniConfig.stCamOpenType.szNisPid[i] < 'Z')
+                {
+                    pid_1[i] = m_sCamIniConfig.stCamOpenType.szNisPid[i] + 32;
+                }
+                else
+                {
+                    pid_1[i] = m_sCamIniConfig.stCamOpenType.szNisPid[i];
+                }
             }
-            else
-            {
-                pid_1[i] = m_sCamIniConfig.stCamOpenType.szNisPid[i];
-            }
-        }
-        Log(ThisModule, __LINE__, "sec : %s", pid_1);
+            Log(ThisModule, __LINE__, "sec : %s", pid_1);
 
-        char vid_2[5] = {0};
-        for(i=0; i < 4; i++)
-        {
-            if(m_sCamIniConfig.stCamOpenType.szVisVid[i] > 'A' && m_sCamIniConfig.stCamOpenType.szVisVid[i] < 'Z')
+            char vid_2[5] = {0};
+            for(i=0; i < 4; i++)
             {
-                vid_2[i] = m_sCamIniConfig.stCamOpenType.szVisVid[i] + 32;
+                if(m_sCamIniConfig.stCamOpenType.szVisVid[i] > 'A' && m_sCamIniConfig.stCamOpenType.szVisVid[i] < 'Z')
+                {
+                    vid_2[i] = m_sCamIniConfig.stCamOpenType.szVisVid[i] + 32;
+                }
+                else
+                {
+                    vid_2[i] = m_sCamIniConfig.stCamOpenType.szVisVid[i];
+                }
             }
-            else
+            Log(ThisModule, __LINE__, "sec : %s", vid_2);
+
+            char pid_2[5] = {0};
+            for(i=0; i < 4; i++)
             {
-                vid_2[i] = m_sCamIniConfig.stCamOpenType.szVisVid[i];
+                if(m_sCamIniConfig.stCamOpenType.szVisPid[i] > 'A' && m_sCamIniConfig.stCamOpenType.szVisPid[i] < 'Z')
+                {
+                    pid_2[i] = m_sCamIniConfig.stCamOpenType.szVisPid[i] + 32;
+                }
+                else
+                {
+                    pid_2[i] = m_sCamIniConfig.stCamOpenType.szVisPid[i];
+                }
             }
-        }
-        Log(ThisModule, __LINE__, "sec : %s", vid_2);
+            Log(ThisModule, __LINE__, "sec : %s", pid_2);
 
-        char pid_2[5] = {0};
-        for(i=0; i < 4; i++)
-        {
-            if(m_sCamIniConfig.stCamOpenType.szVisPid[i] > 'A' && m_sCamIniConfig.stCamOpenType.szVisPid[i] < 'Z')
+            int nRet = SearchVideoIdxFromVidPid(vid_1, pid_1);
+            Log(ThisModule, __LINE__, "di yi gen:%d", nRet);
+
+            int rRet = SearchVideoIdxFromVidPid(vid_2, pid_2);
+            Log(ThisModule, __LINE__, "di er gen:%d", rRet);
+
+            int count = nRet + rRet;
+            if(count < 2 && count != 1)
             {
-                pid_2[i] = m_sCamIniConfig.stCamOpenType.szVisPid[i] + 32;
+                if(m_sCamIniConfig.szCamCheckOpenFile != nullptr)
+                {
+                    Log(ThisModule, __LINE__, "write ok:%d", m_sCamIniConfig.szCamOpenSetLogicName);
+                    Log(ThisModule, __LINE__, "write ok:%s", m_sCamIniConfig.szCamCheckOpenFile);
+
+                    QByteArray strFile(m_sCamIniConfig.szCamCheckOpenFile);
+                    CINIFileReader m_cINI;
+                    m_cINI.LoadINIFile(strFile.constData());
+                    CINIWriter cPR = m_cINI.GetWriterSection("default");
+                    cPR.SetValue("provider","NODEVICE");
+                }
             }
-            else
-            {
-                pid_2[i] = m_sCamIniConfig.stCamOpenType.szVisPid[i];
-            }
-        }
-        Log(ThisModule, __LINE__, "sec : %s", pid_2);
 
-        int nRet = SearchVideoIdxFromVidPid(vid_1, pid_1);
-        Log(ThisModule, __LINE__, "di yi gen:%d", nRet);
-
-        int rRet = SearchVideoIdxFromVidPid(vid_2, pid_2);
-        Log(ThisModule, __LINE__, "di er gen:%d", rRet);
-
-        int count = nRet + rRet;
-        if(count < 2 && count != 1)
-        {
-            if(m_sCamIniConfig.szCamCheckOpenFile != nullptr)
-            {
-                Log(ThisModule, __LINE__, "打开设备连接失败2222．ReturnCode:%s", m_sCamIniConfig.szCamCheckOpenFile);
-
-                QByteArray strFile(m_sCamIniConfig.szCamCheckOpenFile);
-                CINIFileReader m_cINI;
-                m_cINI.LoadINIFile(strFile.constData());
-                CINIWriter cPR = m_cINI.GetWriterSection("default");
-                cPR.SetValue("provider","NODEVICE");
-            }
+            CHAR szCamWriteFile[MAX_PATH] = "/etc/xfs/service_providers/CFES_CAM.ini";
+            QByteArray strFile_Write(szCamWriteFile);
+            CINIFileReader m_wINI;
+            m_wINI.LoadINIFile(strFile_Write.constData());
+            CINIWriter wPR = m_wINI.GetWriterSection("CAMERA_BANK_1");
+            wPR.SetValue("OpenSetLogicNameNoDevice",0);
         }
         return hErrCodeChg(hRet);
     }
+
+    CHAR szCamWriteFileOK[MAX_PATH] = "/etc/xfs/service_providers/CFES_CAM.ini";
+    QByteArray strFile_WriteOK(szCamWriteFileOK);
+    CINIFileReader m_wINIOK;
+    m_wINIOK.LoadINIFile(strFile_WriteOK.constData());
+    CINIWriter wPROK = m_wINIOK.GetWriterSection("CAMERA_BANK_1");
+    wPROK.SetValue("OpenSetLogicNameNoDevice",0);
+
     // 更新扩展状态
     CHAR szDevCAMVer[MAX_PATH] = { 0x00 };
     m_pDev->GetVersion(szDevCAMVer, sizeof(szDevCAMVer) - 1, 1);
@@ -281,6 +300,8 @@ INT CXFS_CAM::SearchVideoIdxFromVidPid(LPSTR lpVid, LPSTR lpPid)
                 if (MCMP_IS0(szGetVid, lpVid) && MCMP_IS0(szGetPid, lpPid))
                 {
                     count++;
+                    Log(ThisModule, __LINE__, "last2222222:%d", count);
+
                     nVideoIdx = atoi(udev_device_get_sysnum(stDevice));
                     udev_device_unref(stDevice);
                     udev_enumerate_unref(stUDevEnumErate);
@@ -291,11 +312,14 @@ INT CXFS_CAM::SearchVideoIdxFromVidPid(LPSTR lpVid, LPSTR lpPid)
             udev_device_unref(stDevice);
         } else
         {
+            Log(ThisModule, __LINE__, "second:%d", count);
+
             udev_enumerate_unref(stUDevEnumErate);
             udev_unref(stUDev);
             return 0;
         }
     }
+    Log(ThisModule, __LINE__, "last:%d", count);
 
     return 0;
 }
@@ -832,7 +856,9 @@ void CXFS_CAM::InitConifig()
     // 活体类型, 0:不活检 1: 红外活体 2:结构光活体
     m_sCamIniConfig.stCamCwInitParam.nLivenessMode = m_cXfsReg.GetValue("CWDetector_CFG", "livenessMode", 1);
     // 授权类型, 1:芯片授权 2：hasp授权 3:临时授权 4:云从相机绑定授权
-    m_sCamIniConfig.stCamCwInitParam.nLicenseType = m_cXfsReg.GetValue("CWDetector_CFG", "licenseType", 1);
+    m_sCamIniConfig.stCamCwInitParam.nLicenseType = m_cXfsReg.GetValue("CWDetector_CFG", "licenseType", 4);
+    Log(ThisModule, __LINE__, "nLicenseType:%d", m_sCamIniConfig.stCamCwInitParam.nLicenseType);
+
     // 算法矩阵文件,可以不写，使用默认
     strcpy(m_sCamIniConfig.stCamCwInitParam.szConfigFile, m_cXfsReg.GetValue("CWDetector_CFG", "configFile", ""));
     // 人脸检测模型,可以不写，使用默认
@@ -911,7 +937,13 @@ void CXFS_CAM::InitConifig()
         memcpy(m_sCamIniConfig.stCamSaveImageCfg.byImageInfoFile, IMAGEINFOFILE, strlen(IMAGEINFOFILE));
     }
 
+    m_sCamIniConfig.szCamOpenSetLogicName = (WORD)m_cXfsReg.GetValue("Camera_Info",
+                                                                  "OpenSetLogicNameNoDevice",int(0));
+
+
     strcpy(m_sCamIniConfig.szCamCheckOpenFile, m_cXfsReg.GetValue("Camera_Info", "CheckOpen", ""));
+    Log(ThisModule, __LINE__, "initconfig:%s", m_sCamIniConfig.szCamCheckOpenFile);
+
     if (strlen((char*)m_sCamIniConfig.szCamCheckOpenFile) < 2 ||
         m_sCamIniConfig.szCamCheckOpenFile[0] != '/') {
         memset(m_sCamIniConfig.szCamCheckOpenFile, 0x00,

@@ -139,6 +139,7 @@ struct st_cam_ini_config
     ULONG                ulCamDataSMemSize;
     WORD                 wCamDevType;
     CHAR                 szCamCheckOpenFile[MAX_PATH];
+    WORD                 szCamOpenSetLogicName;
     st_cam_ini_config()
     {
         memset(this, 0x00, sizeof(st_cam_ini_config));
