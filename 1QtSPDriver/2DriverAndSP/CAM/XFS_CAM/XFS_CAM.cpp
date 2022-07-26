@@ -220,7 +220,7 @@ HRESULT CXFS_CAM::OnOpen(LPCSTR lpLogicalName)
             QByteArray strFile_Write(szCamWriteFile);
             CINIFileReader m_wINI;
             m_wINI.LoadINIFile(strFile_Write.constData());
-            CINIWriter wPR = m_wINI.GetWriterSection("CAMERA_BANK_1");
+            CINIWriter wPR = m_wINI.GetWriterSection("Camera_Info");
             wPR.SetValue("OpenSetLogicNameNoDevice",0);
         }
         return hErrCodeChg(hRet);
@@ -230,7 +230,7 @@ HRESULT CXFS_CAM::OnOpen(LPCSTR lpLogicalName)
     QByteArray strFile_WriteOK(szCamWriteFileOK);
     CINIFileReader m_wINIOK;
     m_wINIOK.LoadINIFile(strFile_WriteOK.constData());
-    CINIWriter wPROK = m_wINIOK.GetWriterSection("CAMERA_BANK_1");
+    CINIWriter wPROK = m_wINIOK.GetWriterSection("Camera_Info");
     wPROK.SetValue("OpenSetLogicNameNoDevice",0);
 
     // 更新扩展状态
