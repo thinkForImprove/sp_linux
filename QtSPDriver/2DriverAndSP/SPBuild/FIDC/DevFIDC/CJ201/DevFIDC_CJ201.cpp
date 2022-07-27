@@ -162,9 +162,9 @@ int DevFIDC_CJ201::DetectCard(IDC_IDCSTAUTS &IDCstatus)
     //AutoMutex(m_MutexAction);
 
     VERTIFYISOPEN();
-    char pFWVersion[MAX_LEN_FWVERSION] = {0};
+    char pFWVersion[10][MAX_LEN_FWVERSION] = {0};
     unsigned int uLen = 0;
-    int iRet = GetFWVersion(pFWVersion, uLen);
+    int iRet = GetFWVersion(&pFWVersion[0], uLen);
     if (iRet != ERR_IDC_SUCCESS)
     {
         m_nCardStatus =  IDCSTATUS_UNKNOWN;
@@ -186,7 +186,7 @@ int DevFIDC_CJ201::DetectCard(IDC_IDCSTAUTS &IDCstatus)
     return iRet;
 }
 
-int DevFIDC_CJ201::GetFWVersion(char pFWVersion[MAX_LEN_FWVERSION], unsigned int &uLen)
+int DevFIDC_CJ201::GetFWVersion(char pFWVersion[10][MAX_LEN_FWVERSION], unsigned int &uLen)
 {
     const char *ThisModule = "GetFWVersion";
     int iLenOut = 0;

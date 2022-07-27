@@ -113,12 +113,12 @@ void MainWindow::on_BUTTON_GETFWVERSION_clicked()
     const char *ThisModule = "GETFWVERSION";
     if (m_pIDCDrv != nullptr)
     {
-        char szFWVer[256] = {0};
+        char szFWVer[10][256] = {0};
         unsigned int ulen = sizeof(szFWVer);
-        int iRet = m_pIDCDrv->GetFWVersion(szFWVer, ulen);
+        int iRet = m_pIDCDrv->GetFWVersion(&szFWVer[0], ulen);
         WriteLog(ThisModule, static_cast<int>(iRet));
         //WriteLog("\n");
-        WriteLog(szFWVer, false);
+        WriteLog(szFWVer[0], false);
     }
 }
 

@@ -1274,7 +1274,7 @@ INT CDevIDC_CRT::DetectCard(IDC_IDCSTAUTS &IDCstatus)
     return iRet;
 }
 
-INT CDevIDC_CRT::GetFWVersion(char pFWVersion[], unsigned int &uLen)
+INT CDevIDC_CRT::GetFWVersion(char pFWVersion[10][MAX_LEN_FWVERSION], unsigned int &uLen)
 {
     THISMODULE(__FUNCTION__);
     AutoMutex(m_MutexAction);
@@ -1317,9 +1317,8 @@ INT CDevIDC_CRT::GetFWVersion(char pFWVersion[], unsigned int &uLen)
     }
     char IC[MAX_LEN_FWVERSION] = "IC:";
     memcpy(IC+3, reply+8, 22);
-    strcpy(pVertion[0], IC);
-    pVertion[0][uLen - 1] = 0x00;
-    strcpy(pFWVersion, pVertion[0]);
+    strcpy(pFWVersion[0], IC);
+    pFWVersion[0][uLen - 1] = 0x00;
     uLen = strlen(pVertion[0]);
 
     char reply1[512] = {0};
@@ -1342,10 +1341,9 @@ INT CDevIDC_CRT::GetFWVersion(char pFWVersion[], unsigned int &uLen)
     }
     char EMV[MAX_LEN_FWVERSION] = "EMV:";
     memcpy(EMV+4, reply1+8, 22);
-    strcpy(pVertion[1], EMV);
-    pVertion[1][sizeof(pVertion[1]) - 1] = 0x00;
-    strcpy(pFWVersion+255, pVertion[1]);
-    uLen = uLen + strlen(pVertion[1]);
+    strcpy(pFWVersion[1], EMV);
+    pVertion[1][sizeof(pFWVersion[1]) - 1] = 0x00;
+    uLen = uLen + strlen(pFWVersion[1]);
 
     char reply2[512];
     nRet = SendCmd("CA4", nullptr, 0, ThisModule);
@@ -1370,10 +1368,9 @@ INT CDevIDC_CRT::GetFWVersion(char pFWVersion[], unsigned int &uLen)
     nRet = strcmp(MT, "MT:**********************");
     if(nRet != 0)
     {
-        strcpy(pVertion[2], MT);
-        pVertion[2][sizeof(pVertion[2]) - 1] = 0x00;
-        strcpy(pFWVersion +255 +255, pVertion[2]);
-        uLen = uLen + strlen(pVertion[2]);
+        strcpy(pFWVersion[2], MT);
+        pVertion[2][sizeof(pFWVersion[2]) - 1] = 0x00;
+        uLen = uLen + strlen(pFWVersion[2]);
     }
     return ERR_IDC_SUCCESS;
 /*

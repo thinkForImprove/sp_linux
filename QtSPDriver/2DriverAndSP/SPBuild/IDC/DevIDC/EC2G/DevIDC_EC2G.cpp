@@ -1055,7 +1055,7 @@ int CDevIDC_EC2G::DetectCard(IDC_IDCSTAUTS &IDCstatus)
     return iRet;
 }
 
-int CDevIDC_EC2G::GetFWVersion(char pFWVersion[MAX_LEN_FWVERSION], unsigned int &uLen)
+int CDevIDC_EC2G::GetFWVersion(char pFWVersion[10][MAX_LEN_FWVERSION], unsigned int &uLen)
 {
     THISMODULE(__FUNCTION__);
     AutoMutex(m_MutexAction);
@@ -1091,9 +1091,9 @@ int CDevIDC_EC2G::GetFWVersion(char pFWVersion[MAX_LEN_FWVERSION], unsigned int 
 
     memset(pFWVersion, 0, uLen);
     //memcpy(pszFWVersion, reply+7, nRet-10);
-    strcpy(pFWVersion, reply + 8);
-    pFWVersion[uLen - 1] = 0x00;
-    uLen = strlen(pFWVersion);
+    strcpy(pFWVersion[0], reply + 8);
+    pFWVersion[0][uLen - 1] = 0x00;
+    uLen = strlen(pFWVersion[0]);
     return ERR_IDC_SUCCESS;
 }
 

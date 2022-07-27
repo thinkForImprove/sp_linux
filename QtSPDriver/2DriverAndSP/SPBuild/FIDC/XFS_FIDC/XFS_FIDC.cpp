@@ -442,15 +442,33 @@ int CXFS_FIDC::GetFWVersion()
     THISMODULE(__FUNCTION__);
     AutoLogFuncBeginEnd();
 
-    char szFWVersion[MAX_LEN_FWVERSION] = {0};
-    unsigned int uLen = sizeof(szFWVersion);
-    int nRet = m_pDev->GetFWVersion(szFWVersion, uLen);
+    char szFWVersion[10][MAX_LEN_FWVERSION] = {0};
+    unsigned int uLen = 255; //sizeof(szFWVersion);
+    int nRet = m_pDev->GetFWVersion(&szFWVersion[0], uLen);
     UpdateDevStatus(nRet);
     if (nRet < 0)
         return WFS_ERR_HARDWARE_ERROR;
-
-    m_cCapExtra.AddExtra("VRTDetail[01]", szFWVersion);
-    Log(ThisModule, 0, "设备固件版本信息：%s", szFWVersion);
+    int count = 1, row = 0;
+    char detail[255];
+    for(row = 0; row < 10; row++)
+    {
+        if(strlen(szFWVersion[row]) != 0)
+        {
+            char ver[255] = "VERDetail[";
+            memset(detail, 0, sizeof(detail));
+            sprintf(detail, "%02d", count);
+            strcat(ver, detail);
+            strcat(ver, "]");
+            Log(ThisModule, 0, "设备固件版本信息%s", szFWVersion[row]);
+            m_cCapExtra.AddExtra(ver, szFWVersion[row]);
+            count++;
+        }
+    }
+    sprintf(detail, "%d", count);
+    m_cCapExtra.AddExtra("VERCount", detail);
+/*
+    m_cCapExtra.AddExtra("VRTDetail[01]", szFWVersion[0]);
+*/
     return nRet;
 }
 
@@ -509,9 +527,9 @@ void CXFS_FIDC::InitCaps()
     m_Caps.bReadWriteAccessFollowingEject = FALSE;
     m_Caps.lpszExtra = NULL;
 
-    m_cCapExtra.AddExtra("VRTCount", "2");
-    m_cCapExtra.AddExtra("VRTDetail[00]", "0000000000000000");             // SP版本程序名称8位+版本8位
-    m_cCapExtra.AddExtra("VRTDetail[01]", "");
+    m_cCapExtra.AddExtra("VERCount", "1");
+    m_cCapExtra.AddExtra("VERDetail[00]", "0000000000000000");             // SP版本程序名称8位+版本8位
+    m_cCapExtra.AddExtra("VERDetail[01]", "");
 }
 
 void CXFS_FIDC::SetTrackInfo(WORD wSource, WORD wStatus, ULONG uLen, LPBYTE pData)

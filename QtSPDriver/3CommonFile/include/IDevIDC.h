@@ -320,7 +320,7 @@ struct  IDevIDC
              uLen: 版本有效信息长度
     ** 返回: 见返回错误码定义
     ************************************************************/
-    virtual int GetFWVersion(char pFWVersion[MAX_LEN_FWVERSION], unsigned int &uLen) = 0;
+    virtual int GetFWVersion(char pFWVersion[10][MAX_LEN_FWVERSION], unsigned int &uLen) = 0;
 
     /************************************************************
     ** 功能: 设置回收计数器

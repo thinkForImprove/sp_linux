@@ -7,6 +7,7 @@ TMZDriver::TMZDriver()
     ICReaderOpenUsbByFD = nullptr;
     ICReaderClose = nullptr;
     ICReaderGetVer = nullptr;
+    ICReaderReadDevSnr = nullptr;
     ICReaderBeep = nullptr;
     ICReaderDevStatus = nullptr;
     GetCardState = nullptr;
@@ -68,6 +69,9 @@ BOOL TMZDriver::LoadSdkIntf()
 
     ICReaderGetVer = (FNICReaderGetVer)m_sdkLibrary.resolve("ICReaderGetVer");
     FUNC_POINTER_ERROR_RETURN(ICReaderGetVer);
+
+    ICReaderReadDevSnr = (FNICReaderReadDevSnr)m_sdkLibrary.resolve("ICReaderReadDevSnr");
+    FUNC_POINTER_ERROR_RETURN(ICReaderReadDevSnr);
 
     ICReaderBeep = (FNICReaderBeep)m_sdkLibrary.resolve("ICReaderBeep");
     FUNC_POINTER_ERROR_RETURN(ICReaderBeep);

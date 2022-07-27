@@ -203,7 +203,7 @@ int CDevFIDC_MT50::DetectCard(IDC_IDCSTAUTS &IDCstatus)
     return m_eCardStatus == IDCSTATUS_UNKNOWN ? ERR_IDC_OFFLINE : ERR_IDC_SUCCESS;
 }
 
-int CDevFIDC_MT50::GetFWVersion(char pFWVersion[], unsigned int &uLen)
+int CDevFIDC_MT50::GetFWVersion(char pFWVersion[10][MAX_LEN_FWVERSION], unsigned int &uLen)
 {
     THISMODULE(__FUNCTION__);
     AutoLogFuncBeginEnd();
@@ -220,11 +220,13 @@ int CDevFIDC_MT50::GetFWVersion(char pFWVersion[], unsigned int &uLen)
     }
     //GetVersion
     string strVerInfo;
+
     char szTemp[64];
     int nLen = 0;
     ZeroMemory(szTemp, sizeof(szTemp));
 
     int nRet = get_device_version(szTemp ,&nLen);
+    Log(ThisModule, __LINE__, "Get version dev,nRet:%s.", szTemp);
     if (nRet != 0)
     {
         Log(ThisModule, __LINE__, "Get version failed,nRet:%d.", nRet);
@@ -232,21 +234,35 @@ int CDevFIDC_MT50::GetFWVersion(char pFWVersion[], unsigned int &uLen)
         return ConvertErrorCode(nRet);
     }
 
-    strVerInfo.append(szTemp, nLen);
-    nRet = get_so_version(szTemp, &nLen);
+    char DEV[MAX_LEN_FWVERSION] = "DEV:";
+    memcpy(DEV+4, szTemp, 22);
+    strcpy(pFWVersion[0], DEV);
+    pFWVersion[0][uLen - 1] = 0x00;
+    uLen = strlen(pFWVersion[0]);
+
+//   strVerInfo.append(szTemp, nLen);
+    char szTemp1[64] = {0};
+    nRet = get_so_version(szTemp1, &nLen);
+    Log(ThisModule, __LINE__, "Get version SO,nRet:%s.", szTemp1);
+
     if(nRet != 0){
         Log(ThisModule, __LINE__, "Get so version failed,nRet:%d.", nRet);
         UpdateErrorCode(nRet, 1);
         return ConvertErrorCode(nRet);
     }
-
+    char SO[MAX_LEN_FWVERSION] = ".SO:";
+    memcpy(SO+4, szTemp1, 22);
+    strcpy(pFWVersion[1], SO);
+    pFWVersion[1][sizeof(pFWVersion[1]) - 1] = 0x00;
+    uLen = uLen + strlen(pFWVersion[1]);
+/*
     strVerInfo.append("|");
     strVerInfo.append(szTemp, nLen);
 
     memset(pFWVersion, 0, uLen);
     uLen = qMin((size_t)strVerInfo.size(), (size_t)uLen - 1);
     memcpy(pFWVersion, strVerInfo.c_str(), uLen);
-
+*/
     return ERR_IDC_SUCCESS;
 }
 

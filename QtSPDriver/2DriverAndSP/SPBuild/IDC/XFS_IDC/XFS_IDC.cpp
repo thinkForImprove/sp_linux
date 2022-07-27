@@ -3124,8 +3124,8 @@ int CXFS_IDC::GetFWVersion()
     AutoLogFuncBeginEnd();
 
     char szFWVersion[10][MAX_LEN_FWVERSION] = {0};
-    unsigned int uLen = sizeof(szFWVersion);
-    int nRet = m_pDev->GetFWVersion(szFWVersion[0], uLen);
+    unsigned int uLen = 255;//sizeof(szFWVersion);
+    int nRet = m_pDev->GetFWVersion(&szFWVersion[0], uLen);
     UpdateDevStatus(nRet);
     if (nRet < 0)
         return WFS_ERR_HARDWARE_ERROR;
@@ -3137,12 +3137,7 @@ int CXFS_IDC::GetFWVersion()
         {
             char ver[255] = "VERDetail[";
             memset(detail, 0, sizeof(detail));
-            if(count < 10){
-                sprintf(detail, "0%d", count);
-            }
-            else{
-                sprintf(detail, "%d", count);
-            }
+            sprintf(detail, "%02d", count);
             strcat(ver, detail);
             strcat(ver, "]");
             Log(ThisModule, 0, "设备固件版本信息%s", szFWVersion[row]);

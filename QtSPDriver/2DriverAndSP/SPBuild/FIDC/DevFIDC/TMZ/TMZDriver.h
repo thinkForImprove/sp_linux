@@ -18,6 +18,8 @@
 typedef long (* FNICReaderOpenUsbByFD)(unsigned int uiFD);
 typedef int  (* FNICReaderClose)(long icdev);
 typedef int  (* FNICReaderGetVer)(long icdev, char *pVer);
+typedef int  (* FNICReaderReadDevSnr)(long icdev, unsigned char rlen, char *pSN);
+
 typedef int  (* FNICReaderBeep)(long icdev, unsigned char uMsec, unsigned char uDelay, unsigned char uNum);
 typedef int  (* FNICReaderDevStatus)(long icdev, unsigned char *uStatus);
 typedef int  (* FNGetCardState)(long icdev, unsigned char uSlot, int* uState);
@@ -50,6 +52,7 @@ public:
     FNICReaderOpenUsbByFD ICReaderOpenUsbByFD;
     FNICReaderClose       ICReaderClose;
     FNICReaderGetVer      ICReaderGetVer;
+    FNICReaderReadDevSnr  ICReaderReadDevSnr;
     FNICReaderBeep        ICReaderBeep;
     FNICReaderDevStatus   ICReaderDevStatus;
     FNGetCardState        GetCardState;

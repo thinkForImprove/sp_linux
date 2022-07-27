@@ -221,7 +221,7 @@ int CDevFIDC_TMZ::DetectCard(IDC_IDCSTAUTS &IDCstatus)
     return ERR_IDC_SUCCESS;
 }
 
-int CDevFIDC_TMZ::GetFWVersion(char pFWVersion[], unsigned int &uLen)
+int CDevFIDC_TMZ::GetFWVersion(char pFWVersion[10][MAX_LEN_FWVERSION], unsigned int &uLen)
 {
     THISMODULE(__FUNCTION__);
     AutoLogFuncBeginEnd();
@@ -249,13 +249,32 @@ int CDevFIDC_TMZ::GetFWVersion(char pFWVersion[], unsigned int &uLen)
         UpdateErrorCode(nRet, 1);
         return ConvertErrorCode(nRet);
     }
+    char DEV[MAX_LEN_FWVERSION] = "Ver:";
+    memcpy(DEV+4, szTemp, 22);
+    strcpy(pFWVersion[0], DEV);
+    pFWVersion[0][uLen - 1] = 0x00;
+    uLen = strlen(pFWVersion[0]);
 
+    char szTemp1[64] = {0};
+    nRet = m_TMZDriver.ICReaderReadDevSnr(m_lDevHdl, 20, szTemp);
+    if (nRet != 0)
+    {
+        Log(ThisModule, __LINE__, "Get version failed,nRet:%d.", nRet);
+        UpdateErrorCode(nRet, 1);
+        return ConvertErrorCode(nRet);
+    }
+    char Snr[MAX_LEN_FWVERSION] = "Snr:";
+    memcpy(Snr+4, szTemp1, 22);
+    strcpy(pFWVersion[1], Snr);
+    pFWVersion[1][sizeof(pFWVersion[1]) - 1] = 0x00;
+    uLen = uLen + strlen(pFWVersion[1]);
+/*
     strVerInfo.append(szTemp);
 
     memset(pFWVersion, 0, uLen);
     uLen = qMin((size_t)strVerInfo.size(), (size_t)uLen - 1);
     memcpy(pFWVersion, strVerInfo.c_str(), uLen);
-
+*/
     return ERR_IDC_SUCCESS;
 }
 

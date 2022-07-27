@@ -43,7 +43,7 @@ public:
     virtual int WriteTracks(const STTRACK_INFO &stTrackInfo);
     virtual int ReadTracks(STTRACK_INFO &stTrackInfo);
     virtual int DetectCard(IDC_IDCSTAUTS &IDCstatus);
-    virtual int GetFWVersion(char pFWVersion[MAX_LEN_FWVERSION], unsigned int &uLen);
+    virtual int GetFWVersion(char pFWVersion[10][MAX_LEN_FWVERSION], unsigned int &uLen);
     virtual int SetRecycleCount(LPCSTR pszCount);
 
     /*--------------------- 以下IC卡操作接口-------------------------*/
