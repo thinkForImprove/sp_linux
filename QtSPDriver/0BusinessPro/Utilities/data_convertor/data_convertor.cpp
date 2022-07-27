@@ -1896,3 +1896,102 @@ DWORD DataConvertor::Hex2Ascii(LPCSTR lpcHex, DWORD dwHexSize, LPSTR lpAscii, DW
     return dwAsciiChgSize;
 }
 
+/**
+ @功能：	整型转换为16进制字符串
+ @参数：	 lSource: 转换源
+ @       lpAscii: 返回转换后ASCII字串空间  dwAsciiSize: 返回转换后ASCII字串大小
+ @返回：	转换成功, 返回转换的字串长度, 字串无效或不成功返回0
+ */
+DWORD DataConvertor::Int_To_HexStr(LONG lSource, LPSTR lpDest, DWORD dwDestSize)
+{
+    LONG lData = lSource;
+    INT nHex = 0;
+    CHAR szChgBuff[1024] = { 0x00 };
+    DWORD dwChgSize = 0;
+    BOOL bIsInDest = TRUE;
+
+    if (lpDest == nullptr || dwDestSize < 1)
+    {
+        bIsInDest = FALSE;
+    }
+
+    if (lSource <= 0)
+    {
+        if (lpDest != nullptr && dwDestSize > 0)
+        {
+            sprintf(lpDest, "0");
+        }
+        return 1;
+    }
+
+    while(lData != 0)
+    {
+        nHex = (lData & 0xF);
+        if (nHex < 10)
+        {
+            szChgBuff[dwChgSize ++] = nHex + 0x30;
+        } else
+        {
+            szChgBuff[dwChgSize ++] = nHex + 0x41;
+        }
+
+        lData = (lData >> 4);
+    }
+
+    if (bIsInDest == TRUE)
+    {
+        INT nLen = (dwChgSize >= dwDestSize ? dwDestSize : dwChgSize);
+
+        for (INT i = 0; i < nLen; i ++)
+        {
+            lpDest[i] = szChgBuff[dwChgSize - 1 - i];
+        }
+    }
+
+    return dwChgSize;
+}
+
+/**
+ @功能：	字串转换为大写
+ @参数：	 lpHex: 转换源字串(16进制)   dwHexSize: : 转换源字串大小
+ @       lpAscii: 返回转换后ASCII字串空间  dwAsciiSize: 返回转换后ASCII字串大小
+ @返回：	转换成功, 返回转换的字串长度, 字串无效或不成功返回0
+ */
+DWORD DataConvertor::str_to_toupper(LPCSTR lpcSource, DWORD dwSourceSize, LPSTR lpDest, DWORD dwDestSize)
+{
+    if (lpcSource == nullptr || dwSourceSize < 1)
+    {
+        return 0;
+    }
+
+    if (lpDest == nullptr || dwDestSize < 1)
+    {
+        return 0;
+    }
+
+    std::string stdToupper = "";
+    for(INT i = 0; i < dwSourceSize; i ++)
+    {
+        if (lpcSource[i] != 0x00)
+        {
+            if (lpcSource[i] >= 'a' && lpcSource[i] <= 'z')
+            {
+                stdToupper.append((CHAR*)lpcSource[i] - 32);
+            } else
+            {
+                stdToupper.append((CHAR*)lpcSource[i]);
+            }
+        } else
+        {
+            break;
+        }
+    }
+
+    DWORD dwSize = stdToupper.length();
+
+    memcpy(lpDest, stdToupper.c_str(), dwSize >= dwDestSize ? dwDestSize : dwSize);
+
+    return dwSize;
+}
+
+

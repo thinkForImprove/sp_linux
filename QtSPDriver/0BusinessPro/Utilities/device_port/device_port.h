@@ -28,10 +28,13 @@ public:
     static INT SearchVideoIdxFromVidPid(LPCSTR lpcVid, LPCSTR lpcPid);      // 根据Vid+Pid取得摄像设备索引序号
     static INT SearchDeviceNameIsHave(LPCSTR lpcDevName);                   // 查找设备名是否存在
     static INT SearchDeviceVidPidIsHave(LPCSTR lpcVid, LPCSTR lpcPid);      // 查找设备VidPid是否存在
+    static INT SearchVideoXIsHave(WORD wID);                                // 查找/dev/videoX是否存在
+    static INT SearchVideoIdxIsHave(WORD wIdx);                             // 查找摄像设备索引序号是否存在
     static INT GetComDevName(LPCSTR lpMode, LPSTR lpDevName, INT nDevNameLen);// 取COM串设备名
 
 private:
     static INT SearchDeviceIsHave(WORD wMode, LPCSTR lpcDevName, LPCSTR lpcVid, LPCSTR lpcPid);// 查找设备是否存在
+    static DWORD str_to_toupper(LPCSTR lpcSource, DWORD dwSourceSize, LPSTR lpDest, DWORD dwDestSize);
 };
 
 #endif // DEVICE_PORT_H

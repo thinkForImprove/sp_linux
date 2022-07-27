@@ -192,29 +192,54 @@ extern "C" DEVCAM_EXPORT long CreateIDevCAM(LPCSTR lpDevType, IDevCAM *&p);
 // 错误码相关定义
 //****************************************************************************
 // 成功
-#define CAM_SUCCESS                     (0)
+#define CAM_SUCCESS                     0
 
 // 警告
-#define ERR_CAM_USER_CANCEL             (1)     // 用户取消
+#define ERR_CAM_USER_CANCEL             1       // 用户取消
 
 // 通用错误(-1 ~ -99)
-#define ERR_CAM_LIBRARY                 (-1)    // 动态库加载失败
-#define ERR_CAM_PARAM_ERR               (-2)    // 参数错误
-#define ERR_CAM_UNSUP_CMD               (-3)    // 不支持的指令/接口
-#define ERR_CAM_DATA_FAIL               (-4)    // 数据错误
-#define ERR_CAM_TIMEOUT                 (-5)    // 超时
-#define ERR_CAM_USER_ERR                (-6)    // 用户使用错误
-#define ERR_CAM_OTHER                   (-98)   // 其它错误(知道错误原因,不细分类别)
-#define ERR_CAM_UNKNOWN                 (-99)   // 未知错误(不知原因的错误)
+#define ERR_CAM_LIBRARY                 -1      // 动态库加载失败
+#define ERR_CAM_PARAM_ERR               -2      // 参数错误
+#define ERR_CAM_UNSUP_CMD               -3      // 不支持的指令/接口
+#define ERR_CAM_DATA_FAIL               -4      // 数据错误
+#define ERR_CAM_TIMEOUT                 -5      // 超时
+#define ERR_CAM_USER_ERR                -6      // 用户使用错误
+#define ERR_CAM_OTHER                   -98     // 其它错误(知道错误原因,不细分类别)
+#define ERR_CAM_UNKNOWN                 -99     // 未知错误(不知原因的错误)
 
 // 其他错误
-#define ERR_CAM_NOTOPEN                 (-100)  // 设备未打开
-#define ERR_CAM_NODEVICE                (-101)  // 设备不存在
-#define ERR_CAM_OFFLINE                 (-102)  // 设备断线
-#define ERR_CAM_PROCESS                 (-103)  // 进程/线程错误
-#define ERR_CAM_SAVE_IMAGE              (-104)  // 图像无法保存
-#define ERR_CAM_LOAD_IMAGE              (-105)  // 图像无法加载
-#define ERR_CAM_SHAREDMEM               (-106)  // 共享内存错误
+#define ERR_CAM_NOTOPEN                 -100    // 设备未打开
+#define ERR_CAM_OPENFAIL                -101    // 设备打开失败
+#define ERR_CAM_NODEVICE                -102    // 设备不存在
+#define ERR_CAM_OFFLINE                 -103    // 设备断线
+#define ERR_CAM_PROCESS                 -104    // 进程/线程错误
+#define ERR_CAM_SAVE_IMAGE              -105    // 图像保存错误
+#define ERR_CAM_LOAD_IMAGE              -106    // 图像无法加载
+#define ERR_CAM_SHAREDMEM               -107    // 共享内存错误
+#define ERR_CAM_LIVEDETECT              -108    // 活体检测失败
+
+// 用于标记display/TakePicture接口摄像模式入参
+#define DEV_CAM_MODE_ROOM               0       //
+#define DEV_CAM_MODE_PERSON             1       //
+#define DEV_CAM_MODE_EXITSLOT           2       //
+#define DEV_CAM_MODE_EXTRA              3       //
+#define DEV_CAM_MODE_HIGHT              4       //
+#define DEV_CAM_MODE_PANORA             5       //
+
+// LiveError: 活检图像状态事件错误码
+#define LIVE_ERR_OK                 0   // 活检图像正常
+#define LIVE_ERR_VIS_NOFACE         1   // 可见光未检测到人脸
+#define LIVE_ERR_FACE_SHELTER       2   // 人脸有遮挡(五官有遮挡,戴镜帽等)
+#define LIVE_ERR_FACE_ANGLE_FAIL    3   // 人脸角度不满足要求(低头/抬头/侧脸等)
+#define LIVE_ERR_FACE_EYECLOSE      4   // 检测到闭眼
+#define LIVE_ERR_FACE_MOUTHOPEN     5   // 检测到张嘴
+#define LIVE_ERR_FACE_SHAKE         6   // 检测到人脸晃动/模糊
+#define LIVE_ERR_FACE_MULTIPLE      7   // 检测到多张人脸
+#define LIVE_ERR_IS_UNLIVE          8   // 检测到非活体
+#define LIVE_ERR_FACE_TOOFAR        9   // 人脸离摄像头太远
+#define LIVE_ERR_FACE_TOONEAR       10  // 人脸离摄像头太近
+#define LIVE_ERR_NIS_NOFACE         11  // 红外光未检测到人脸
+#define LIVE_ERR_UNKNOWN            99  // 其他/未知错误
 
 
 //***************************************************************************
@@ -506,12 +531,14 @@ public:
             case ERR_CAM_UNKNOWN:           return WFS_ERR_HARDWARE_ERROR;      // 未知错误(不知原因的错误)
             // 其他错误
             case ERR_CAM_NOTOPEN:           return WFS_ERR_HARDWARE_ERROR;      // 设备未打开
+            case ERR_CAM_OPENFAIL:          return WFS_ERR_HARDWARE_ERROR;      // 设备打开失败
             case ERR_CAM_NODEVICE:          return WFS_ERR_HARDWARE_ERROR;      // 设备不存在
             case ERR_CAM_OFFLINE:           return WFS_ERR_HARDWARE_ERROR;      // 设备断线
             case ERR_CAM_PROCESS:           return WFS_ERR_SOFTWARE_ERROR;      // 进程/线程错误
             case ERR_CAM_SAVE_IMAGE:        return WFS_ERR_SOFTWARE_ERROR;      // 图像无法保存
             case ERR_CAM_LOAD_IMAGE:        return WFS_ERR_SOFTWARE_ERROR;      // 图像无法加载
             case ERR_CAM_SHAREDMEM:         return WFS_ERR_SOFTWARE_ERROR;      // 共享内存错误
+            case ERR_CAM_LIVEDETECT:        return WFS_ERR_HARDWARE_ERROR;      // 活体检测失败
             default:                        return WFS_ERR_HARDWARE_ERROR;
         }
     }
@@ -541,12 +568,14 @@ public:
             case ERR_CAM_UNKNOWN:           CONV_CAM_CODE_STR(nRet, "未知错误(不知原因的错误)")
             // 其他错误
             case ERR_CAM_NOTOPEN:           CONV_CAM_CODE_STR(nRet, "设备未打开")
+            case ERR_CAM_OPENFAIL:          CONV_CAM_CODE_STR(nRet, "设备打开失败")
             case ERR_CAM_NODEVICE:          CONV_CAM_CODE_STR(nRet, "设备不存在")
             case ERR_CAM_OFFLINE:           CONV_CAM_CODE_STR(nRet, "设备断线")
             case ERR_CAM_PROCESS:           CONV_CAM_CODE_STR(nRet, "进程/线程错误")
             case ERR_CAM_SAVE_IMAGE:        CONV_CAM_CODE_STR(nRet, "图像无法保存")
             case ERR_CAM_LOAD_IMAGE:        CONV_CAM_CODE_STR(nRet, "图像无法加载")
             case ERR_CAM_SHAREDMEM:         CONV_CAM_CODE_STR(nRet, "共享内存错误")
+          case ERR_CAM_LIVEDETECT:          CONV_CAM_CODE_STR(nRet, "活体检测失败")
             default:                        CONV_CAM_CODE_STR(nRet, "未定义错误");
         }
 
@@ -575,6 +604,42 @@ public:
             case EN_EVENTACT_SWERROR    /* 软件错误 */      : return WFS_ERR_ACT_SWERROR;
             case EN_EVENTACT_CONFIG     /* 配置错误 */      : return WFS_ERR_ACT_CONFIG;
             default: return WFS_ERR_ACT_RESET;
+        }
+    }
+
+    // 活检状态转换为WFS格式
+    WORD ConvertLiveErr2WFS(WORD wError)
+    {
+        switch(wError)
+        {
+            case LIVE_ERR_OK:                   // 0:活检图像正常
+                return WFS_CAM_LIVE_ERR_OK;
+            case LIVE_ERR_VIS_NOFACE:           // 1:可见光未检测到人脸
+                return WFS_CAM_LIVE_ERR_VIS_NOFACE;
+            case LIVE_ERR_FACE_SHELTER:         // 2:人脸有遮挡(五官有遮挡,戴镜帽等)
+                return WFS_CAM_LIVE_ERR_FACE_SHELTER;
+            case LIVE_ERR_FACE_ANGLE_FAIL:      // 3:人脸角度不满足要求(低头/抬头/侧脸等)
+                return WFS_CAM_LIVE_ERR_FACE_ANGLE_FAIL;
+            case LIVE_ERR_FACE_EYECLOSE:        // 4:检测到闭眼
+                return WFS_CAM_LIVE_ERR_FACE_EYECLOSE;
+            case LIVE_ERR_FACE_MOUTHOPEN:       // 5:检测到张嘴
+                return WFS_CAM_LIVE_ERR_FACE_MOUTHOPEN;
+            case LIVE_ERR_FACE_SHAKE:           // 6:检测到人脸晃动/模糊
+                return WFS_CAM_LIVE_ERR_FACE_SHAKE;
+            case LIVE_ERR_FACE_MULTIPLE:        // 7:检测到多张人脸
+                return WFS_CAM_LIVE_ERR_FACE_MULTIPLE;
+            case LIVE_ERR_IS_UNLIVE:            // 8:检测到非活体
+                return WFS_CAM_LIVE_ERR_IS_UNLIVE;
+            case LIVE_ERR_FACE_TOOFAR:          // 9:人脸离摄像头太远
+                return WFS_CAM_LIVE_ERR_FACE_TOOFAR;
+            case LIVE_ERR_FACE_TOONEAR:         // 10:人脸离摄像头太近
+                return WFS_CAM_LIVE_ERR_FACE_TOONEAR;
+            case LIVE_ERR_NIS_NOFACE:           // 11:红外光未检测到人脸
+                return WFS_CAM_LIVE_ERR_NIS_NOFACE;
+            case LIVE_ERR_UNKNOWN:              // 99:其他/未知错误
+                return WFS_CAM_LIVE_ERR_UNKNOWN;
+            default:
+                return WFS_CAM_LIVE_ERR_UNKNOWN;
         }
     }
 };

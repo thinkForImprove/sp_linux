@@ -166,6 +166,7 @@ typedef DWORD                       COLORREF;
 
 // 与或非处理
 #define AND_IS1(s, d) ((s & d) == d)
+#define AND_IS0(s, d) ((s & d) != d)
 
 // 转换: 0.1毫米单位转1毫米单位
 #define M01M2MM(MM) (INT)((MM + 5) / 10)

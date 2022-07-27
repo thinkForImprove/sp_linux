@@ -155,6 +155,7 @@ public:
     static unsigned long posix_get_write_time_of_files(
         const char* file_dir_path, bool recursive, tm* write_time_array, unsigned long max_count, bool need_sort);
     static bool create_process(const char* expression);
+    static BOOL WriteDataToFile(LPCSTR lpcFile, LPCSTR lpcData, INT nDataSize);
 };
 #ifdef WIN32
 #define find_file_names win_find_file_names

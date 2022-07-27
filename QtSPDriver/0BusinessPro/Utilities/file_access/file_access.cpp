@@ -2663,3 +2663,32 @@ bool FileAccess::create_process(const char* expression)
 
     return true;
 }
+
+/**
+ @功能：	数据写入指定文件
+ @参数：
+ @返回：	false：失败    true：成功
+ */
+BOOL FileAccess::WriteDataToFile(LPCSTR lpcFile, LPCSTR lpcData, INT nDataSize)
+{
+    if (lpcFile == nullptr || lpcData == nullptr || nDataSize == 0)
+    {
+        return TRUE;
+    }
+
+    if (strlen(lpcData) == 0)
+    {
+        return TRUE;
+    }
+
+    FILE *fp = NULL;
+    if ((fp = fopen(lpcFile, "a+")) == NULL)
+    {
+        return FALSE;
+    }
+    //fseek(fp, 0, SEEK_END);
+    fwrite(lpcData, 1, nDataSize, fp);
+    fclose(fp);
+
+    return TRUE;
+}

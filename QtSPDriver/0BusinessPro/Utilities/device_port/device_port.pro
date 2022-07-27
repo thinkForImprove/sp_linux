@@ -52,10 +52,10 @@ unix {
 
 # Setting the depending libs
 CONFIG(debug, debug|release) {
-    LIBS += -ludev
+    LIBS += -lfile_accessd -ldata_convertord -ludev
 } else
 CONFIG(release, debug|release) {
-    LIBS += -ludev
+    LIBS += -lfile_access -ldata_convertor -ludev
 }
 
 #unix {

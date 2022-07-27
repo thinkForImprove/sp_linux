@@ -11,6 +11,7 @@
 #define ERRORCODE_H
 
 #include "QtTypeDef.h"
+#include "data_convertor.h"
 
 /*********************************************************************************
  * 错误码字符串用于 STATUS中ErrDetail/LaseErrDetail显示
@@ -36,7 +37,7 @@
  *             (7). 110~1FF保留
  *         401～4FF: 标记DevXXX层模块内错误码, 适用各SP模块不相同的错误码, 各SP模块自行定义
  *    Byte 5~12: 用于标记硬件或厂商SDK返回的错误, 该节有两种记录方式, 如下:
- *             (1). 对于支持多类硬件的模块, Byte8用于指定硬件编号(暂定各模块INI中定义设备类型)
+ *             (1). 对于支持多类硬件的模块, Byte5用于指定硬件编号(暂定各模块INI中定义设备类型)
  *             (2). 对于只支持一类硬件的模块, 可使用全部8Byte或自由设置
  *        注: 该节有效标记为[0~F], 避免使用特殊符号.
  *
@@ -125,6 +126,7 @@
 #define EC_DEV_CommTimeOut                  "362"               // 通信超时
 #define EC_DEV_DataRWErr                    "363"               // 数据读写错误
 #define EC_DEV_SDKFail                      "364"               // SDK调用错误
+#define EX_DEV_InTerExec                    "365"               // 接口执行错误
 
 // DEV 共通 错误码定义(380~39F): 其他错误相关:
 #define EC_DEV_LibraryNotFound              "380"               // 动态库未找到
@@ -200,6 +202,7 @@
 #define EC_CAM_DEV_VideoIdxNotFount         "401"               // 摄像设备号未找到
 #define EC_CAM_DEV_GetImageErr              "402"               // 取图像数据失败
 #define EC_CAM_DEV_SaveImageErr             "403"               // 保存图像失败
+#define EC_CAM_DEV_NotLiveDetect            "403"               // 未检测到活体
 
 
 //****************************************************************************
@@ -231,7 +234,7 @@ public:
     // XFS_XXX传入 stSPName.szName指定的模块名
     // DevXXX传入对应模块INI定义的设备类型(1Byte)
     // stSPName.szName优先检查,不符合默认为DevXXX方式参数
-    CErrorDetail(LPSTR lpSPName)
+    CErrorDetail(LPSTR lpSPName = nullptr)
     {
         MSET_0(m_szSPErrCode);
         MSET_0(m_szSPErrCodeLast);
@@ -384,19 +387,62 @@ public:
         }
         return 0;
     }
+    // 设置硬件返回分段错误码(入参字符串)
+    // wDevID: INI定义设备类型编号(整数)
+    INT SetHWErrCodeStr(LPCSTR lpcCode, WORD wDevID)
+    {
+        MSET_XS(m_szSPErrCode + 4, 0x30, EC_ALL_LEN - 4);
+        if (wDevID <= 16)
+        {
+            CHAR szTmp[64] = { 0x00 };
+            sprintf(szTmp, "%X%07s", wDevID, lpcCode);
+            memcpy(m_szSPErrCode + 1 + 3, szTmp, 8);
+        } else
+        {
+            CHAR szTmp[64] = { 0x00 };
+            sprintf(szTmp, "%08s", lpcCode);
+            memcpy(m_szSPErrCode + 1 + 3, szTmp, 8);
+        }
+        return 0;
+    }
     // 设置硬件返回分段错误码(入参正整数)
     INT SetHWErrCodeHex(UINT unCode, LPCSTR lpcDevType = nullptr)
     {
-        //MSET_X0(m_szSPErrCodeLast, 0x30);
-        //MCPY_NOLEN(m_szSPErrCodeLast, m_szSPErrCode);
+        CHAR szHex[1024] = { 0x00 };
+        DataConvertor::Int_To_HexStr(unCode, szHex, sizeof(szHex));
+
+        MSET_XS(m_szSPErrCode + 4, 0x30, EC_ALL_LEN - 4);
         if (lpcDevType != nullptr)
         {
-            m_szSPErrCode[1 + 3 + 3] = lpcDevType[0];
+            CHAR szTmp[64] = { 0x00 };
+            sprintf(szTmp, "%c%07s", lpcDevType[0], szHex);
+            memcpy(m_szSPErrCode + 1 + 3, szTmp, 8);
         } else
         {
-            m_szSPErrCode[1 + 3 + 3] = '0';
+            CHAR szTmp[64] = { 0x00 };
+            sprintf(szTmp, "%08s", szHex);
+            memcpy(m_szSPErrCode + 1 + 3, szTmp, 8);
         }
-        sprintf(m_szSPErrCode + 1 + 3 + 3 + 1, "%02X%02X", unCode / 256, unCode % 256);
+        return 0;
+    }
+    // 设置硬件返回分段错误码(入参正整数)
+    INT SetHWErrCodeHex(UINT unCode, WORD wDevID)
+    {
+        CHAR szHex[1024] = { 0x00 };
+        DataConvertor::Int_To_HexStr(unCode, szHex, sizeof(szHex));
+
+        MSET_XS(m_szSPErrCode + 4, 0x30, EC_ALL_LEN - 4);
+        if (wDevID <= 16)
+        {
+            CHAR szTmp[64] = { 0x00 };
+            sprintf(szTmp, "%X%07s", wDevID, szHex);
+            memcpy(m_szSPErrCode + 1 + 3, szTmp, 8);
+        } else
+        {
+            CHAR szTmp[64] = { 0x00 };
+            sprintf(szTmp, "%08s", szHex);
+            memcpy(m_szSPErrCode + 1 + 3, szTmp, 8);
+        }
         return 0;
     }
 

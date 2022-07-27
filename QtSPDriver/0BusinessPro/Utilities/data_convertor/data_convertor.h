@@ -85,6 +85,8 @@ public:
     static double str2number(char *str);                                                        // 数字字串转换为整形浮点型(第一位为“-”转为负数)
     static DWORD Ascii2Hex(LPCSTR lpcAscii, DWORD dwAsciiSize, LPSTR lpHex, DWORD dwHexSize);   // ASCII字串转换为16进制字串
     static DWORD Hex2Ascii(LPCSTR lpcHex, DWORD dwHexSize, LPSTR lpAscii, DWORD dwAsciiSize);   // 16进制字串转换为ASCII字串
+    static DWORD Int_To_HexStr(LONG lSource, LPSTR lpDest, DWORD dwDestSize);                   // 整型转换为16进制字符串
+    static DWORD str_to_toupper(LPCSTR lpcSource, DWORD dwSourceSize, LPSTR lpDest, DWORD dwDestSize);// 字串转换为大写
 };
 
 #endif // DATA_CONVERTOR_H

@@ -33,6 +33,7 @@
 #define GET_VER_SERIAL          3       // 序列号
 #define GET_VER_PN              4       // 设备编号
 #define GET_VER_SN              5       // 设备出厂编号
+#define GET_VER_ALGO            6       // 算法版本
 
 
 //***************************************************************************
@@ -50,8 +51,8 @@ struct st_Device_OpenMode
     INT     nHidVid[8];             // 设备VID(整型)[最多可设置8组]
     INT     nHidPid[8];             // 设备PID(整型)[最多可设置8组]
     WORD    wProtocol[8];           // 通讯协议[最多可设置8组]
-    INT     nOtherParam[32];        // 其他参数(整型数组)
-    CHAR    szOtherParams[32][256]; // 其他参数(多组字符串)
+    INT     nOtherParam[64];        // 其他参数(整型数组)
+    CHAR    szOtherParams[64][256]; // 其他参数(多组字符串)
 
     st_Device_OpenMode()
     {
