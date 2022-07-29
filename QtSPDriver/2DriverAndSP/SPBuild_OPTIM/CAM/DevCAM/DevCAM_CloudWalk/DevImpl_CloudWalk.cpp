@@ -1285,8 +1285,6 @@ LPSTR CDevImpl_CloudWalk::ConvertCode_Impl2Str(LONG lErrCode)
         }
     }
 
-
-
     return (LPSTR)m_szErrStr;
 }
 

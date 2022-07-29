@@ -8,7 +8,6 @@
 * 文件版本: 1.0.0.1
 ***************************************************************************/
 #pragma once
-//#define LINUX
 
 #ifndef DEVIMPL_CLOUDWALK_H
 #define DEVIMPL_CLOUDWALK_H
@@ -182,7 +181,7 @@ public:
     BOOL GetNirImgSup();                                            // 当前SDK是否支持红外图片生成
     LPSTR ConvertCode_Impl2Str(LONG lErrCode);                      // 错误码解析
 
-public:    // DevIDC.SetData相关
+public:    // DevXXX.SetData相关
     INT SetReConFlag(BOOL bFlag);                                   // 设置断线重连标记
     INT SetLibPath(LPCSTR lpPath);                                  // 设置动态库路径(DeviceOpen前有效)
     void SetSDKVersion(WORD wVer);                                  // 设置SDK版本
@@ -268,10 +267,10 @@ private:    // 变量定义
     BOOL            m_GetDataRunning;
 
 private: // 接口加载(QLibrary方式)
-    BOOL    bLoadLibrary();
-    void    vUnLoadLibrary();
-    BOOL    bLoadLibIntf();
-    void    vInitLibFunc();
+    BOOL    bLoadLibrary();                                             // 加载动态库
+    void    vUnLoadLibrary();                                           // 释放动态库
+    BOOL    bLoadLibIntf();                                             // 加载动态库接口
+    void    vInitLibFunc();                                             // 动态库接口初始化
 
 private: // 接口加载(QLibrary方式)
     char        m_szLoadDllPath[MAX_PATH];

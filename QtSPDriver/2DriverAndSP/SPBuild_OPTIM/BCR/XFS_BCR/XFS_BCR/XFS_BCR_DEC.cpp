@@ -9,6 +9,7 @@
 ****************************************************************/
 
 #include "XFS_BCR.h"
+#include <QTextCodec>
 
 //-----------------------------------------------------------------------------------
 // Open设备及初始化相关子处理
@@ -220,6 +221,14 @@ INT CXFS_BCR::InitConfig()
         m_stConfig.wReadBcrRetDataMode = 0;
     }
 
+    // 扫码读码返回数据编码格式(0:UTF8, 1:GBK, 缺省0)
+    m_stConfig.wReadBcrRetDataCode = (WORD)m_cXfsReg.GetValue("BCR_COFNIG", "ReadBcrRetDataCode", (DWORD)0);
+    if (m_stConfig.wReadBcrRetDataCode != 0 &&
+        m_stConfig.wReadBcrRetDataCode != 1)
+    {
+        m_stConfig.wReadBcrRetDataCode = 0;
+    }
+
 
     //------------------------[TESTER_CONFIG]下参数------------------------
     //------------------------测试模式相关配置----------------------------------
@@ -267,6 +276,7 @@ INT CXFS_BCR::PrintIniBCR()
     PRINT_INI_BUF("\n\t\t\t\t Open失败时返回值(0原样返回/1返回SUCCESS): OPEN_CONFIG->OpenFailRet = %d", m_stConfig.wOpenFailRet);
     PRINT_INI_BUF("\n\t\t\t\t Reset失败时返回标准(0原样返回/1忽略失败和错误返回成功): RESET_CONFIG->ResetFailReturn = %d", m_stConfig.wResetFailReturn);
     PRINT_INI_BUF("\n\t\t\t\t 扫码读码返回数据格式(0:16进制,1:ASCII): BCR_COFNIG->ReadBcrRetDataMode = %d", m_stConfig.wReadBcrRetDataMode);
+    PRINT_INI_BUF("\n\t\t\t\t 扫码读码返回数据编码格式(0:UTF8,1:GBK): BCR_COFNIG->ReadBcrRetDataCode = %d", m_stConfig.wReadBcrRetDataCode);
     PRINT_INI_BUF("\n\t\t\t\t 是否启用测试模式(0:不启用,1:启用): TESTER_CONFIG->TestModeIsSup = %d",m_stConfig.wTestModeIsSup);
 
     Log(ThisModule, __LINE__, "BCRBCR INI配置取得如下: %s", qsIniPrt.toStdString().c_str());
@@ -447,6 +457,11 @@ HRESULT CXFS_BCR::InnerReadBcr(LPWORD lpwSymList, DWORD dwTimeOut)
     THISMODULE(__FUNCTION__);
 
     INT nRet = BCR_SUCCESS;
+    INT nCodeType = 0;          // 数据编码格式
+    CHAR szBcrDataAscii[65536];
+    DWORD dwBcrDataAsciiSize;
+    CHAR szBcrDataResult[65536];
+    DWORD dwBcrDataResultSize;
 
     // 扫码
     STREADBCRIN stReadBcrIn;
@@ -511,31 +526,104 @@ HRESULT CXFS_BCR::InnerReadBcr(LPWORD lpwSymList, DWORD dwTimeOut)
             pData->wSymbology = stReadBcrOut.wSymType;
             pData->lpszSymbologyName = nullptr;
 
-            if (m_stConfig.wReadBcrRetDataMode == 0)    // INI配置返回条码数据模式为Hex
+            if (stReadBcrOut.dwSymDataSize > 0)
             {
-                if (stReadBcrOut.wSymDataMode == SYMD_HEX)  // 返回条码数据为HEX(不转换)
+                // DevBCR返回数据转换为ASCII格式
+                /*MSET_0(szBcrDataAscii);
+                if (stReadBcrOut.wSymDataMode == SYMD_HEX)  // DevXXX返回条码数据为HEX,先转换为ASCII
                 {
-                    pData->lpxBarcodeData->usLength = (WORD)stReadBcrOut.dwSymDataSize;
-                    memcpy(pData->lpxBarcodeData->lpbData, stReadBcrOut.szSymData, stReadBcrOut.dwSymDataSize);
-                } else                                      // 返回条码数据为ASCII, 转换为HEX
+                    dwBcrDataAsciiSize = DataConvertor::Hex2Ascii(stReadBcrOut.szSymData, stReadBcrOut.dwSymDataSize,
+                                                                  szBcrDataAscii, sizeof(szBcrDataAscii));
+                } else                                      // DevXXX返回条码数据为ASCII,不转换
                 {
-                    pData->lpxBarcodeData->usLength =
-                            DataConvertor::Ascii2Hex(stReadBcrOut.szSymData, stReadBcrOut.dwSymDataSize,
-                                                     (LPSTR)pData->lpxBarcodeData->lpbData, m_clReadBcrOut.GetDataMemSize());
+                    MCPY_LEN(szBcrDataAscii, stReadBcrOut.szSymData, stReadBcrOut.dwSymDataSize);
+                    dwBcrDataAsciiSize = stReadBcrOut.dwSymDataSize;
                 }
-            } else                                      // INI配置返回条码数据模式为Ascii
-            {
-                if (stReadBcrOut.wSymDataMode == SYMD_HEX)  // 返回条码数据为HEX, 转换为ASCII
-                {
-                    pData->lpxBarcodeData->usLength =
-                            DataConvertor::Hex2Ascii(stReadBcrOut.szSymData, stReadBcrOut.dwSymDataSize,
-                                                     (LPSTR)pData->lpxBarcodeData->lpbData, m_clReadBcrOut.GetDataMemSize());
-                } else  // 返回条码数据为ASCII, 不转换为
-                {
-                    pData->lpxBarcodeData->usLength = (WORD)stReadBcrOut.dwSymDataSize;
-                    memcpy(pData->lpxBarcodeData->lpbData, stReadBcrOut.szSymData, stReadBcrOut.dwSymDataSize);
 
+                // 检查条码数据编码格式
+                nCodeType = DataConvertor::ChkDataIsUTF8(szBcrDataAscii, dwBcrDataAsciiSize);
+
+                // 条码数据编码格式处理(UTF8/GBK)
+                MSET_0(szBcrDataResult);
+                if (m_stConfig.wReadBcrRetDataCode == 0)    // INI配置返回条码数据编码格式为UTF8
+                {
+                    if (nCodeType == CODE_UTF8) // 数据为UTF8编码,不转换
+                    {
+                        MCPY_LEN(szBcrDataResult, szBcrDataAscii, dwBcrDataAsciiSize);
+                    } else                      // 数据为GBK编码,转换为UTF8
+                    {
+                        dwBcrDataResultSize = DataConvertor::string_ascii_to_utf8(szBcrDataAscii, szBcrDataResult,
+                                                                                  sizeof(szBcrDataResult));
+                        if (dwBcrDataResultSize < 1)
+                        {
+                            Log(ThisModule, __LINE__, "扫码读码: 命令执行成功: 数据为GBK编码,转换为UTF8编码失败, Return: %d",
+                                WFS_ERR_SOFTWARE_ERROR);
+                            SetErrorDetail((LPSTR)EX_XFS_CodeChange);
+                            return WFS_ERR_OUT_OF_MEMORY;
+                        }
+                    }
+                } else                                      // INI配置返回条码数据编码格式为GBK
+                {
+                    if (nCodeType == CODE_UTF8) // 数据为UTF8编码,转换为GBK
+                    {
+                        dwBcrDataResultSize = DataConvertor::string_utf8_to_ascii(szBcrDataAscii, szBcrDataResult,
+                                                                                  sizeof(szBcrDataResult));
+                        if (dwBcrDataResultSize < 1)
+                        {
+                            Log(ThisModule, __LINE__, "扫码读码: 命令执行成功: 数据为UTF8编码,转换为GBK编码失败, Return: %d",
+                                WFS_ERR_SOFTWARE_ERROR);
+                            SetErrorDetail((LPSTR)EX_XFS_CodeChange);
+                            return WFS_ERR_OUT_OF_MEMORY;
+                        }
+                    } else                      // 数据为GBK编码,不转换
+                    {
+                        MCPY_LEN(szBcrDataResult, szBcrDataAscii, dwBcrDataAsciiSize);
+                        dwBcrDataResultSize = dwBcrDataAsciiSize;
+                    }
                 }
+
+                // 条码返回数据模式处理(16进制/ASCII)
+                if (m_stConfig.wReadBcrRetDataMode == 0)    // INI配置返回条码数据模式为Hex, 转换HEX
+                {
+                    pData->lpxBarcodeData->usLength =
+                            DataConvertor::Ascii2Hex(szBcrDataResult, dwBcrDataResultSize,
+                                                     (LPSTR)pData->lpxBarcodeData->lpbData, m_clReadBcrOut.GetDataMemSize());
+                } else                                      // INI配置返回条码数据模式为Ascii
+                {
+                    pData->lpxBarcodeData->usLength = (WORD)dwBcrDataResultSize;
+                        memcpy(pData->lpxBarcodeData->lpbData, szBcrDataResult, dwBcrDataResultSize);
+                }*/
+
+                // 条码返回数据模式处理(16进制/ASCII)
+                if (m_stConfig.wReadBcrRetDataMode == 0)    // INI配置返回条码数据模式为Hex
+                {
+                    if (stReadBcrOut.wSymDataMode == SYMD_HEX)  // 返回条码数据为HEX(不转换)
+                    {
+                        pData->lpxBarcodeData->usLength = (WORD)stReadBcrOut.dwSymDataSize;
+                        memcpy(pData->lpxBarcodeData->lpbData, stReadBcrOut.szSymData, stReadBcrOut.dwSymDataSize);
+                    } else                                      // 返回条码数据为ASCII, 转换为HEX
+                    {
+                        pData->lpxBarcodeData->usLength =
+                                DataConvertor::Ascii2Hex(stReadBcrOut.szSymData, stReadBcrOut.dwSymDataSize,
+                                                         (LPSTR)pData->lpxBarcodeData->lpbData, m_clReadBcrOut.GetDataMemSize());
+                    }
+                } else                                      // INI配置返回条码数据模式为Ascii
+                {
+                    if (stReadBcrOut.wSymDataMode == SYMD_HEX)  // 返回条码数据为HEX, 转换为ASCII
+                    {
+                        pData->lpxBarcodeData->usLength =
+                                DataConvertor::Hex2Ascii(stReadBcrOut.szSymData, stReadBcrOut.dwSymDataSize,
+                                                         (LPSTR)pData->lpxBarcodeData->lpbData, m_clReadBcrOut.GetDataMemSize());
+                    } else  // 返回条码数据为ASCII, 不转换为
+                    {
+                        pData->lpxBarcodeData->usLength = (WORD)stReadBcrOut.dwSymDataSize;
+                        memcpy(pData->lpxBarcodeData->lpbData, stReadBcrOut.szSymData, stReadBcrOut.dwSymDataSize);
+                    }
+                }
+            } else
+            {
+                pData->lpxBarcodeData->usLength = (WORD)stReadBcrOut.dwSymDataSize;
+                memcpy(pData->lpxBarcodeData->lpbData, stReadBcrOut.szSymData, stReadBcrOut.dwSymDataSize);
             }
         }
     }

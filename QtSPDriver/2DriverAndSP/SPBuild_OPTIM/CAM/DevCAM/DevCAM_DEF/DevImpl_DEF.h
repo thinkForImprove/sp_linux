@@ -17,6 +17,7 @@
 /***************************************************************************
 // 返回值/错误码　宏定义 (0~-300共通定义)
 ***************************************************************************/
+#define IMP_ERR_DEF_NUM                 300
 #define IMP_SUCCESS                     0           // 成功
 #define IMP_ERR_LOAD_LIB                -1          // 动态库加载错误
 #define IMP_ERR_PARAM_INVALID           -2          // 参数无效
@@ -30,6 +31,7 @@
 #define IMP_ERR_SET_VMODE               -10         // 摄像参数设置错误
 #define IMP_ERR_SET_RESO                -11         // 分辨率设置失败
 #define IMP_ERR_SHAREDMEM_RW            -12         // 共享内存读写失败
+#define IMP_ERR_MEMORY                  -13         // 内存错误
 
 // 检查是否共通定义错误码
 #define CHK_ERR_ISDEF(e)                ((e <= 0 && e >= -300) ? TRUE : FALSE)
@@ -116,6 +118,7 @@ public:
             PUB_CASE_CODE_STR(IMP_ERR_SET_VMODE, nErrCode, "摄像参数设置错误")
             PUB_CASE_CODE_STR(IMP_ERR_SET_RESO, nErrCode, "分辨率设置失败")
             PUB_CASE_CODE_STR(IMP_ERR_SHAREDMEM_RW, nErrCode, "共享内存读写失败")
+            PUB_CASE_CODE_STR(IMP_ERR_MEMORY, nErrCode, "内存错误")
             default :
                 sprintf(lpRetStr, "%d|%s", nErrCode, "未知Code");
                 break;

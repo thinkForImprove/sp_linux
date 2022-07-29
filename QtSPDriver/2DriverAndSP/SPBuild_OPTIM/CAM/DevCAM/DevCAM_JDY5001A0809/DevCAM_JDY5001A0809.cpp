@@ -35,6 +35,8 @@ CDevCAM_JDY5001A0809::CDevCAM_JDY5001A0809(LPCSTR lpDevType) :
     MSET_XS(m_nSaveStat, 0, sizeof(INT) * 12); // 保存必要的状态信息
     MSET_XS(m_nRetErrOLD, 0, sizeof(INT) * 12);// 处理错误值保存
     m_nClipMode = EN_CLIP_NO;               // 图像镜像模式转换
+    m_wDisplayOpenMode = DISP_OPEN_MODE_THREAD;// Display窗口打开模式(必须设定):线程支持
+    memset(m_bDevPortIsHaveOLD, FALSE, sizeof(BOOL) * 2);// 记录设备是否连接上)
 }
 
 CDevCAM_JDY5001A0809::~CDevCAM_JDY5001A0809()
@@ -222,7 +224,7 @@ int CDevCAM_JDY5001A0809::Cancel(unsigned short usMode)
         m_bCancel = TRUE;
     }
 
-    m_bCancel = TRUE;
+    return CAM_SUCCESS;
 }
 
 // 摄像窗口处理
@@ -272,7 +274,9 @@ int CDevCAM_JDY5001A0809::SetData(unsigned short usType, void *vData/* = nullptr
             {
                 MCPY_NOLEN(m_szSharedDataName, ((LPSTINITPARAM)vData)->szParStr[0]);
                 m_ulSharedDataSize = ((LPSTINITPARAM)vData)->lParLong[0];
-                m_nRefreshTime = ((LPSTINITPARAM)vData)->nParInt[0];
+                // display采用图像帧方式刷新时,取图像帧数据接口错误次数上限
+                m_nDisplayGetVideoMaxErrCnt = ((LPSTINITPARAM)vData)->nParInt[2];
+
             }
             break;
         }
@@ -290,6 +294,7 @@ int CDevCAM_JDY5001A0809::SetData(unsigned short usType, void *vData/* = nullptr
             if (vData != nullptr)
             {
                 memcpy(&(m_stOpenMode), ((LPSTDEVICEOPENMODE)vData), sizeof(STDEVICEOPENMODE));
+                m_nRefreshTime = ((LPSTDEVICEOPENMODE)vData)->nOtherParam[1];
             }
             break;
         }
@@ -490,13 +495,12 @@ INT CDevCAM_JDY5001A0809::VideoCameraOpenFrontRun(STDISPLAYPAR stDisplayIn)
 }
 
 // 打开设备摄像画面(重写)
-INT CDevCAM_JDY5001A0809::VideoCameraOpen(WORD wWidth, WORD wHeight)
+INT CDevCAM_JDY5001A0809::VideoCameraOpen(STDISPLAYPAR stDisplayIn)
 {
     THISMODULE(__FUNCTION__);
     //AutoLogFuncBeginEnd();
 
     INT nRet = IMP_SUCCESS;
-
 
     return CAM_SUCCESS;
 }
@@ -540,7 +544,7 @@ INT CDevCAM_JDY5001A0809::GetViewImage(LPSTIMGDATA lpImgData, INT nWidth, INT nH
 }
 
 // 拍照前运行处理(重写)
-INT CDevCAM_JDY5001A0809::TakePicFrontRun()
+INT CDevCAM_JDY5001A0809::TakePicFrontRun(STTAKEPICTUREPAR stTakePicIn)
 {
     THISMODULE(__FUNCTION__);
     //AutoLogFuncBeginEnd();
@@ -551,7 +555,7 @@ INT CDevCAM_JDY5001A0809::TakePicFrontRun()
 }
 
 // 拍照后运行处理(重写)
-INT CDevCAM_JDY5001A0809::TakePicAfterRun()
+INT CDevCAM_JDY5001A0809::TakePicAfterRun(STTAKEPICTUREPAR stTakePicIn)
 {
     THISMODULE(__FUNCTION__);
     //AutoLogFuncBeginEnd();

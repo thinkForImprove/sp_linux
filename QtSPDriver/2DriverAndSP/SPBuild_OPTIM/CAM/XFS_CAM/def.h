@@ -189,9 +189,13 @@ typedef struct ST_CAM_INI_CONFIG
 //   szParStr[11]: 特殊的处理方式2
 //   lParLong[0]: 摄像数据共享内存Size
 //   nParInt[1]: 指定银行
+//   nParInt[2]: Display采用图像帧方式刷新时,取图像帧数据接口错误次数上限
 
 // STDEVICEOPENMODE(设备Open参数结构体)在CAM模块中各下标为用途
 //   其他参数下标0~9用于共通, 10及以上用于各设备自行选用
 //   nOtherParam[0]: 保存设备类型编号
+//   nOtherParam[1]: 摄像刷新时间
+//   nOtherParam[2]: 水平分辨率
+//   nOtherParam[3]: 垂直分辨率
 
 // -------------------------------------- END --------------------------------------

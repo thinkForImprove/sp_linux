@@ -166,10 +166,10 @@ INT CXFS_CAM::InitConfig()
     m_stConfig.wDevNotFoundStat = m_cXfsReg.GetValue("CONFIG", "DevNotFoundStat", (DWORD)0);
 
     // 截取画面帧的分辨率(Width),缺省0
-    m_stConfig.wFrameResoWidth = m_cXfsReg.GetValue("CONFIG", "FrameResoWidth", (DWORD)0);
+    //m_stConfig.wFrameResoWidth = m_cXfsReg.GetValue("CONFIG", "FrameResoWidth", (DWORD)0);
 
     // 截取画面帧的分辨率(Height),缺省0
-    m_stConfig.wFrameResoHeight = m_cXfsReg.GetValue("CONFIG", "FrameResoHeight", (DWORD)0);
+    //m_stConfig.wFrameResoHeight = m_cXfsReg.GetValue("CONFIG", "FrameResoHeight", (DWORD)0);
 
     // 镜像转换, 0:不转换, 1:左右转换, 2:上下转换, 3:上下左右转换, 缺省0
     m_stConfig.wDisplayFlip = m_cXfsReg.GetValue("CONFIG", "DisplayFlip", (DWORD)0);
@@ -178,6 +178,10 @@ INT CXFS_CAM::InitConfig()
         m_stConfig.wDisplayFlip = 0;
     }
     m_stConfig.stVideoPar.nOtherParam[0] = m_stConfig.wDisplayFlip;
+
+    // Display采用图像帧方式刷新时,取图像帧数据接口错误次数上限,缺省500
+    m_stConfig.stInitPar.nParInt[2] =
+            m_cXfsReg.GetValue("CONFIG", "DisplayGetVideoMaxErrCnt", (DWORD)500);
 
 
     // ------------------------[DEVICE_CFG]下参数读取------------------------
@@ -239,16 +243,16 @@ INT CXFS_CAM::InitConfig()
                    (WORD)m_cXfsReg.GetValue(szIniAppName, "nisCamIdx", (DWORD)0);
         } else  // VidPid方式打开
         {
-            // 可见光模组vid/pid
+            // 可见光模组VidPid,缺省0C45:C812
             strcpy(m_stConfig.stDevOpenMode[LIDX_YC0C98].szHidVid[0],
-                   m_cXfsReg.GetValue(szIniAppName, "vis_vid", "0C45"));
+                   m_cXfsReg.GetValue(szIniAppName, "Vis_Vid", "0C45"));
             strcpy(m_stConfig.stDevOpenMode[LIDX_YC0C98].szHidPid[0],
-                   m_cXfsReg.GetValue(szIniAppName, "vis_pid", "C812"));
-            // 红外光模组vid/pid
+                   m_cXfsReg.GetValue(szIniAppName, "Vis_Pid", "C812"));
+            // 红外光模组VidPid,缺省0C45:C811
             strcpy(m_stConfig.stDevOpenMode[LIDX_YC0C98].szHidVid[1],
-                   m_cXfsReg.GetValue(szIniAppName, "nis_vid", "0C45"));
+                   m_cXfsReg.GetValue(szIniAppName, "Nis_Vid", "0C45"));
             strcpy(m_stConfig.stDevOpenMode[LIDX_YC0C98].szHidPid[1],
-                   m_cXfsReg.GetValue(szIniAppName, "nis_pid", "C811"));
+                   m_cXfsReg.GetValue(szIniAppName, "Nis_Pid", "C811"));
         }
 
         //******************************************************************
@@ -308,8 +312,8 @@ INT CXFS_CAM::InitConfig()
         // 计入 STDEVICEOPENMODE.nOtherParam/szOtherParams
         //     其他参数使用下标从10开始, 0～9作为通用参数保留
         // 是否打开语音提示支持 -> nOtherParam[15];
-        // 截取画面帧的分辨率(Width) ->  nOtherParam[16];
-        // 截取画面帧的分辨率(Height) ->  nOtherParam[17];
+        // 截取画面帧的分辨率(Width) ->  nOtherParam[1];
+        // 截取画面帧的分辨率(Height) ->  nOtherParam[2];
         // 设置SDK版本,缺省0 -> nOtherParam[18];
         // 摄像刷新时间 -> nOtherParam[19];
         // 语音提示配置文件 -> szOtherParams[17];
@@ -325,22 +329,6 @@ INT CXFS_CAM::InitConfig()
                    m_cXfsReg.GetValue(szIniAppName, "VoiceTipFile", ""));
         }
 
-        // 截取画面帧的分辨率(Width),缺省:1280
-        m_stConfig.stDevOpenMode[LIDX_YC0C98].nOtherParam[16] =
-                m_cXfsReg.GetValue(szIniAppName, "FrameResoWidth", (DWORD)1280);
-        if (m_stConfig.stDevOpenMode[LIDX_YC0C98].nOtherParam[16] < 0)
-        {
-            m_stConfig.stDevOpenMode[LIDX_YC0C98].nOtherParam[16] = 1280;
-        }
-
-        // 截取画面帧的分辨率(Height),缺省:1024
-        m_stConfig.stDevOpenMode[LIDX_YC0C98].nOtherParam[17] =
-                m_cXfsReg.GetValue(szIniAppName, "FrameResoHeight", (DWORD)1024);
-        if (m_stConfig.stDevOpenMode[LIDX_YC0C98].nOtherParam[17] < 0)
-        {
-            m_stConfig.stDevOpenMode[LIDX_YC0C98].nOtherParam[17] = 1024;
-        }
-
         // 设置SDK版本,缺省0
         m_stConfig.stDevOpenMode[LIDX_YC0C98].nOtherParam[18] =
                 m_cXfsReg.GetValue(szIniAppName, "SDKVersion", (DWORD)0);
@@ -350,17 +338,8 @@ INT CXFS_CAM::InitConfig()
             m_stConfig.stDevOpenMode[LIDX_YC0C98].nOtherParam[18] = 0;
         }
 
-        // 摄像刷新时间(毫秒,缺省30)
-        m_stConfig.stDevOpenMode[LIDX_YC0C98].nOtherParam[19] =
-                m_cXfsReg.GetValue(szIniAppName, "WinRefreshTime", (DWORD)30);
-        if (m_stConfig.stDevOpenMode[LIDX_YC0C98].nOtherParam[10] < 0)
-        {
-            m_stConfig.stDevOpenMode[LIDX_YC0C98].nOtherParam[10] = 30;
-        }
-
         InitConfigDef(szIniAppName, LIDX_YC0C98);
     }
-
 
     //-----------------------天诚盛业(TCF261)设备参数获取-------------------------
     if (m_stCamModeInfo.SearchIsDeviceType(XFS_TCF261) == TRUE)
@@ -375,11 +354,65 @@ INT CXFS_CAM::InitConfig()
         strcpy(m_stConfig.szSDKPath[LIDX_TCF261],
                m_cXfsReg.GetValue(szIniAppName, "SDK_Path", ""));
 
-        // 抓拍图像模式(0活体头像/1全景，缺省0)
-        m_stConfig.stDevOpenMode[LIDX_TCF261].nOtherParam[10] =
-                (WORD)m_cXfsReg.GetValue(szIniAppName, "LiveDetectMode", (DWORD)0);
+        // 打开方式(0:指定VidPid, 1:不指定VidPid, 缺省1)
+        m_stConfig.stDevOpenMode[LIDX_TCF261].wOpenMode =
+                (WORD)m_cXfsReg.GetValue(szIniAppName, "OpenType", (DWORD)1);
+        if (m_stConfig.stDevOpenMode[LIDX_TCF261].wOpenMode == 1) // 序号方式打开
+        {
+            // 可见光模组VidPid,缺省735F:2218
+            strcpy(m_stConfig.stDevOpenMode[LIDX_TCF261].szHidVid[0],
+                   m_cXfsReg.GetValue(szIniAppName, "Vis_Vid", "735F"));
+            strcpy(m_stConfig.stDevOpenMode[LIDX_TCF261].szHidPid[0],
+                   m_cXfsReg.GetValue(szIniAppName, "Vis_Pid", "2218"));
+            // 红外光模组VidPid,缺省735F:2218
+            strcpy(m_stConfig.stDevOpenMode[LIDX_TCF261].szHidVid[1],
+                   m_cXfsReg.GetValue(szIniAppName, "Nis_Vid", "735F"));
+            strcpy(m_stConfig.stDevOpenMode[LIDX_TCF261].szHidPid[1],
+                   m_cXfsReg.GetValue(szIniAppName, "Nis_Pid", "2217"));
+        }
 
         InitConfigDef(szIniAppName, LIDX_TCF261);
+    }
+
+    //-----------------------哲林(ZLF1000A3)设备参数获取-------------------------
+    if (m_stCamModeInfo.SearchIsDeviceType(XFS_ZLF1000A3) == TRUE)
+    {
+        // STDEVICEOPENMODE.nOtherParam[0]: 保存设备类型编号
+        m_stConfig.stDevOpenMode[LIDX_ZLF1000A3].nOtherParam[0] = XFS_ZLF1000A3;
+
+        memset(szIniAppName, 0x00, sizeof(szIniAppName));
+        sprintf(szIniAppName, "DEVICE_SET_%d", XFS_ZLF1000A3);
+
+        // 设备SDK库路径
+        strcpy(m_stConfig.szSDKPath[LIDX_ZLF1000A3],
+               m_cXfsReg.GetValue(szIniAppName, "SDK_Path", ""));
+
+        // 打开方式(0:指定VidPid, 1:不指定VidPid, 缺省1)
+        m_stConfig.stDevOpenMode[LIDX_ZLF1000A3].wOpenMode =
+                (WORD)m_cXfsReg.GetValue(szIniAppName, "OpenType", (DWORD)1);
+        if (m_stConfig.stDevOpenMode[LIDX_ZLF1000A3].wOpenMode == 1) // 序号方式打开
+        {
+            // VidPid,缺省VidPid,缺省3C4D:A3E8:A3E8
+            strcpy(m_stConfig.stDevOpenMode[LIDX_ZLF1000A3].szHidVid[0],
+                   m_cXfsReg.GetValue(szIniAppName, "Vid", "3C4D"));
+            strcpy(m_stConfig.stDevOpenMode[LIDX_ZLF1000A3].szHidPid[0],
+                   m_cXfsReg.GetValue(szIniAppName, "Pid", "A3E8"));
+        }
+
+        //******************************************************************
+        // 参数设置加载 计入 STDEVICEOPENMODE.nOtherParam
+        //     其他参数使用下标从10开始, 0～9作为通用参数保留
+        // 设备指定使用模式 -> nOtherParam[10];
+        // 图像帧是否绘制切边区域 -> nOtherParam[11];]
+        //******************************************************************
+        // 设备指定使用模式(0:文档模式, 1:人脸模式, 缺省0)
+        m_stConfig.stDevOpenMode[LIDX_ZLF1000A3].nOtherParam[10] =
+                m_cXfsReg.GetValue(szIniAppName, "ApplyMode", (DWORD)0);
+        // 图像帧是否绘制切边区域(0:不绘制, 1:绘制, 缺省1)
+        m_stConfig.stDevOpenMode[LIDX_ZLF1000A3].nOtherParam[11] =
+                m_cXfsReg.GetValue(szIniAppName, "DrawCutRect", (DWORD)1);
+
+        InitConfigDef(szIniAppName, LIDX_ZLF1000A3);
     }
 
 
@@ -414,20 +447,12 @@ INT CXFS_CAM::InitConfig()
                 (WORD)m_cXfsReg.GetValue(szIniAppName, "OpenMode", (DWORD)0);
         // 设备序列,缺省
         strcpy(m_stConfig.stDevOpenMode[LIDX_JDY5001A0809].szDevPath[0],
-               m_cXfsReg.GetValue(szIniAppName, "Idx", "/dev/video0"));
+               m_cXfsReg.GetValue(szIniAppName, "VideoX", "/dev/video0"));
         // VID/PID
         strcpy(m_stConfig.stDevOpenMode[LIDX_JDY5001A0809].szHidVid[0],
                m_cXfsReg.GetValue(szIniAppName, "Vid", ""));
         strcpy(m_stConfig.stDevOpenMode[LIDX_JDY5001A0809].szHidPid[0],
                m_cXfsReg.GetValue(szIniAppName, "Pid", ""));
-
-        // 摄像刷新时间(毫秒,缺省30)
-        m_stConfig.stDevOpenMode[LIDX_JDY5001A0809].nOtherParam[10] =
-                m_cXfsReg.GetValue(szIniAppName, "WinRefreshTime", (DWORD)30);
-        if (m_stConfig.stDevOpenMode[LIDX_JDY5001A0809].nOtherParam[10] < 0)
-        {
-            m_stConfig.stDevOpenMode[LIDX_JDY5001A0809].nOtherParam[10] = 30;
-        }
 
         InitConfigDef(szIniAppName, LIDX_JDY5001A0809);
     }
@@ -597,6 +622,7 @@ INT CXFS_CAM::PrintIniData()
     PRINT_INI_BUF("\n\t\t\t\t 截取画面帧的分辨率(Width): CONFIG->FrameResoWidth = %d", m_stConfig.wFrameResoWidth);
     PRINT_INI_BUF("\n\t\t\t\t 截取画面帧的分辨率(Height): CONFIG->FrameResoHeight = %d", m_stConfig.wFrameResoHeight);
     PRINT_INI_BUF("\n\t\t\t\t 镜像转换(0:不转换,1:左右转换,2:上下转换,3:上下左右转换): CONFIG->DisplayFlip = %d", m_stConfig.wDisplayFlip);
+    PRINT_INI_BUF("\n\t\t\t\t isplay采用图像帧方式刷新时,取图像帧数据接口错误次数上限: CONFIG->DisplayGetVideoMaxErrCnt = %d", m_stConfig.stInitPar.nParInt[2]);
 
     // DEVICE_CFG
     PRINT_INI_BUF("\n\t\t\t\t 环境摄像设备类型(0无效): DEVICE_CFG->DeviceRoomType = %d", m_stConfig.wDeviceRoomType);
@@ -612,17 +638,17 @@ INT CXFS_CAM::PrintIniData()
         qsIniPrt.append("\n\t\t\t\t ---------------------------------云从设备参数---------------------------------");
 
         PRINT_INI_BUF2("\n\t\t\t\t 设备SDK库路径: DEVICE_SET_%d->SDK_Path = %s", XFS_YC0C98, m_stConfig.szSDKPath[LIDX_YC0C98]);
-        PRINT_INI_BUF2("\n\t\t\t\t 打开方式(0:序号,1:VidPidDEVICE_SET_): DEVICE_SET_%d->OpenType = %d", XFS_YC0C98, m_stConfig.stDevOpenMode[LIDX_YC0C98].wOpenMode);
+        PRINT_INI_BUF2("\n\t\t\t\t 打开方式(0:序号,1:VidPid): DEVICE_SET_%d->OpenType = %d", XFS_YC0C98, m_stConfig.stDevOpenMode[LIDX_YC0C98].wOpenMode);
         if (m_stConfig.stDevOpenMode[LIDX_YC0C98].wOpenMode == 0) // 序号方式打开
         {
             PRINT_INI_BUF2("\n\t\t\t\t 可见光模组枚举序号: DEVICE_SET_%d->visCamIdx = %d", XFS_YC0C98, m_stConfig.stDevOpenMode[LIDX_YC0C98].nHidVid[0]);
             PRINT_INI_BUF2("\n\t\t\t\t 红外光模组枚举序号: DEVICE_SET_%d->NisCamIdx = %d", XFS_YC0C98, m_stConfig.stDevOpenMode[LIDX_YC0C98].nHidVid[1]);
         } else
         {
-            PRINT_INI_BUF2("\n\t\t\t\t 可见光模组Vid: DEVICE_SET_%d->vis_vid = %s", XFS_YC0C98, m_stConfig.stDevOpenMode[LIDX_YC0C98].szHidVid[0]);
-            PRINT_INI_BUF2("\n\t\t\t\t 可见光模组Pid: DEVICE_SET_%d->vis_pid = %s", XFS_YC0C98, m_stConfig.stDevOpenMode[LIDX_YC0C98].szHidPid[0]);
-            PRINT_INI_BUF2("\n\t\t\t\t 红外光模组Vid: DEVICE_SET_%d->nis_vid = %s", XFS_YC0C98, m_stConfig.stDevOpenMode[LIDX_YC0C98].szHidVid[1]);
-            PRINT_INI_BUF2("\n\t\t\t\t 红外光模组Pid: DEVICE_SET_%d->nis_pid = %s", XFS_YC0C98, m_stConfig.stDevOpenMode[LIDX_YC0C98].szHidPid[1]);
+            PRINT_INI_BUF2("\n\t\t\t\t 可见光模组Vid: DEVICE_SET_%d->Vis_Vid = %s", XFS_YC0C98, m_stConfig.stDevOpenMode[LIDX_YC0C98].szHidVid[0]);
+            PRINT_INI_BUF2("\n\t\t\t\t 可见光模组Pid: DEVICE_SET_%d->Vis_Pid = %s", XFS_YC0C98, m_stConfig.stDevOpenMode[LIDX_YC0C98].szHidPid[0]);
+            PRINT_INI_BUF2("\n\t\t\t\t 红外光模组Vid: DEVICE_SET_%d->Nis_Vid = %s", XFS_YC0C98, m_stConfig.stDevOpenMode[LIDX_YC0C98].szHidVid[1]);
+            PRINT_INI_BUF2("\n\t\t\t\t 红外光模组Pid: DEVICE_SET_%d->Nis_Pid = %s", XFS_YC0C98, m_stConfig.stDevOpenMode[LIDX_YC0C98].szHidPid[1]);
         }
         PRINT_INI_BUF2("\n\t\t\t\t 模型加载方式(0:文件加载,1:内存加载): DEVICE_SET_%d->modelMode = %d", XFS_YC0C98, m_stConfig.stDevOpenMode[LIDX_YC0C98].nOtherParam[10]);
         PRINT_INI_BUF2("\n\t\t\t\t 活体类型(0:不活检,1:红外活体,2:结构光活体): DEVICE_SET_%d->livenessMode = %d", XFS_YC0C98, m_stConfig.stDevOpenMode[LIDX_YC0C98].nOtherParam[11]);
@@ -638,12 +664,77 @@ INT CXFS_CAM::PrintIniData()
         PRINT_INI_BUF2("\n\t\t\t\t 是否多线程检测: DEVICE_SET_%d->multiThread = %d", XFS_YC0C98, m_stConfig.stDevOpenMode[LIDX_YC0C98].nOtherParam[14]);
         PRINT_INI_BUF2("\n\t\t\t\t 是否打开语音提示支持(0:打开,1:关闭): DEVICE_SET_%d->VoiceOpen = %d", XFS_YC0C98, m_stConfig.stDevOpenMode[LIDX_YC0C98].nOtherParam[15]);
         PRINT_INI_BUF2("\n\t\t\t\t 语音提示配置文件: DEVICE_SET_%d->VoiceTipFile = %s", XFS_YC0C98, m_stConfig.stDevOpenMode[LIDX_YC0C98].szOtherParams[17]);
-        PRINT_INI_BUF2("\n\t\t\t\t 截取画面帧的分辨率: DEVICE_SET_%d->FrameResoWidth = %d", XFS_YC0C98, m_stConfig.stDevOpenMode[LIDX_YC0C98].nOtherParam[16]);
-        PRINT_INI_BUF2("\n\t\t\t\t 截取画面帧的分辨率: DEVICE_SET_%d->FrameResoHeight = %d", XFS_YC0C98, m_stConfig.stDevOpenMode[LIDX_YC0C98].nOtherParam[17]);
         PRINT_INI_BUF2("\n\t\t\t\t 设置SDK版本: DEVICE_SET_%d->SDKVersion = %d", XFS_YC0C98, m_stConfig.stDevOpenMode[LIDX_YC0C98].nOtherParam[18]);
         PRINT_INI_BUF2("\n\t\t\t\t 摄像刷新时间(毫秒): DEVICE_SET_%d->WinRefreshTime = %d", XFS_YC0C98, m_stConfig.stDevOpenMode[LIDX_YC0C98].nOtherParam[19]);
         PRINT_INI_BUF2("\n\t\t\t\t 摄像窗口显示方式(0:SDK控制,1:SP内处理,2:外接程序窗口): DEVICE_SET_%d->ShowWinMode = %d", XFS_YC0C98, m_wDeviceShowWinMode[XFS_YC0C98]);
         PRINT_INI_BUF2("\n\t\t\t\t 摄像窗口外接程序: DEVICE_SET_%d->ShowWinMode = %s", XFS_YC0C98, m_szWinProcessPath[XFS_YC0C98]);
+        PRINT_INI_BUF2("\n\t\t\t\t 截取画面帧的分辨率: DEVICE_SET_%d->FrameResoWidth = %d", XFS_YC0C98, m_stConfig.stDevOpenMode[LIDX_YC0C98].nOtherParam[1]);
+        PRINT_INI_BUF2("\n\t\t\t\t 截取画面帧的分辨率: DEVICE_SET_%d->FrameResoHeight = %d", XFS_YC0C98, m_stConfig.stDevOpenMode[LIDX_YC0C98].nOtherParam[2]);
+    }
+
+    // 天诚盛业(XFS_TCF261)
+    if (m_stCamModeInfo.SearchIsDeviceType(XFS_TCF261) == TRUE)
+    {
+        qsIniPrt.append("\n\t\t\t\t ---------------------------------天诚盛业设备参数---------------------------------");
+
+        PRINT_INI_BUF2("\n\t\t\t\t 设备SDK库路径: DEVICE_SET_%d->SDK_Path = %s", XFS_TCF261, m_stConfig.szSDKPath[LIDX_TCF261]);
+        PRINT_INI_BUF2("\n\t\t\t\t 打开方式(0:指定VidPid, 1:不指定VidPid): DEVICE_SET_%d->OpenMode = %d", XFS_TCF261, m_stConfig.stDevOpenMode[LIDX_TCF261].wOpenMode);
+        if (m_stConfig.stDevOpenMode[LIDX_TCF261].wOpenMode == 1)
+        {
+            PRINT_INI_BUF2("\n\t\t\t\t 可见光模组Vid: DEVICE_SET_%d->Vis_Vid = %s", XFS_TCF261, m_stConfig.stDevOpenMode[LIDX_TCF261].szHidVid[0]);
+            PRINT_INI_BUF2("\n\t\t\t\t 可见光模组Pid: DEVICE_SET_%d->Vis_Pid = %s", XFS_TCF261, m_stConfig.stDevOpenMode[LIDX_TCF261].szHidPid[0]);
+            PRINT_INI_BUF2("\n\t\t\t\t 红外光模组Vid: DEVICE_SET_%d->Nis_Vid = %s", XFS_TCF261, m_stConfig.stDevOpenMode[LIDX_TCF261].szHidVid[1]);
+            PRINT_INI_BUF2("\n\t\t\t\t 红外光模组Pid: DEVICE_SET_%d->Nis_Pid = %s", XFS_TCF261, m_stConfig.stDevOpenMode[LIDX_TCF261].szHidPid[1]);
+        }
+        PRINT_INI_BUF2("\n\t\t\t\t 摄像刷新时间(毫秒): DEVICE_SET_%d->WinRefreshTime = %d", XFS_TCF261, m_stConfig.stDevOpenMode[LIDX_TCF261].nOtherParam[19]);
+        PRINT_INI_BUF2("\n\t\t\t\t 摄像窗口显示方式(0:SDK控制,1:SP内处理,2:外接程序窗口): DEVICE_SET_%d->ShowWinMode = %d", XFS_TCF261, m_wDeviceShowWinMode[LIDX_TCF261]);
+        PRINT_INI_BUF2("\n\t\t\t\t 摄像窗口外接程序: DEVICE_SET_%d->ShowWinMode = %s", XFS_TCF261, m_szWinProcessPath[LIDX_TCF261]);
+        PRINT_INI_BUF2("\n\t\t\t\t 截取画面帧的分辨率: DEVICE_SET_%d->FrameResoWidth = %d", XFS_TCF261, m_stConfig.stDevOpenMode[LIDX_TCF261].nOtherParam[1]);
+        PRINT_INI_BUF2("\n\t\t\t\t 截取画面帧的分辨率: DEVICE_SET_%d->FrameResoHeight = %d", XFS_TCF261, m_stConfig.stDevOpenMode[LIDX_TCF261].nOtherParam[2]);
+    }
+
+    // 哲林(ZLF1000A3)
+    if (m_stCamModeInfo.SearchIsDeviceType(XFS_ZLF1000A3) == TRUE)
+    {
+        qsIniPrt.append("\n\t\t\t\t ---------------------------------哲林设备参数---------------------------------");
+
+        PRINT_INI_BUF2("\n\t\t\t\t 设备SDK库路径: DEVICE_SET_%d->SDK_Path = %s", XFS_ZLF1000A3, m_stConfig.szSDKPath[LIDX_ZLF1000A3]);
+        PRINT_INI_BUF2("\n\t\t\t\t 打开方式(0:指定VidPid, 1:不指定VidPid): DEVICE_SET_%d->OpenMode = %d", XFS_ZLF1000A3, m_stConfig.stDevOpenMode[LIDX_ZLF1000A3].wOpenMode);
+        if (m_stConfig.stDevOpenMode[XFS_ZLF1000A3].wOpenMode == 1)
+        {
+            PRINT_INI_BUF2("\n\t\t\t\t Vid: DEVICE_SET_%d->Vid = %s", XFS_ZLF1000A3, m_stConfig.stDevOpenMode[LIDX_ZLF1000A3].szHidVid[0]);
+            PRINT_INI_BUF2("\n\t\t\t\t Pid: DEVICE_SET_%d->Pid = %s", XFS_ZLF1000A3, m_stConfig.stDevOpenMode[LIDX_ZLF1000A3].szHidPid[0]);
+        }
+        PRINT_INI_BUF2("\n\t\t\t\t 摄像刷新时间(毫秒): DEVICE_SET_%d->WinRefreshTime = %d", XFS_ZLF1000A3, m_stConfig.stDevOpenMode[LIDX_ZLF1000A3].nOtherParam[19]);
+        PRINT_INI_BUF2("\n\t\t\t\t 摄像窗口显示方式(0:SDK控制,1:SP内处理,2:外接程序窗口): DEVICE_SET_%d->ShowWinMode = %d", XFS_ZLF1000A3, m_wDeviceShowWinMode[LIDX_ZLF1000A3]);
+        PRINT_INI_BUF2("\n\t\t\t\t 摄像窗口外接程序: DEVICE_SET_%d->ShowWinMode = %s", XFS_ZLF1000A3, m_szWinProcessPath[LIDX_ZLF1000A3]);
+        PRINT_INI_BUF2("\n\t\t\t\t 截取画面帧的分辨率: DEVICE_SET_%d->FrameResoWidth = %d", XFS_ZLF1000A3, m_stConfig.stDevOpenMode[LIDX_ZLF1000A3].nOtherParam[1]);
+        PRINT_INI_BUF2("\n\t\t\t\t 截取画面帧的分辨率: DEVICE_SET_%d->FrameResoHeight = %d", XFS_ZLF1000A3, m_stConfig.stDevOpenMode[LIDX_ZLF1000A3].nOtherParam[2]);
+        PRINT_INI_BUF2("\n\t\t\t\t 设备指定使用模式(0:文档模式,1:人脸模式): DEVICE_SET_%d->ApplyMode = %d", XFS_ZLF1000A3, m_stConfig.stDevOpenMode[LIDX_ZLF1000A3].nOtherParam[10]);
+        PRINT_INI_BUF2("\n\t\t\t\t 图像帧是否绘制切边区域(0:不绘制,1:绘制): DEVICE_SET_%d->DrawCutRect = %d", XFS_ZLF1000A3, m_stConfig.stDevOpenMode[LIDX_ZLF1000A3].nOtherParam[11]);
+    }
+
+
+    // 建德源(XFS_JDY5001A0809)
+    if (m_stCamModeInfo.SearchIsDeviceType(XFS_JDY5001A0809) == TRUE)
+    {
+        qsIniPrt.append("\n\t\t\t\t ---------------------------------建德源设备参数---------------------------------");
+
+        PRINT_INI_BUF2("\n\t\t\t\t 设备SDK库路径: DEVICE_SET_%d->SDK_Path = %s", XFS_JDY5001A0809, m_stConfig.szSDKPath[LIDX_JDY5001A0809]);
+        PRINT_INI_BUF2("\n\t\t\t\t 打开方式(0:设备序列,1:VidPid): DEVICE_SET_%d->OpenMode = %d", XFS_JDY5001A0809, m_stConfig.stDevOpenMode[LIDX_JDY5001A0809].wOpenMode);
+        if (m_stConfig.stDevOpenMode[LIDX_JDY5001A0809].wOpenMode == 0) // 序号方式打开
+        {
+            PRINT_INI_BUF2("\n\t\t\t\t 设备序列: DEVICE_SET_%d->VideoX = %s", XFS_JDY5001A0809, m_stConfig.stDevOpenMode[LIDX_JDY5001A0809].szDevPath[0]);
+        } else
+        {
+            PRINT_INI_BUF2("\n\t\t\t\t Vid: DEVICE_SET_%d->Vid = %s", XFS_JDY5001A0809, m_stConfig.stDevOpenMode[LIDX_JDY5001A0809].szHidVid[0]);
+            PRINT_INI_BUF2("\n\t\t\t\t Pid: DEVICE_SET_%d->Pid = %s", XFS_JDY5001A0809, m_stConfig.stDevOpenMode[LIDX_JDY5001A0809].szHidPid[0]);
+        }
+        PRINT_INI_BUF2("\n\t\t\t\t 摄像刷新时间(毫秒): DEVICE_SET_%d->WinRefreshTime = %d", XFS_JDY5001A0809, m_stConfig.stDevOpenMode[LIDX_JDY5001A0809].nOtherParam[19]);
+        PRINT_INI_BUF2("\n\t\t\t\t 摄像窗口显示方式(0:SDK控制,1:SP内处理,2:外接程序窗口): DEVICE_SET_%d->ShowWinMode = %d", XFS_JDY5001A0809, m_wDeviceShowWinMode[LIDX_JDY5001A0809]);
+        PRINT_INI_BUF2("\n\t\t\t\t 摄像窗口外接程序: DEVICE_SET_%d->ShowWinMode = %s", XFS_JDY5001A0809, m_szWinProcessPath[LIDX_JDY5001A0809]);
+        PRINT_INI_BUF2("\n\t\t\t\t 截取画面帧的分辨率: DEVICE_SET_%d->FrameResoWidth = %d", XFS_JDY5001A0809, m_stConfig.stDevOpenMode[LIDX_JDY5001A0809].nOtherParam[1]);
+        PRINT_INI_BUF2("\n\t\t\t\t 截取画面帧的分辨率: DEVICE_SET_%d->FrameResoHeight = %d", XFS_JDY5001A0809, m_stConfig.stDevOpenMode[LIDX_JDY5001A0809].nOtherParam[2]);
     }
 
 
@@ -1142,6 +1233,7 @@ HRESULT CXFS_CAM::InnerDisplay(const WFSCAMDISP &stDisplay, DWORD dwTimeout)
     lpDisplay = (LPWFSCAMDISP)&stDisplay;
 
     WORD wDisplayMode = 0;
+    WORD wLCMode = 0;
 
     // 入参摄像模式检查
     if (lpDisplay->wCamera != WFS_CAM_ROOM && lpDisplay->wCamera != WFS_CAM_PERSON &&
@@ -1154,13 +1246,14 @@ HRESULT CXFS_CAM::InnerDisplay(const WFSCAMDISP &stDisplay, DWORD dwTimeout)
         return WFS_ERR_INVALID_DATA;
     }
 
+    wLCMode = WMODE_TO_LCMODE(lpDisplay->wCamera);
+
     // 检查INI设定摄像模式支持
-    if (MI_Enable(WMODE_TO_LCMODE(lpDisplay->wCamera)) != TRUE)    // 模式不支持
+    if (MI_Enable(wLCMode) != TRUE)    // 模式不支持
     {
         Log(ThisModule, __LINE__,
             "创建摄像窗口: 失败: 入参Camera[%d]无效, INI设定[%s]模式不支持, Return: %d",
-            lpDisplay->wCamera,
-            m_stCamModeInfo.stModeList[WMODE_TO_LCMODE(lpDisplay->wCamera)].szModeName,
+            lpDisplay->wCamera, m_stCamModeInfo.stModeList[wLCMode].szModeName,
             WFS_ERR_INVALID_DATA);
         SetErrorDetail((LPSTR)EC_XFS_ParInvalid);
         return WFS_ERR_INVALID_DATA;
@@ -1204,21 +1297,23 @@ HRESULT CXFS_CAM::InnerDisplay(const WFSCAMDISP &stDisplay, DWORD dwTimeout)
     }
 
     // 根据INI配置设置水平分辨率参数
-    if (lpDisplay->wHpixel == 0 && m_stConfig.wFrameResoWidth > 0)
+    if (lpDisplay->wHpixel == 0 &&
+        m_stConfig.stDevOpenMode[MI_GetDevType(wLCMode)].nOtherParam[2] > 0)
     {
-        lpDisplay->wHpixel = m_stConfig.wFrameResoWidth;
+        lpDisplay->wHpixel = m_stConfig.stDevOpenMode[MI_GetDevType(wLCMode)].nOtherParam[2];
         Log(ThisModule, __LINE__,
             "创建摄像窗口: 入参 水平分辨率Hpixel=%d, INI设置截取画面分辨率>0, 设置水平分辨率Hpixel为%d.",
-            lpDisplay->wHpixel, m_stConfig.wFrameResoWidth);
+            lpDisplay->wHpixel, m_stConfig.stDevOpenMode[MI_GetDevType(wLCMode)].nOtherParam[3]);
     }
 
     // 根据INI配置设置垂直分辨率参数
-    if (lpDisplay->wVpixel == 0 && m_stConfig.wFrameResoHeight > 0)
+    if (lpDisplay->wVpixel == 0 &&
+        m_stConfig.stDevOpenMode[MI_GetDevType(wLCMode)].nOtherParam[3] > 0)
     {
-        lpDisplay->wVpixel = m_stConfig.wFrameResoHeight;
+        lpDisplay->wVpixel = m_stConfig.stDevOpenMode[MI_GetDevType(wLCMode)].nOtherParam[3];
         Log(ThisModule, __LINE__,
             "创建摄像窗口: 入参 垂直分辨率Vpixel=%d, INI设置截取画面分辨率>0, 设置垂直分辨率Vpixel为%d.",
-            lpDisplay->wVpixel, m_stConfig.wFrameResoHeight);
+            lpDisplay->wVpixel, m_stConfig.stDevOpenMode[MI_GetDevType(wLCMode)].nOtherParam[3]);
     }
 
     // 命令下发
@@ -1235,22 +1330,21 @@ HRESULT CXFS_CAM::InnerDisplay(const WFSCAMDISP &stDisplay, DWORD dwTimeout)
     stDisplayPar.wVpixel = lpDisplay->wVpixel;
 
     // 按不同摄像模式下发命令
-    nRet = MI_DevDll(WMODE_TO_LCMODE(lpDisplay->wCamera))->Display(stDisplayPar);
+    nRet = MI_DevDll(wLCMode)->Display(stDisplayPar);
     if (nRet != CAM_SUCCESS)
     {
         Log(ThisModule, __LINE__,
             "创建摄像窗口: ->Display(%d|%s) fail, ErrCode: %s, Return: %d",
-            lpDisplay->wCamera, MI_ModeName(WMODE_TO_LCMODE(lpDisplay->wCamera)),
+            lpDisplay->wCamera, MI_ModeName(wLCMode),
             ConvertDevErrCodeToStr(nRet), ConvertDevErrCode2WFS(nRet));
-        SetErrorDetail(nullptr, WMODE_TO_LCMODE(lpDisplay->wCamera));
+        SetErrorDetail(nullptr, wLCMode);
         return ConvertDevErrCode2WFS(nRet);
     } else
     {
         if (lpDisplay->wAction == WFS_CAM_CREATE)
         {
             // 命令成功且为创建窗口参数时, 设定窗口建立方式
-            m_wWindowsRunMode =
-                    m_wDeviceShowWinMode[MI_GetDevType(WMODE_TO_LCMODE(lpDisplay->wCamera))];
+            m_wWindowsRunMode = m_wDeviceShowWinMode[MI_GetDevType(wLCMode)];
         }
     }
 
@@ -1560,6 +1654,29 @@ INT CXFS_CAM::InitConfigDef(LPCSTR lpsKeyName, WORD wDeviceType)
     CHAR    szBuffer[MAX_PATH];
 
     // 使用0～9通用参数范围
+    // 摄像刷新时间(毫秒,缺省30)
+    m_stConfig.stDevOpenMode[wDeviceType].nOtherParam[1] =
+            m_cXfsReg.GetValue(lpsKeyName, "WinRefreshTime", (DWORD)30);
+    if (m_stConfig.stDevOpenMode[wDeviceType].nOtherParam[1] < 0)
+    {
+        m_stConfig.stDevOpenMode[wDeviceType].nOtherParam[1] = 30;
+    }
+
+    // 截取画面帧的分辨率(Width),缺省:0
+    m_stConfig.stDevOpenMode[wDeviceType].nOtherParam[2] =
+            m_cXfsReg.GetValue(lpsKeyName, "FrameResoWidth", (DWORD)0);
+    if (m_stConfig.stDevOpenMode[wDeviceType].nOtherParam[2] < 0)
+    {
+        m_stConfig.stDevOpenMode[wDeviceType].nOtherParam[2] = 0;
+    }
+
+    // 截取画面帧的分辨率(Height),缺省:0
+    m_stConfig.stDevOpenMode[wDeviceType].nOtherParam[3] =
+            m_cXfsReg.GetValue(lpsKeyName, "FrameResoHeight", (DWORD)0);
+    if (m_stConfig.stDevOpenMode[wDeviceType].nOtherParam[3] < 0)
+    {
+        m_stConfig.stDevOpenMode[wDeviceType].nOtherParam[3] = 0;
+    }
 
     // 摄像窗口显示方式(0:SDK控制, 1:SP内处理, 2:外接程序窗口, 缺省0)
     m_wDeviceShowWinMode[wDeviceType] = m_cXfsReg.GetValue(lpsKeyName, "ShowWinMode", (DWORD)0);

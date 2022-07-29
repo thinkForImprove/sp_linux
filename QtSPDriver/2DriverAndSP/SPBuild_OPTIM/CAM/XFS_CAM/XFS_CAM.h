@@ -160,7 +160,6 @@ typedef struct ST_CAM_MODE_INFO
         CHAR szModeName[128];               // 摄像模式中文解析(参考static CHAR szCamModeStr)
     } stModeList[LCMODE_CNT];
 
-
     ST_CAM_MODE_INFO()
     {
         Clear();
@@ -269,7 +268,7 @@ typedef struct ST_CAM_MODE_INFO
         return 0;
     }
 
-    // 释放DexCAM连接句柄
+    // 释放DevCAM连接句柄
     INT ReleaseDevCAMDllAll()
     {
         for (INT i = 0; i < LCMODE_CNT; i ++)

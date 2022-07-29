@@ -19,6 +19,8 @@ CDevCAM_DEF::CDevCAM_DEF()
     m_bCancel = FALSE;                                  // 是否下发取消命令
     m_nRefreshTime = 30;                                // 摄像数据获取间隔
     MSET_XS(m_nSaveStat, 0, sizeof(INT) * 12);          // 保存必要的状态信息
+    m_wDisplayOpenMode = DISP_OPEN_MODE_THREAD;         // Display窗口打开模式
+    m_nDisplayGetVideoMaxErrCnt = 500;    // display采用图像帧方式刷新时,取图像帧数据接口错误次数上限
 }
 
 CDevCAM_DEF::~CDevCAM_DEF()
@@ -58,71 +60,75 @@ INT CDevCAM_DEF::InnerDisplay(STDISPLAYPAR stDisplayIn, void *vParam/* = nullptr
             }
 
             // 打开设备摄像画面
-            nRet = VideoCameraOpen(stDisplayIn.wWidth, stDisplayIn.wHeight);
+            nRet = VideoCameraOpen(stDisplayIn);
             if (nRet != CAM_SUCCESS)
             {
                 return nRet;
             }
 
-            // 启动窗口处理进程
-            m_nThreadRet = CAM_SUCCESS;
-            m_enDisplayStat = EN_DISP_CREATE;
-            if (!m_thRunDisplay.joinable())
+            // Display窗口打开模式为线程方式
+            if (m_wDisplayOpenMode == DISP_OPEN_MODE_THREAD)
             {
-                m_thRunDisplay = std::thread(&CDevCAM_DEF::ThreadRunDisplay, this,
-                                             stDisplayIn.wWidth, stDisplayIn.wHeight,
-                                             m_nRefreshTime);
-                if (m_thRunDisplay.joinable())
+                // 启动窗口处理线程
+                m_nThreadRet = CAM_SUCCESS;
+                m_enDisplayStat = EN_DISP_CREATE;
+                if (!m_thRunDisplay.joinable())
                 {
-                    m_thRunDisplay.detach();   // 进程分离
-                } else
-                {
-                    Log(ThisModule, __LINE__,
-                        "摄像窗口处理: 建立窗口: 窗口未建立, 创建窗口处理线程失败: Return: %s",
-                        ConvertDevErrCodeToStr(ERR_CAM_OTHER));
-                    m_enDisplayStat = EN_DISP_ENDING;
-                    VideoCameraClose();     // 关闭设备摄像画面
-                    return ERR_CAM_OTHER;
-                }
-            }
-
-            // 根据超时时间，循环验证线程是否启动
-            QTime qtTimeCurr = QTime::currentTime();     // 拍照执行前时间
-            ULONG ulTimeCount = 0;
-            while(1)
-            {
-                QCoreApplication::processEvents();
-
-                if (stDisplayIn.dwTimeOut > 0)   // >0有超时;否则不超时
-                {
-                    ulTimeCount = qtTimeCurr.msecsTo(QTime::currentTime()); // 时间差计入超时计数(毫秒)
-                    if (ulTimeCount >= stDisplayIn.dwTimeOut)
+                    m_thRunDisplay = std::thread(&CDevCAM_DEF::ThreadRunDisplay, this,
+                                                 stDisplayIn.wWidth, stDisplayIn.wHeight,
+                                                 m_nRefreshTime);
+                    if (m_thRunDisplay.joinable())
+                    {
+                        m_thRunDisplay.detach();   // 进程分离
+                    } else
                     {
                         Log(ThisModule, __LINE__,
-                            "摄像窗口处理: 建立窗口: 等待时间[%ld] > 指定超时时间[%ld]: 超时: Return: %s",
-                            ulTimeCount, stDisplayIn.dwTimeOut, ConvertDevErrCodeToStr(ERR_CAM_TIMEOUT));
-                        VideoCameraClose(); // 关闭设备摄像画面
-                        return ERR_CAM_TIMEOUT;
+                            "摄像窗口处理: 建立窗口: 窗口未建立, 创建窗口处理线程失败: Return: %s",
+                            ConvertDevErrCodeToStr(ERR_CAM_OTHER));
+                        m_enDisplayStat = EN_DISP_ENDING;
+                        VideoCameraClose();     // 关闭设备摄像画面
+                        return ERR_CAM_OTHER;
                     }
                 }
 
-                if (m_nThreadRet != CAM_SUCCESS)
+                // 根据超时时间，循环验证线程是否启动
+                QTime qtTimeCurr = QTime::currentTime();     // 拍照执行前时间
+                ULONG ulTimeCount = 0;
+                while(1)
                 {
-                    Log(ThisModule, __LINE__,
-                        "摄像窗口处理: 建立窗口失败, ErrCode: %s, Return: %s",
-                        ConvertDevErrCodeToStr(m_nThreadRet), ConvertDevErrCodeToStr(m_nThreadRet));
-                    VideoCameraClose(); // 关闭设备摄像画面
-                    return m_nThreadRet;
-                } else
-                {
-                    if (m_enDisplayStat == EN_DISP_SHOWING)
+                    QCoreApplication::processEvents();
+
+                    if (stDisplayIn.dwTimeOut > 0)   // >0有超时;否则不超时
                     {
-                        Log(ThisModule, __LINE__, "摄像窗口处理: 建立窗口完成...");
-                        break;
+                        ulTimeCount = qtTimeCurr.msecsTo(QTime::currentTime()); // 时间差计入超时计数(毫秒)
+                        if (ulTimeCount >= stDisplayIn.dwTimeOut)
+                        {
+                            Log(ThisModule, __LINE__,
+                                "摄像窗口处理: 建立窗口: 等待时间[%ld] > 指定超时时间[%ld]: 超时: Return: %s",
+                                ulTimeCount, stDisplayIn.dwTimeOut, ConvertDevErrCodeToStr(ERR_CAM_TIMEOUT));
+                            VideoCameraClose(); // 关闭设备摄像画面
+                            return ERR_CAM_TIMEOUT;
+                        }
                     }
-                }
 
-                usleep(1000 * 30);
+                    if (m_nThreadRet != CAM_SUCCESS)
+                    {
+                        Log(ThisModule, __LINE__,
+                            "摄像窗口处理: 建立窗口失败, ErrCode: %s, Return: %s",
+                            ConvertDevErrCodeToStr(m_nThreadRet), ConvertDevErrCodeToStr(m_nThreadRet));
+                        VideoCameraClose(); // 关闭设备摄像画面
+                        return m_nThreadRet;
+                    } else
+                    {
+                        if (m_enDisplayStat == EN_DISP_SHOWING)
+                        {
+                            Log(ThisModule, __LINE__, "摄像窗口处理: 建立窗口完成...");
+                            break;
+                        }
+                    }
+
+                    usleep(1000 * 30);
+                }
             }
 
             return CAM_SUCCESS;
@@ -233,7 +239,7 @@ INT CDevCAM_DEF::InnerTakePicture(STTAKEPICTUREPAR stTakePicIn, void *vParam/* =
     qtTimeCurr = QTime::currentTime();     // 拍照执行前时间
 
     // 拍照前运行处理
-    nRet = TakePicFrontRun();
+    nRet = TakePicFrontRun(stTakePicIn);
     if (nRet != CAM_SUCCESS)
     {
         return nRet;
@@ -249,7 +255,7 @@ INT CDevCAM_DEF::InnerTakePicture(STTAKEPICTUREPAR stTakePicIn, void *vParam/* =
         {
             Log(ThisModule, __LINE__, "摄像拍照: 命令取消: Return: %s",
                 nRet, ConvertDevErrCodeToStr(ERR_CAM_USER_CANCEL));
-            TakePicAfterRun();
+            TakePicAfterRun(stTakePicIn);
             return ERR_CAM_USER_CANCEL;
         }
 
@@ -261,7 +267,7 @@ INT CDevCAM_DEF::InnerTakePicture(STTAKEPICTUREPAR stTakePicIn, void *vParam/* =
                 Log(ThisModule, __LINE__,
                     "摄像拍照: 等待时间[%ld] > 指定超时时间[%ld]: 超时: Return: %s",
                     ulTimeCount, stTakePicIn.dwTimeOut, ConvertDevErrCodeToStr(ERR_CAM_TIMEOUT));
-                TakePicAfterRun();
+                TakePicAfterRun(stTakePicIn);
                 return ERR_CAM_TIMEOUT;
             }
         }
@@ -276,7 +282,7 @@ INT CDevCAM_DEF::InnerTakePicture(STTAKEPICTUREPAR stTakePicIn, void *vParam/* =
                     "摄像拍照: ->SaveImageFile(%s) Fail, ErrCode: %s, Return: %s",
                     stTakePicIn.szFileName, ConvertDevErrCodeToStr(nRet),
                     ConvertDevErrCodeToStr(nRet));
-                TakePicAfterRun();
+                TakePicAfterRun(stTakePicIn);
                 return nRet;
             } else
             {
@@ -286,13 +292,13 @@ INT CDevCAM_DEF::InnerTakePicture(STTAKEPICTUREPAR stTakePicIn, void *vParam/* =
             }
         } else
         {
-
+            ;
         }
 
         usleep(1000 * 30);
     }
 
-    TakePicAfterRun();
+    TakePicAfterRun(stTakePicIn);
 
     return CAM_SUCCESS;
 }
@@ -362,6 +368,7 @@ INT CDevCAM_DEF::DEF_ConvertImplErrCode2CAM(INT nRet)
         DEF_CASE_RET_DEVCODE(IMP_ERR_SET_VMODE, ERR_CAM_OTHER)              // 摄像参数设置错误
         DEF_CASE_RET_DEVCODE(IMP_ERR_SET_RESO, ERR_CAM_OTHER)               // 分辨率设置失败
         DEF_CASE_RET_DEVCODE(IMP_ERR_SHAREDMEM_RW, ERR_CAM_OTHER)           // 共享内存读写失败
+        DEF_CASE_RET_DEVCODE(IMP_ERR_MEMORY, ERR_CAM_OTHER)                 // 内存错误
         default: return ERR_CAM_OTHER;
     }
 
@@ -388,6 +395,7 @@ INT CDevCAM_DEF::DEF_ConvertImplErrCode2ErrDetail(INT nRet)
         CASE_SET_DEV_DETAIL(IMP_ERR_SET_VMODE, EC_DEV_OtherErr)             // 摄像参数设置错误
         CASE_SET_DEV_DETAIL(IMP_ERR_SET_RESO, EC_DEV_OtherErr)              // 分辨率设置失败
         CASE_SET_DEV_DETAIL(IMP_ERR_SHAREDMEM_RW, EC_DEV_ShareMemRW)        // 共享内存读写失败
+        CASE_SET_DEV_DETAIL(IMP_ERR_MEMORY, EC_DEV_MemoryErrr)              // 内存错误
     }
 
     return CAM_SUCCESS;
@@ -404,7 +412,7 @@ INT CDevCAM_DEF::VideoCameraOpenFrontRun(STDISPLAYPAR stDisplayIn)
 }
 
 // 打开设备摄像画面
-INT CDevCAM_DEF::VideoCameraOpen(WORD wWidth, WORD wHeight)
+INT CDevCAM_DEF::VideoCameraOpen(STDISPLAYPAR stDisplayIn)
 {
     THISMODULE(__FUNCTION__);
     //AutoLogFuncBeginEnd();
@@ -449,7 +457,7 @@ INT CDevCAM_DEF::GetViewImage(LPSTIMGDATA lpImgData, INT nWidth, INT nHeight, DW
 }
 
 // 拍照前运行处理
-INT CDevCAM_DEF::TakePicFrontRun()
+INT CDevCAM_DEF::TakePicFrontRun(STTAKEPICTUREPAR stTakePicIn)
 {
     THISMODULE(__FUNCTION__);
     //AutoLogFuncBeginEnd();
@@ -458,7 +466,7 @@ INT CDevCAM_DEF::TakePicFrontRun()
 }
 
 // 拍照后运行处理
-INT CDevCAM_DEF::TakePicAfterRun()
+INT CDevCAM_DEF::TakePicAfterRun(STTAKEPICTUREPAR stTakePicIn)
 {
     THISMODULE(__FUNCTION__);
     //AutoLogFuncBeginEnd();
@@ -533,12 +541,13 @@ void CDevCAM_DEF::ThreadRunDisplay(WORD wDisplayW, WORD wDisplayH, DWORD dwRefre
             if (nRet != IMP_SUCCESS)
             {
                 nRetErrCount ++;
-                if (nRetErrCount > 5)
+                if (nRetErrCount > m_nDisplayGetVideoMaxErrCnt)
                 {
                     Log(ThisModule, __LINE__,
-                        "窗口处理进程[%ld]: 窗口状态为显示[%d]: 获取帧数据: ->GetViewImage() Fail(%d次), ErrCode: %s, 线程结束.",
+                        "窗口处理进程[%ld]: 窗口状态为显示[%d]: 获取帧数据: ->GetViewImage() Fail, "
+                        "错误次数%d超过上限%d, ErrCode: %s, 线程结束.",
                         std::this_thread::get_id(), m_enDisplayStat, nRetErrCount,
-                        ConvertDevErrCodeToStr(nRet));
+                        m_nDisplayGetVideoMaxErrCnt, ConvertDevErrCodeToStr(nRet));
                     m_nThreadRet = nRet;
                     // 设置错误事件参数
                     if (m_enDisplayStat == EN_DISP_SHOWING)
@@ -549,7 +558,6 @@ void CDevCAM_DEF::ThreadRunDisplay(WORD wDisplayW, WORD wDisplayH, DWORD dwRefre
                     }
                     break;
                 }
-
             } else
             {
                 nRetErrCount = 0;

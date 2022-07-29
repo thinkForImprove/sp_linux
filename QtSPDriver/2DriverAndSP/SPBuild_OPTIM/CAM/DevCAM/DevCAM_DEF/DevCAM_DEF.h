@@ -22,6 +22,15 @@
 
 #include "DevImpl_DEF.h"
 
+
+/***************************************************************************
+// 无分类　宏定义
+***************************************************************************/
+// 窗口打开模式
+#define DISP_OPEN_MODE_SDK      1       // SDK自建窗口
+#define DISP_OPEN_MODE_THREAD   2       // 图像数据线程处理方式
+
+
 /***************************************************************************
 *
 ***************************************************************************/
@@ -44,14 +53,14 @@ public:     // 可重写:共享内存建立/销毁
 
 public:     // 可重写: 窗口显示和拍照处理内接口, 根据不同设备进行重载调用对应的设备接口处理
     virtual INT VideoCameraOpenFrontRun(STDISPLAYPAR stDisplayIn);  // 摄像窗口打开前处理
-    virtual INT VideoCameraOpen(WORD wWidth, WORD wHeight);         // 打开设备摄像画面
+    virtual INT VideoCameraOpen(STDISPLAYPAR stDisplayIn);          // 打开设备摄像画面
     virtual INT VideoCameraClose();                                 // 关闭设备摄像画面
     virtual INT VideoCameraPause();                                 // 暂停设备摄像画面
     virtual INT VideoCameraResume();                                // 恢复设备摄像画面
     virtual INT GetViewImage(LPSTIMGDATA lpImgData, INT nWidth = 0,
                      INT nHeight = 0, DWORD dwParam = 0);           // 获取窗口显示数据
-    virtual INT TakePicFrontRun();                                  // 拍照前运行处理
-    virtual INT TakePicAfterRun();                                  // 拍照后运行处理
+    virtual INT TakePicFrontRun(STTAKEPICTUREPAR stTakePicIn);      // 拍照前运行处理
+    virtual INT TakePicAfterRun(STTAKEPICTUREPAR stTakePicIn);      // 拍照后运行处理
     virtual BOOL GetLiveDetectResult();                             // 获取检测结果
     virtual INT TakePicSaveImage(STTAKEPICTUREPAR stTakePicIn);     // 保存图像
 
@@ -68,6 +77,8 @@ public:
     ULONG                           m_ulSharedDataSize;             // 共享内存大小
     INT                             m_nRefreshTime;                 // 摄像数据获取间隔
     CErrorDetail                    m_clErrorDet;                   // 错误码处理类实例
+    WORD                            m_wDisplayOpenMode;             // 窗口打开模式
+    INT                             m_nDisplayGetVideoMaxErrCnt;    // display采用图像帧方式刷新时,取图像帧数据接口错误次数上限
 
 public:    // 线程处理
     std::thread                     m_thRunDisplay;                 // 窗口处理线程句柄

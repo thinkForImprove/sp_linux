@@ -131,6 +131,16 @@ HRESULT CXFS_CAM::OnClose()
     THISMODULE(__FUNCTION__);
     AutoLogFuncBeginEnd();
 
+    // 关闭所有设备连接
+    for (WORD i = 0; i < LCMODE_CNT; i ++)
+    {
+        if (MI_Enable(i) == TRUE && MI_DevDll(i) != nullptr)
+        {
+            MI_DevDll(i)->Close();
+        }
+    }
+
+    // 释放所有设备DevXXX库连接
     m_stCamModeInfo.ReleaseDevCAMDllAll();
     m_stCamModeInfo.Clear();
 
@@ -206,7 +216,10 @@ HRESULT CXFS_CAM::OnCancelAsyncRequest()
     AutoLogFuncBeginEnd();
 
     // 根据当前窗口运行模式选择对应的设备连接
-    m_stCamModeInfo.stModeList[CMODE_TO_LCMODE(m_wWindowsRunMode)].m_pCAMDev->Cancel();
+    if (m_wWindowsRunMode > 0)
+    {
+        m_stCamModeInfo.stModeList[CMODE_TO_LCMODE(m_wWindowsRunMode)].m_pCAMDev->Cancel();
+    }
 
     return WFS_SUCCESS;
 }

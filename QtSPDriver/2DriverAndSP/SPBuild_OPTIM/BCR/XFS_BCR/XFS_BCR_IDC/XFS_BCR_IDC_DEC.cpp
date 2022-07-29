@@ -197,6 +197,14 @@ INT CXFS_BCR::InitConfig()
         m_stConfig.wReadBcrRetDataMode = 0;
     }
 
+    // 扫码读码返回数据编码格式(0:UTF8, 1:GBK, 缺省0)
+    m_stConfig.wReadBcrRetDataCode = (WORD)m_cXfsReg.GetValue("BCR_COFNIG", "ReadBcrRetDataCode", (DWORD)0);
+    if (m_stConfig.wReadBcrRetDataCode != 0 &&
+        m_stConfig.wReadBcrRetDataCode != 1)
+    {
+        m_stConfig.wReadBcrRetDataCode = 0;
+    }
+
 
     //------------------------[TESTER_CONFIG]下参数------------------------
     //------------------------测试模式相关配置----------------------------------
@@ -244,6 +252,7 @@ INT CXFS_BCR::PrintIniBCR()
     PRINT_INI_BUF("\n\t\t\t\t Open失败时返回值(0原样返回/1返回SUCCESS): OPEN_CONFIG->OpenFailRet = %d", m_stConfig.wOpenFailRet);
     PRINT_INI_BUF("\n\t\t\t\t Reset失败时返回标准(0原样返回/1忽略失败和错误返回成功): RESET_CONFIG->ResetFailReturn = %d", m_stConfig.wResetFailReturn);
     PRINT_INI_BUF("\n\t\t\t\t 扫码读码返回数据格式(0:16进制,1:ASCII): BCR_COFNIG->ReadBcrRetDataMode = %d", m_stConfig.wReadBcrRetDataMode);
+    PRINT_INI_BUF("\n\t\t\t\t 扫码读码返回数据编码格式(0:UTF8,1:GBK): BCR_COFNIG->ReadBcrRetDataCode = %d", m_stConfig.wReadBcrRetDataCode);
     PRINT_INI_BUF("\n\t\t\t\t 是否启用测试模式(0:不启用,1:启用): TESTER_CONFIG->TestModeIsSup = %d",m_stConfig.wTestModeIsSup);
 
     Log(ThisModule, __LINE__, "BCRIDC INI配置取得如下: %s", qsIniPrt.toStdString().c_str());

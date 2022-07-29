@@ -39,6 +39,7 @@ struct st_idc_ini_config
     WORD                wResetFailReturn;                   // Reset失败时返回标准
     // INI配置通用相关
     WORD                wReadBcrRetDataMode;                // 扫码读码返回数据格式
+    WORD                wReadBcrRetDataCode;                // 扫码读码返回数据编码格式
     // INI配置测试模式相关
     WORD                wTestModeIsSup;                     // 是否启用测试模式
     INT                 nTestInsertComplete;                //

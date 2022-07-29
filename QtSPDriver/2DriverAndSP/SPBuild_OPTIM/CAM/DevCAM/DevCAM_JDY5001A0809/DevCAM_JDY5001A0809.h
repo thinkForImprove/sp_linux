@@ -63,14 +63,14 @@ private:
 
 private:    // 重写CDevCAM_DEF类接口
     INT VideoCameraOpenFrontRun(STDISPLAYPAR stDisplayIn);          // 摄像窗口打开前处理
-    INT VideoCameraOpen(WORD wWidth, WORD wHeight);                 // 打开设备摄像画面
+    INT VideoCameraOpen(STDISPLAYPAR stDisplayIn);                  // 打开设备摄像画面
     INT VideoCameraClose();                                         // 关闭设备摄像画面
     INT VideoCameraPause();                                         // 暂停设备摄像画面
     INT VideoCameraResume();                                        // 恢复设备摄像画面
     INT GetViewImage(LPSTIMGDATA lpImgData, INT nWidth = 0,
                      INT nHeight = 0, DWORD dwParam = 0);           // 获取窗口显示数据
-    INT TakePicFrontRun();                                          // 拍照前运行处理
-    INT TakePicAfterRun();                                          // 拍照后运行处理
+    INT TakePicFrontRun(STTAKEPICTUREPAR stTakePicIn);              // 拍照前运行处理
+    INT TakePicAfterRun(STTAKEPICTUREPAR stTakePicIn);              // 拍照后运行处理
     BOOL GetLiveDetectResult();                                     // 获取检测结果
     INT TakePicSaveImage(STTAKEPICTUREPAR stTakePicIn);             // 保存图像
 
@@ -93,6 +93,7 @@ private:
     INT                             m_nRetErrOLD[12];               // 处理错误值保存(0:USB动态库/1:设备连接/
                                                                     //             2:设备初始化/3/4)
     INT                             m_nClipMode;                    // 图像镜像模式转换
+    BOOL                            m_bDevPortIsHaveOLD[2];         // 记录设备是否连接上
 
 };
 

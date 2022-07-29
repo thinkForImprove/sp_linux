@@ -184,9 +184,9 @@ HRESULT CXFS_BCR::GetStatus(LPWFSIDCSTATUS &lpStatus)
 {
     THISMODULE(__FUNCTION__);
     AutoLogFuncBeginEnd();
-	
-	UpdateDeviceStatus();
-		
+
+    UpdateDeviceStatus();
+
     m_cStatExtra.AddExtra("ErrorDetail", m_clErrorDet.GetSPErrCode());
     m_cStatExtra.AddExtra("LastErrorDetail", m_clErrorDet.GetSPErrCodeLast());
 

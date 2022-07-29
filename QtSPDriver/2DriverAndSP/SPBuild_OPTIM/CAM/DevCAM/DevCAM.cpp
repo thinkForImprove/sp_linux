@@ -4,6 +4,8 @@
 #include "DevCAM_DEF/DevCAM_DEF.h"
 #include "DevCAM_CloudWalk/DevCAM_CloudWalk.h"
 #include "DevCAM_JDY5001A0809/DevCAM_JDY5001A0809.h"
+#include "DevCAM_TCF261/DevCAM_TCF261.h"
+#include "DevCAM_ZLF1000A3/DevCAM_ZLF1000A3.h"
 
 /************************************************************
 ** 功能：获取设备连接handle
@@ -15,13 +17,21 @@ extern "C" DEVCAM_EXPORT long CreateIDevCAM(LPCSTR lpDevType, IDevCAM *&pDev)
 {
     pDev = nullptr;
 
-    if (MCMP_IS0(lpDevType, IDEV_YC0C98))     // YC-0C98
+    if (MCMP_IS0(lpDevType, IDEV_YC0C98))               // YC-0C98
     {
         pDev = new CDevCAM_CloudWalk(lpDevType);
     } else
-    if (MCMP_IS0(lpDevType, IDEV_JDY5001A0809))     // JDY-5001A-0809
+    if (MCMP_IS0(lpDevType, IDEV_JDY5001A0809))         // JDY-5001A-0809
     {
         pDev = new CDevCAM_JDY5001A0809(lpDevType);
+    } else
+    if (MCMP_IS0(lpDevType, IDEV_TCF261))               // TCF-261
+    {
+        pDev = new CDevCAM_TCF261(lpDevType);
+    } else
+    if (MCMP_IS0(lpDevType, IDEV_ZLF1000A3))            // ZLF1000A3
+    {
+        pDev = new CDevCAM_ZLF1000A3(lpDevType);
     }
 
     return (pDev != nullptr) ? 0 : -1;

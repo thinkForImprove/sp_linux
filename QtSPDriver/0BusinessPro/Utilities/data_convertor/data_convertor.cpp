@@ -1063,7 +1063,7 @@ unsigned long DataConvertor::string_ascii_to_utf8(const char* ascii_str, char* u
     len = code_convert(cInCode, cOutCode, ascii_str, strlen(ascii_str), utf8_str, buf_size);
 #endif  // WIN32
 
-    return len;
+    return len < 0 ? 0 : len;
 
 }
 
@@ -1121,7 +1121,7 @@ unsigned long DataConvertor::string_utf8_to_ascii(const char* utf8_str, char* as
     char cOutCode[] = "GB2312";
     len = code_convert(cInCode, cOutCode, utf8_str, strlen(utf8_str), ascii_str, buf_size);
 #endif // WIN32
-    return len;
+    return len < 0 ? 0 : len;
 }
 
 /**
@@ -1992,6 +1992,38 @@ DWORD DataConvertor::str_to_toupper(LPCSTR lpcSource, DWORD dwSourceSize, LPSTR 
     memcpy(lpDest, stdToupper.c_str(), dwSize >= dwDestSize ? dwDestSize : dwSize);
 
     return dwSize;
+}
+
+
+/**
+ @功能：	检查数据编码格式
+ @参数：	 lpcData: 源字串   dwDataSize: 源字串大小
+ @返回：	0:无效数据, 1:UTF8编码, 2:GBK编码
+ */
+INT DataConvertor::ChkDataIsUTF8(LPCSTR lpcData, DWORD dwDataSize)
+{
+    if (lpcData == nullptr || dwDataSize < 1)
+    {
+        return 0;
+    }
+
+    if (strlen(lpcData) < 1)
+    {
+        return 0;
+    }
+
+    QTextCodec::ConverterState qtState;
+    QTextCodec *qtCodecUTF8 = QTextCodec::codecForName("UTF-8");
+    qtCodecUTF8->toUnicode(lpcData, dwDataSize, &qtState);
+
+    if (!qtState.invalidChars)   // UTF8
+    {
+        return CODE_UTF8;
+    } else
+    {
+        // 暂定非UTF8则为GBK,后续要加验证GBK方式
+        return CODE_GBK;
+    }
 }
 
 

@@ -59,14 +59,23 @@ HEADERS += \
         DevCAM_CloudWalk/cloudwalk.h
 
 #TCF261(加载CPP/H)
-#SOURCES += \
-#        DevCAM_TCF261/DevCAM_TCF261.cpp \
- #       DevCAM_TCF261/DevImpl_TCF261.cpp
+SOURCES += \
+        DevCAM_TCF261/DevCAM_TCF261.cpp \
+        DevCAM_TCF261/DevImpl_TCF261.cpp
 
-#HEADERS += \
-#        DevCAM_TCF261/DevCAM_TCF261.h \
-#        DevCAM_TCF261/DevImpl_TCF261.h \
-#        DevCAM_TCF261/TCF261.h
+HEADERS += \
+        DevCAM_TCF261/DevCAM_TCF261.h \
+        DevCAM_TCF261/DevImpl_TCF261.h \
+        DevCAM_TCF261/TCF261.h
+
+#ZLF1000A3(加载CPP/H)
+SOURCES += \
+        DevCAM_ZLF1000A3/DevCAM_ZLF1000A3.cpp \
+        DevCAM_ZLF1000A3/DevImpl_ZLF1000A3.cpp
+
+HEADERS += \
+        DevCAM_ZLF1000A3/DevCAM_ZLF1000A3.h \
+        DevCAM_ZLF1000A3/DevImpl_ZLF1000A3.h
 
 #JDY-5001A-0809(加载CPP/H)
 SOURCES += \

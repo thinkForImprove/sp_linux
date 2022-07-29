@@ -600,7 +600,7 @@ int CDevPTR_SNBC::PrintForm(DEVPRINTFORMIN stPrintIn, DEVPRINTFORMOUT &stPrintOu
                                                                    (stPrintIn.lOtherParam[0] == 0 ? FALSE : TRUE))) != IMP_SUCCESS)
             {
                 Log(ThisModule, __LINE__,
-                    "打印文本(缺省点阵): LineModePrintTextUniversal(%s, %d, %d, %d, %d, %d, %d) fail, ErrCode: %d, Return: %s.",
+                    "打印文本(缺省点阵): LineModePrintTextUniversal(%s, %d, %d, %d, %d, %d, %d, %d) fail, ErrCode: %d, Return: %s.",
                     stPrintIn.szData, stPrintIn.dwDataSize, stPrintIn.ulX * 8 / 10, m_wDouWidth, m_wDouHeight,
                     m_wFontType, m_wFontStyle, stPrintIn.lOtherParam[0], nRet,
                     ConvertErrCodeToStr(ConvertErrorCode(nRet)));

@@ -4,6 +4,8 @@
 #include "data_convertor_global.h"
 #include "__common_def.h"
 
+#include <QTextCodec>
+
 
 #define TIME_UNIT_MS				(10000ULL)
 #define TIME_UNIT_SEC				(1000 * 10000ULL)
@@ -14,6 +16,10 @@
 #define STRING_ALIGN_LEFT			(0)
 #define STRING_ALIGN_CENTER			(1)
 #define STRING_ALIGN_RIGHT			(2)
+
+// 编码格式
+#define CODE_UTF8                   1
+#define CODE_GBK                    2
 
 /****************************************************************************************************
  @功能：	常用数据转换功能，字符串解析、格式转换、时间比较等
@@ -87,6 +93,7 @@ public:
     static DWORD Hex2Ascii(LPCSTR lpcHex, DWORD dwHexSize, LPSTR lpAscii, DWORD dwAsciiSize);   // 16进制字串转换为ASCII字串
     static DWORD Int_To_HexStr(LONG lSource, LPSTR lpDest, DWORD dwDestSize);                   // 整型转换为16进制字符串
     static DWORD str_to_toupper(LPCSTR lpcSource, DWORD dwSourceSize, LPSTR lpDest, DWORD dwDestSize);// 字串转换为大写
+    static BOOL ChkDataIsUTF8(LPCSTR lpcData, DWORD dwDataSize);                                // 检查数据编码格式
 };
 
 #endif // DATA_CONVERTOR_H

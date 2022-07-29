@@ -41,6 +41,8 @@ CDevCAM_CloudWalk::CDevCAM_CloudWalk(LPCSTR lpDevType) :
     MSET_0(m_szPersonImgFile);              // 特殊处理: 人脸图像名
     MSET_0(m_szPersonNirImgFile);           // 特殊处理: 人脸红外图像名
     m_stStatusOLD.Clear();                  // 记录上一次状态
+    m_wDisplayOpenMode = DISP_OPEN_MODE_THREAD;// Display窗口打开模式(必须设定):线程支持
+    memset(m_bDevPortIsHaveOLD, FALSE, sizeof(BOOL) * 2);// 记录设备是否连接上)
 }
 
 CDevCAM_CloudWalk::~CDevCAM_CloudWalk()
@@ -56,6 +58,9 @@ int CDevCAM_CloudWalk::Open(LPCSTR lpMode)
     //AutoMutex(m_cMutex);
 
     INT nRet = IMP_SUCCESS;
+
+    INT nDevPort1IsHave = 0;   // 设备连接1是否存在
+    INT nDevPort2IsHave = 0;   // 设备连接2是否存在
 
     m_pDevImpl.CloseDevice();
 
@@ -76,17 +81,24 @@ int CDevCAM_CloudWalk::Open(LPCSTR lpMode)
         }
     } else                              // VidPid方式打开
     {
-        if (CDevicePort::SearchDeviceVidPidIsHave(m_stOpenMode.szHidVid[0],
-                                                  m_stOpenMode.szHidPid[0]) == DP_RET_NOTHAVE ||
-            CDevicePort::SearchDeviceVidPidIsHave(m_stOpenMode.szHidVid[1],
-                                                  m_stOpenMode.szHidPid[1]) == DP_RET_NOTHAVE)
+        nDevPort1IsHave = CDevicePort::SearchDeviceVidPidIsHave(m_stOpenMode.szHidVid[0],
+                                                                m_stOpenMode.szHidPid[0]);
+        nDevPort2IsHave = CDevicePort::SearchDeviceVidPidIsHave(m_stOpenMode.szHidVid[1],
+                                                                m_stOpenMode.szHidPid[1]);
+
+        m_bDevPortIsHaveOLD[0] = (nDevPort1IsHave == DP_RET_NOTHAVE ? FALSE : TRUE);
+        m_bDevPortIsHaveOLD[1] = (nDevPort2IsHave == DP_RET_NOTHAVE ? FALSE : TRUE);
+
+        if (nDevPort1IsHave == DP_RET_NOTHAVE || nDevPort2IsHave == DP_RET_NOTHAVE)
         {
             if (m_nRetErrOLD[3] != ERR_CAM_NODEVICE)
             {
                 Log(ThisModule, __LINE__,
-                    "打开设备: 检查设备: VidPid方式打开: [%s:%s, %s,%s] 未找到, Return: %s.",
+                    "打开设备: 检查设备: VidPid方式打开: VidPid[%s:%s%s, %s:%s%s], Return: %s.",
                     m_stOpenMode.szHidVid[0], m_stOpenMode.szHidPid[0],
+                    nDevPort1IsHave == DP_RET_NOTHAVE ? "未连接" : "已连接",
                     m_stOpenMode.szHidVid[1], m_stOpenMode.szHidPid[1],
+                    nDevPort2IsHave == DP_RET_NOTHAVE ? "未连接" : "已连接",
                     ConvertDevErrCodeToStr(ERR_CAM_NODEVICE));
                 m_nRetErrOLD[3] = ERR_CAM_NODEVICE;
             }
@@ -131,16 +143,16 @@ int CDevCAM_CloudWalk::Open(LPCSTR lpMode)
     if (m_stOpenMode.wOpenMode == 0)
     {
         Log(ThisModule, __LINE__,
-            "打开设备(序号方式): ->OpenDevice(%d, %d) Succ.",
-            m_stOpenMode.nHidVid[0], m_stOpenMode.nHidVid[1],
-            m_bReCon == TRUE ? "断线重连: " : "");
+            "%s打开设备(序号方式): ->OpenDevice(%d, %d) Succ.",
+            m_bReCon == TRUE ? "断线重连: " : "",
+            m_stOpenMode.nHidVid[0], m_stOpenMode.nHidVid[1]);
     } else
     {
         Log(ThisModule, __LINE__,
-            "打开设备(VidPid方式): ->OpenDevice(%s:%s, %s:%s) Succ.",
+            "%s打开设备(VidPid方式): ->OpenDevice(%s:%s, %s:%s) Succ.",
+            m_bReCon == TRUE ? "断线重连: " : "",
             m_stOpenMode.szHidVid[0], m_stOpenMode.szHidPid[0],
-            m_stOpenMode.szHidVid[1], m_stOpenMode.szHidPid[1],
-            m_bReCon == TRUE ? "断线重连: " : "");
+            m_stOpenMode.szHidVid[1], m_stOpenMode.szHidPid[1]);
     }
 
     m_bReCon = FALSE; // 是否断线重连状态: 初始F
@@ -227,6 +239,22 @@ int CDevCAM_CloudWalk::GetStatus(STDEVCAMSTATUS &stStatus)
         {
             bDevPort2IsHave = TRUE;
         }
+
+        if (m_bDevPortIsHaveOLD[0] != bDevPort1IsHave)
+        {
+            Log(ThisModule, __LINE__, "数据线VID:PID[%s:%s]%s",
+                m_stOpenMode.szHidVid[0],m_stOpenMode.szHidPid[0],
+                bDevPort1IsHave == TRUE ? "已连接" : "已断开");
+            m_bDevPortIsHaveOLD[0] = bDevPort1IsHave;
+        }
+
+        if (m_bDevPortIsHaveOLD[1] != bDevPort2IsHave)
+        {
+            Log(ThisModule, __LINE__, "数据线VID:PID[%s:%s]%s",
+                m_stOpenMode.szHidVid[1],m_stOpenMode.szHidPid[1],
+                bDevPort2IsHave == TRUE ? "已连接" : "已断开");
+            m_bDevPortIsHaveOLD[1] = bDevPort2IsHave;
+        }
     }
 
     if (bDevPort1IsHave == TRUE && bDevPort2IsHave == TRUE)     // 两根线正常接入
@@ -305,7 +333,7 @@ int CDevCAM_CloudWalk::Cancel(unsigned short usMode)
         m_bCancel = TRUE;
     }
 
-    m_bCancel = TRUE;
+    return CAM_SUCCESS;
 }
 
 // 摄像窗口处理
@@ -357,6 +385,8 @@ int CDevCAM_CloudWalk::SetData(unsigned short usType, void *vData/* = nullptr*/)
                 m_ulSharedDataSize = ((LPSTINITPARAM)vData)->lParLong[0];
                 MCPY_NOLEN(m_szPersonImgFile, ((LPSTINITPARAM)vData)->szParStr[10]);    // 特殊处理: 人脸图像名
                 MCPY_NOLEN(m_szPersonNirImgFile, ((LPSTINITPARAM)vData)->szParStr[11]); // 特殊处理: 人脸红外图像名
+                // display采用图像帧方式刷新时,取图像帧数据接口错误次数上限
+                m_nDisplayGetVideoMaxErrCnt = ((LPSTINITPARAM)vData)->nParInt[2];
             }
             break;
         }
@@ -396,10 +426,10 @@ int CDevCAM_CloudWalk::SetData(unsigned short usType, void *vData/* = nullptr*/)
                 {
                     MCPY_NOLEN(m_szVoiceFile, ((LPSTDEVICEOPENMODE)vData)->szOtherParams[16]);  // 语音文件路径
                 }
-                m_nFrameResoWH[0] = ((LPSTDEVICEOPENMODE)vData)->nOtherParam[16];               // 截取画面帧的分辨率(0:Width, 1:Height)
-                m_nFrameResoWH[1] = ((LPSTDEVICEOPENMODE)vData)->nOtherParam[17];
+                m_nFrameResoWH[0] = ((LPSTDEVICEOPENMODE)vData)->nOtherParam[2];               // 截取画面帧的分辨率(0:Width, 1:Height)
+                m_nFrameResoWH[1] = ((LPSTDEVICEOPENMODE)vData)->nOtherParam[3];
                 m_pDevImpl.SetSDKVersion(((LPSTDEVICEOPENMODE)vData)->nOtherParam[18]);         // 设置SDK版本
-                m_nRefreshTime = ((LPSTDEVICEOPENMODE)vData)->nOtherParam[19];                  // 摄像刷新时间
+                m_nRefreshTime = ((LPSTDEVICEOPENMODE)vData)->nOtherParam[1];                  // 摄像刷新时间
             }
             break;
         }
@@ -830,7 +860,7 @@ INT CDevCAM_CloudWalk::VideoCameraOpenFrontRun(STDISPLAYPAR stDisplayIn)
 }
 
 // 打开设备摄像画面(重写)
-INT CDevCAM_CloudWalk::VideoCameraOpen(WORD wWidth, WORD wHeight)
+INT CDevCAM_CloudWalk::VideoCameraOpen(STDISPLAYPAR stDisplayIn)
 {
     THISMODULE(__FUNCTION__);
     //AutoLogFuncBeginEnd();
@@ -840,42 +870,44 @@ INT CDevCAM_CloudWalk::VideoCameraOpen(WORD wWidth, WORD wHeight)
     if (m_stOpenMode.wOpenMode == 0)    // 序号方式打开
     {
         // 按序号开启相机
-        nRet = m_pDevImpl.OpenCamera(m_stOpenMode.nHidVid[0], 0, wWidth, wHeight);
+        nRet = m_pDevImpl.OpenCamera(m_stOpenMode.nHidVid[0], 0, stDisplayIn.wWidth, stDisplayIn.wHeight);
         if (nRet != IMP_SUCCESS)
         {
             Log(ThisModule, __LINE__,
                 "打开设备摄像画面(可见光:序号方式): ->OpenCamera(%d, %d, %d, %d) Fail, ErrCode: %s, Return: %s.",
-                m_stOpenMode.nHidVid[0], 0, wWidth, wHeight, m_pDevImpl.ConvertCode_Impl2Str(nRet),
-                ConvertDevErrCodeToStr(ConvertImplErrCode2CAM(nRet)));
+                m_stOpenMode.nHidVid[0], 0, stDisplayIn.wWidth, stDisplayIn.wHeight,
+                m_pDevImpl.ConvertCode_Impl2Str(nRet), ConvertDevErrCodeToStr(ConvertImplErrCode2CAM(nRet)));
             return ConvertImplErrCode2CAM(nRet);
         }
-        nRet = m_pDevImpl.OpenCamera(m_stOpenMode.nHidVid[1], 1, wWidth, wHeight);
+        nRet = m_pDevImpl.OpenCamera(m_stOpenMode.nHidVid[1], 1, stDisplayIn.wWidth, stDisplayIn.wHeight);
         if (nRet != IMP_SUCCESS)
         {
             Log(ThisModule, __LINE__,
                 "打开设备摄像画面(红外光:序号方式): ->OpenCamera(%d, %d, %d, %d) Fail, ErrCode: %s, Return: %s.",
-                m_stOpenMode.nHidPid[0], 0, wWidth, wHeight, m_pDevImpl.ConvertCode_Impl2Str(nRet),
-                ConvertDevErrCodeToStr(ConvertImplErrCode2CAM(nRet)));
+                m_stOpenMode.nHidPid[0], 0, stDisplayIn.wWidth, stDisplayIn.wHeight,
+                m_pDevImpl.ConvertCode_Impl2Str(nRet), ConvertDevErrCodeToStr(ConvertImplErrCode2CAM(nRet)));
             return ConvertImplErrCode2CAM(nRet);
         }
     } else                          // VidPid方式打开
     {
         // 开启相机(按VID/PID)
-        nRet = m_pDevImpl.OpenCameraEx(m_stOpenMode.szHidVid[0], m_stOpenMode.szHidPid[0], 0, wWidth, wHeight);
+        nRet = m_pDevImpl.OpenCameraEx(m_stOpenMode.szHidVid[0], m_stOpenMode.szHidPid[0], 0,
+                                       stDisplayIn.wWidth, stDisplayIn.wHeight);
         if (nRet != IMP_SUCCESS)
         {
             Log(ThisModule, __LINE__,
                 "打开设备摄像画面(可见光:VidPid方式): ->OpenCamera(%s, %s, %d, %d, %d) Fail, ErrCode: %s, Return: %s.",
-                m_stOpenMode.szHidVid[0], m_stOpenMode.szHidPid[0], 0, wWidth, wHeight,
+                m_stOpenMode.szHidVid[0], m_stOpenMode.szHidPid[0], 0, stDisplayIn.wWidth, stDisplayIn.wHeight,
                 m_pDevImpl.ConvertCode_Impl2Str(nRet), ConvertDevErrCodeToStr(ConvertImplErrCode2CAM(nRet)));
             return ConvertImplErrCode2CAM(nRet);
         }
-        nRet = m_pDevImpl.OpenCameraEx(m_stOpenMode.szHidVid[1], m_stOpenMode.szHidPid[1], 1, wWidth, wHeight);
+        nRet = m_pDevImpl.OpenCameraEx(m_stOpenMode.szHidVid[1], m_stOpenMode.szHidPid[1], 1,
+                                       stDisplayIn.wWidth, stDisplayIn.wHeight);
         if (nRet != IMP_SUCCESS)
         {
             Log(ThisModule, __LINE__,
                 "打开设备摄像画面(红外光:VidPid方式): ->OpenCamera(%s, %s, %d, %d, %d) Fail, ErrCode: %s, Return: %s.",
-                m_stOpenMode.szHidVid[1], m_stOpenMode.szHidPid[1], 0, wWidth, wHeight,
+                m_stOpenMode.szHidVid[1], m_stOpenMode.szHidPid[1], 0, stDisplayIn.wWidth, stDisplayIn.wHeight,
                 m_pDevImpl.ConvertCode_Impl2Str(nRet), ConvertDevErrCodeToStr(ConvertImplErrCode2CAM(nRet)));
             return ConvertImplErrCode2CAM(nRet);
         }
@@ -935,7 +967,7 @@ INT CDevCAM_CloudWalk::GetViewImage(LPSTIMGDATA lpImgData, INT nWidth, INT nHeig
 }
 
 // 拍照前运行处理(重写)
-INT CDevCAM_CloudWalk::TakePicFrontRun()
+INT CDevCAM_CloudWalk::TakePicFrontRun(STTAKEPICTUREPAR stTakePicIn)
 {
     THISMODULE(__FUNCTION__);
     //AutoLogFuncBeginEnd();
@@ -960,7 +992,7 @@ INT CDevCAM_CloudWalk::TakePicFrontRun()
 }
 
 // 拍照后运行处理(重写)
-INT CDevCAM_CloudWalk::TakePicAfterRun()
+INT CDevCAM_CloudWalk::TakePicAfterRun(STTAKEPICTUREPAR stTakePicIn)
 {
     THISMODULE(__FUNCTION__);
     //AutoLogFuncBeginEnd();

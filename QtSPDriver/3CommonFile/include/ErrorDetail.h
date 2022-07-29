@@ -91,6 +91,7 @@
 #define EC_XFS_ShareMemRW                   "192"               // 共享内存读写错误
 #define EX_XFS_FilePathCrtErr               "193"               // 文件目录创建失败
 #define EX_XFS_MemoryApply                  "194"               // 内存空间申请失败
+#define EX_XFS_CodeChange                   "195"               // 数据格式转换失败
 
 
 //--------------------------DevXXX相关--------------------------
@@ -138,7 +139,8 @@
 #define EC_DEV_TimeOut                      "386"               // 超时
 #define EC_DEV_ShareMemCrt                  "387"               // 共享内存建立错误
 #define EC_DEV_ShareMemRW                   "388"               // 共享内存读写错误
-#define EX_DEV_FilePathCrtErr               "380"               // 文件目录创建失败
+#define EC_DEV_FilePathCrtErr               "380"               // 文件目录创建失败
+#define EC_DEV_MemoryErrr                   "381"               // 内存错误
 
 
 
