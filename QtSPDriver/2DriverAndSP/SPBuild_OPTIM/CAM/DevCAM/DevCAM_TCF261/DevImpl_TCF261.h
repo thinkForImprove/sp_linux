@@ -18,6 +18,7 @@
 #include "QtTypeInclude.h"
 #include "ILogWrite.h"
 #include "QtDLLLoader.h"
+#include "ClassCommon.h"
 #include "TCF261.h"
 #include "../DevCAM_DEF/DevImpl_DEF.h"
 
@@ -47,19 +48,10 @@
 #define DLL_DEVLIB_NAME                     "libfacesdk.so"         // 缺省动态库名
 
 
-// 加载动态库接口
-#define LOAD_LIBINFO_FUNC(LPFUNC, FUNC, FUNC2) \
-    FUNC = (LPFUNC)m_LoadLibrary.resolve(FUNC2); \
-    if(!FUNC) {   \
-        m_bLoadIntfFail = TRUE; \
-        return FALSE;   \
-    }
-
-
 /***************************************************************************
 // 封装类: 命令编辑、发送接收等处理。
 ***************************************************************************/
-class CDevImpl_TCF261 : public CLogManage, public CDevImpl_DEF
+class CDevImpl_TCF261 : public CLogManage, public CDevImpl_DEF, public CLibraryLoad
 {
 public:
     CDevImpl_TCF261();
@@ -134,17 +126,11 @@ private:    // 变量定义
                                                                         //  2:设备连接[打开人脸设备]
                                                                         //  2:设备状态/3介质状态/4检查设备状态/
                                                                         //  5:设置设备列表/6:设备列表)
+    CHAR            m_szLoadDllPath[MAX_PATH];                          // 动态库路径
 
-private: // 接口加载(QLibrary方式)    
-    BOOL    bLoadLibrary();                                             // 加载动态库
-    void    vUnLoadLibrary();                                           // 释放动态库
-    BOOL    bLoadLibIntf();                                             // 加载动态库接口
-    void    vInitLibFunc();                                             // 动态库接口初始化
-
-private: // 接口加载(QLibrary方式)
-    char        m_szLoadDllPath[MAX_PATH];
-    QLibrary    m_LoadLibrary;
-    BOOL        m_bLoadIntfFail;
+private: // 接口加载继承重写(QLibrary方式)
+    virtual INT nLoadLibIntf();                                         // 加载动态库接口
+    virtual void vInitLibFunc();                                        // 动态库接口初始化
 
 private: // 动态库接口定义
     FR_CREATEFACECALLBACK   FR_CreateFaceCallBack;      // 1. 初始化SDK

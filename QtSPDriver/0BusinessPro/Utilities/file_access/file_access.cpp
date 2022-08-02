@@ -574,6 +574,7 @@ bool FileAccess::create_directory_by_path(const char* file_dir_path, bool is_fil
     char buf_dir[MAX_PATH] = { 0 };
     size_t len = 0;
 
+    // 检查入参是否有效路径串
     if (!IS_FULL_PATH(file_dir_path)) {
         return false;
     }
@@ -606,10 +607,6 @@ bool FileAccess::create_directory_by_path(const char* file_dir_path, bool is_fil
 
 #ifdef WIN32
     ret = ((CreateDirectory(new_dir, NULL) == FALSE) && (GetLastError() != ERROR_ALREADY_EXISTS));
-#else
-    //ret = ((_access(new_dir, 0) != 0) && (_mkdir(new_dir) != 0));
-    ret = ((access(new_dir, F_OK) != 0) && (mkdir(new_dir, S_IRWXU | S_IRGRP | S_IROTH) != 0));
-#endif
     if (ret) {
         ret = reduce_path(new_dir, 1, buf_dir, sizeof(buf_dir));
         if (ret == false) {
@@ -621,6 +618,38 @@ bool FileAccess::create_directory_by_path(const char* file_dir_path, bool is_fil
         }
         return create_directory_by_path(new_dir, false);
     }
+#else
+    //ret = ((_access(new_dir, 0) != 0) && (_mkdir(new_dir) != 0));
+    //ret = ((access(new_dir, F_OK) != 0) && (mkdir(new_dir, S_IRWXU | S_IRGRP | S_IROTH) != 0));
+    if (access(new_dir, F_OK) != 0) // 目录不存在
+    {
+        // 取上一级目录
+        ret = reduce_path(new_dir, 1, buf_dir, sizeof(buf_dir));
+        if (ret == false) {
+            return false;
+        }
+
+        // 检查上一级目录
+        ret = create_directory_by_path(buf_dir, false);
+        if (ret == false) {
+            return false;
+        }
+
+        // 上一级目录无异常, 创建目录
+        if (mkdir(new_dir, S_IRWXU | S_IRGRP | S_IROTH) != 0)
+        {
+            return false;
+        }
+        return create_directory_by_path(new_dir, false);
+    } else                          // 目录存在
+    {
+        // 检查权限
+        if (access(new_dir, X_OK | W_OK | R_OK) != 0)   // 没有权限
+        {
+            return false;
+        }
+    }
+#endif
 
     return true;
 }

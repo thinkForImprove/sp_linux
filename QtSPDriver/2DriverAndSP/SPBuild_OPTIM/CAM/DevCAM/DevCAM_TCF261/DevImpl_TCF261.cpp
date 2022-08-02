@@ -49,7 +49,6 @@ void CDevImpl_TCF261::Init()
 
     memset(m_szLoadDllPath, 0x00, sizeof(m_szLoadDllPath));
     sprintf(m_szLoadDllPath, "%s", strDllName.toStdString().c_str());
-    m_bLoadIntfFail = TRUE;
 
     // 变量初始化
     MSET_0(m_szDevType);                                        // 设备类型
@@ -74,68 +73,10 @@ CDevImpl_TCF261::~CDevImpl_TCF261()
     vUnLoadLibrary();
 }
 
-
-
-BOOL CDevImpl_TCF261::bLoadLibrary()
+//------------------------------SDK接口加载--------------------------------
+// 加载动态库接口
+INT CDevImpl_TCF261::nLoadLibIntf()
 {
-    THISMODULE(__FUNCTION__);
-    //AutoLogFuncBeginEnd();
-
-    m_LoadLibrary.setFileName(m_szLoadDllPath);
-    m_bLoadIntfFail = TRUE;
-
-    if (m_LoadLibrary.isLoaded() != true)
-    {
-        if (m_LoadLibrary.load() != true)
-        {
-            if (m_nRetErrOLD[0] != IMP_ERR_LOAD_LIB)
-            {
-                Log(ThisModule, __LINE__, "加载动态库<%s> fail, ErrCode: %s, Return: %s.",
-                    m_szLoadDllPath, m_LoadLibrary.errorString().toStdString().c_str());
-            }
-            return FALSE;
-        } else
-        {
-            Log(ThisModule, __LINE__, "加载动态库<%s> succ. ", m_szLoadDllPath);
-        }
-    }
-
-    if (m_bLoadIntfFail)
-    {
-        if (bLoadLibIntf() != TRUE)
-        {
-            if (m_nRetErrOLD[0] != IMP_ERR_LOAD_LIB)
-            {
-                Log(ThisModule, __LINE__, "加载动态库函数接口<%s> fail, ErrCode: %s, Return: %s.",
-                    m_szLoadDllPath, m_LoadLibrary.errorString().toStdString().c_str());
-            }
-            return FALSE;
-        }
-        {
-            Log(ThisModule, __LINE__, "加载动态库函数接口<%s> succ. ", m_szLoadDllPath);
-        }
-    }
-
-    return TRUE;
-}
-
-void CDevImpl_TCF261::vUnLoadLibrary()
-{
-    if (m_LoadLibrary.isLoaded())
-    {
-        m_LoadLibrary.unload();
-        m_bLoadIntfFail = TRUE;
-        vInitLibFunc(); // 动态库接口函数初始化
-    }
-}
-
-BOOL CDevImpl_TCF261::bLoadLibIntf()
-{
-    THISMODULE(__FUNCTION__);
-    //AutoLogFuncBeginEnd();
-
-    m_bLoadIntfFail = FALSE;
-
     // 1. 初始化SDK
     LOAD_LIBINFO_FUNC(FR_CREATEFACECALLBACK, FR_CreateFaceCallBack, "FR_CreateFaceCallBack");
 
@@ -178,9 +119,10 @@ BOOL CDevImpl_TCF261::bLoadLibIntf()
     // 14. 未知
     LOAD_LIBINFO_FUNC(FR_HIDETIPS, FR_HideTips, "FR_HideTips");
 
-    return TRUE;
+    return SUCCESS;
 }
 
+// 动态库接口初始化
 void CDevImpl_TCF261::vInitLibFunc()
 {
     // 动态库接口函数初始化
@@ -200,7 +142,8 @@ void CDevImpl_TCF261::vInitLibFunc()
     FR_HideTips = nullptr;                // 14. 未知
 }
 
-//-------------------------------------------------------------------------
+
+//----------------------------设备封装接口方法-------------------------------
 // 打开设备
 INT CDevImpl_TCF261::OpenDevice()
 {
@@ -218,13 +161,17 @@ INT CDevImpl_TCF261::OpenDevice()
     m_bDevOpenOk = FALSE;
 
     // so加载失败,重新加载
-    if (m_bLoadIntfFail == TRUE)
+    INT nLoadRet = SUCCESS;
+    if (GetLoadLibIsSucc() != TRUE)
     {
-        if (bLoadLibrary() != TRUE)
+        nLoadRet = nLoadLibrary(m_szLoadDllPath);
+        if (nLoadRet != SUCCESS)
         {
             if (m_nRetErrOLD[0] != IMP_ERR_LOAD_LIB)
             {
-                Log(ThisModule, __LINE__, "打开设备: 加载动态库: bLoadLibrary() Failed, Return: %s.",
+                Log(ThisModule, __LINE__,
+                    "打开设备: 加载动态库: nLoadLibrary(%s) Failed, ErrCode: %s, Return: %s.",
+                    m_szLoadDllPath, GetLibError(LOADDLL_MODE_QLIB),
                     ConvertCode_Impl2Str(IMP_ERR_LOAD_LIB));
             }
             m_nRetErrOLD[0] = IMP_ERR_LOAD_LIB;
@@ -454,9 +401,7 @@ INT CDevImpl_TCF261::ConvertCode_TCF2Impl(INT nErrCode)
     }
 }
 
-//-------------------------------------------------------------------------
-//--------------------------- 对外参数设置接口 -------------------------------
-//-------------------------------------------------------------------------
+//----------------------------对外参数设置接口-------------------------------
 // 设置断线重连标记
 INT CDevImpl_TCF261::SetReConFlag(BOOL bFlag)
 {
@@ -502,9 +447,8 @@ INT CDevImpl_TCF261::SetLibPath(LPCSTR lpPath)
     return IMP_SUCCESS;
 }
 
-//-------------------------------------------------------------------------
-//---------------------------- 封装动态库接口 -------------------------------
-//-------------------------------------------------------------------------
+
+//----------------------------SDK封装接口方法-------------------------------
 // 1. 初始化SDK
 INT CDevImpl_TCF261::CreateFaceCallBack(CaptureCallBackDetectInfo pDetectInfo, LPCSTR lpParentDir)
 {

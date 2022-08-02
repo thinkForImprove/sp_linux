@@ -19,16 +19,16 @@ static const char *ThisFile = "DevImpl_ZLF1000A3.cpp";
 #define CHK_DEV_OPEN_FLAG(OFLAG) \
     if (OFLAG != TRUE) \
     { \
-        if (m_nRetErrOLD[3] != IMP_ERR_DEV_NOTOPEN) \
+        if (m_nRetErrOLD[2] != IMP_ERR_DEV_NOTOPEN) \
         { \
             Log(ThisModule, __LINE__, "检查设备OPEN标记: OpenFlag == FALSE, Device Not Open, return fail.Return: %s.", \
             ConvertCode_Impl2Str(IMP_ERR_DEV_NOTOPEN)); \
         } \
-        m_nRetErrOLD[3] = IMP_ERR_DEV_NOTOPEN; \
+        m_nRetErrOLD[2] = IMP_ERR_DEV_NOTOPEN; \
         return IMP_ERR_DEV_NOTOPEN; \
     }
 
-//----------------------------------构造/析构/初始化----------------------------------
+//-----------------------------构造/析构/初始化-----------------------------
 CDevImpl_ZLF1000A3::CDevImpl_ZLF1000A3()
 {
     SetLogFile(LOG_NAME, ThisFile);                 // 设置日志文件名和错误发生的文件
@@ -74,9 +74,7 @@ void CDevImpl_ZLF1000A3::Init()
 
     memset(m_szLoadDllPath, 0x00, sizeof(m_szLoadDllPath));
     sprintf(m_szLoadDllPath, "%s", strDllName.toStdString().c_str());
-    m_bLoadIntfFail = TRUE;
-    m_vLibInst = nullptr;                                   // dlxxx方式库连接句柄
-    m_nDlOpenMode = RTLD_NOW | RTLD_DEEPBIND;               // dlOpen命令模式
+    SetDlOpenMode(RTLD_NOW | RTLD_DEEPBIND);               // dlOpen命令模式
 
     // 变量初始化
     MSET_0(m_szDevType);                                    // 设备类型
@@ -95,94 +93,7 @@ void CDevImpl_ZLF1000A3::Init()
     vInitLibFunc();
 }
 
-//----------------------------------SDK接口加载----------------------------------
-// 加载动态库(QLibrary方式)
-BOOL CDevImpl_ZLF1000A3::bLoadLibrary()
-{
-    THISMODULE(__FUNCTION__);
-    //AutoLogFuncBeginEnd();
-
-    m_LoadLibrary.setFileName(m_szLoadDllPath);
-    m_bLoadIntfFail = TRUE;
-
-    if (m_LoadLibrary.isLoaded() != true)
-    {
-        if (m_LoadLibrary.load() != true)
-        {
-            if (m_nRetErrOLD[0] != IMP_ERR_LOAD_LIB)
-            {
-                Log(ThisModule, __LINE__, "QLibrary方式加载动态库<%s> fail. ReturnCode:%s.",
-                    m_szLoadDllPath, m_LoadLibrary.errorString().toStdString().c_str());
-            }
-            return FALSE;
-        } else
-        {
-            Log(ThisModule, __LINE__, "QLibrary方式加载动态库<%s> succ. ", m_szLoadDllPath);
-        }
-    }
-
-    if (m_bLoadIntfFail)
-    {
-        if (bLoadLibIntf() != TRUE)
-        {
-            if (m_nRetErrOLD[0] != IMP_ERR_LOAD_LIB)
-            {
-                Log(ThisModule, __LINE__, "QLibrary方式加载动态库函数接口<%s> fail. ReturnCode:%s.",
-                    m_szLoadDllPath, m_LoadLibrary.errorString().toStdString().c_str());
-            }
-            return FALSE;
-        }
-        {
-            Log(ThisModule, __LINE__, "QLibrary方式加载动态库函数接口<%s> succ. ", m_szLoadDllPath);
-        }
-    }
-
-    return TRUE;
-}
-
-// 释放动态库(QLibrary方式)
-void CDevImpl_ZLF1000A3::vUnLoadLibrary()
-{
-    if (m_LoadLibrary.isLoaded())
-    {
-        m_LoadLibrary.unload();
-        m_bLoadIntfFail = TRUE;
-        vInitLibFunc(); // 动态库接口函数初始化
-    }
-}
-
-// 加载动态库接口(QLibrary方式)
-BOOL CDevImpl_ZLF1000A3::bLoadLibIntf()
-{
-    m_bLoadIntfFail = FALSE;
-
-    // 1. 打开摄像头
-    LOAD_LIBINFO_FUNC(pZLOpenDevice, ZLOpenDevice, "OpenDevice");
-
-    // 2. 获取图像
-    LOAD_LIBINFO_FUNC(pZLGrabImage, ZLGrabImage, "GrabImage");
-
-    // 3. 获取图像并保存
-    LOAD_LIBINFO_FUNC(pZLSaveImage, ZLSaveImage, "SaveImage");
-
-    // 4. 获取视频图像数据
-    LOAD_LIBINFO_FUNC(pZLGrabVideoData, ZLGrabVideoData, "GrabVideoData");
-
-    // 5. 关闭摄像头
-    LOAD_LIBINFO_FUNC(pZLCloseDevice, ZLCloseDevice, "CloseDevice");
-
-    // 6. 获取分辨率
-    LOAD_LIBINFO_FUNC(pZLGetResolution, ZLGetResolution, "GetResolution");
-
-    // 7. 设置分辨率
-    LOAD_LIBINFO_FUNC(pZLSetResolution, ZLSetResolution, "SetResolution");
-
-    // 8. 获取设备状态
-    LOAD_LIBINFO_FUNC(pZLGetDeviceStatus, ZLGetDeviceStatus, "GetDeviceStatus");
-
-    return TRUE;
-}
-
+//------------------------------SDK接口加载--------------------------------
 // 动态库接口初始化
 void CDevImpl_ZLF1000A3::vInitLibFunc()
 {
@@ -197,96 +108,37 @@ void CDevImpl_ZLF1000A3::vInitLibFunc()
     ZLGetDeviceStatus = nullptr;      // 8. 获取设备状态
 }
 
-// 加载动态库(dlxxx方式)
-BOOL CDevImpl_ZLF1000A3::bDlLoadLibrary()
-{
-    THISMODULE(__FUNCTION__);
-    // AutoLogFuncBeginEnd();
-    AutoMutex(m_Mutex);
-
-    m_bLoadIntfFail = TRUE;
-
-    if (m_vLibInst == nullptr)
-    {
-        m_vLibInst = dlopen(m_szLoadDllPath, m_nDlOpenMode);
-        if (m_vLibInst == nullptr)
-        {
-            if (m_nRetErrOLD[0] != IMP_ERR_LOAD_LIB)
-            {
-                Log(ThisModule, __LINE__, "dlxxx方式加载动态库<%s> Fail.", m_szLoadDllPath);
-            }
-            return FALSE;
-        } else
-        {
-            Log(ThisModule, __LINE__, "dlxxx方式加载动态库<%s> Succ. ", m_szLoadDllPath);
-        }
-    }
-
-    if (m_bLoadIntfFail)
-    {
-        if (bDlLoadLibIntf() != TRUE)
-        {
-            if (m_nRetErrOLD[0] != IMP_ERR_LOAD_LIB)
-            {
-                Log(ThisModule, __LINE__, "dlxxx方式加载动态库函数接口<%s> Fail. ", m_szLoadDllPath);
-            }
-            return FALSE;
-        }
-        {
-            Log(ThisModule, __LINE__, "dlxxx方式加载动态库函数接口<%s> Succ. ", m_szLoadDllPath);
-        }
-    }
-
-    return TRUE;
-}
-
-// 释放动态库(dlxxx方式)
-void CDevImpl_ZLF1000A3::vDlUnLoadLibrary()
-{
-    if(m_vLibInst != nullptr)
-    {
-        dlclose(m_vLibInst);
-        m_vLibInst = nullptr;
-        m_bLoadIntfFail = TRUE;
-        vInitLibFunc(); // 动态库接口函数初始化
-    }
-}
-
 // 加载动态库接口函数(dlxxx方式)
-BOOL CDevImpl_ZLF1000A3::bDlLoadLibIntf()
+INT CDevImpl_ZLF1000A3::nDlLoadLibIntf()
 {
-    THISMODULE(__FUNCTION__);
-
-    m_bLoadIntfFail = FALSE;
-
     // 1. 打开摄像头
-    LOAD_LIBINFO_FUNC_DL(m_vLibInst, pZLOpenDevice, ZLOpenDevice, "OpenDevice");
+    LOAD_LIBINFO_FUNC_DL(pZLOpenDevice, ZLOpenDevice, "OpenDevice");
 
     // 2. 获取图像
-    LOAD_LIBINFO_FUNC_DL(m_vLibInst, pZLGrabImage, ZLGrabImage, "GrabImage");
+    LOAD_LIBINFO_FUNC_DL(pZLGrabImage, ZLGrabImage, "GrabImage");
 
     // 3. 获取图像并保存
-    LOAD_LIBINFO_FUNC_DL(m_vLibInst, pZLSaveImage, ZLSaveImage, "SaveImage");
+    LOAD_LIBINFO_FUNC_DL(pZLSaveImage, ZLSaveImage, "SaveImage");
 
     // 4. 获取视频图像数据
-    LOAD_LIBINFO_FUNC_DL(m_vLibInst, pZLGrabVideoData, ZLGrabVideoData, "GrabVideoData");
+    LOAD_LIBINFO_FUNC_DL(pZLGrabVideoData, ZLGrabVideoData, "GrabVideoData");
 
     // 5. 关闭摄像头
-    LOAD_LIBINFO_FUNC_DL(m_vLibInst, pZLCloseDevice, ZLCloseDevice, "CloseDevice");
+    LOAD_LIBINFO_FUNC_DL(pZLCloseDevice, ZLCloseDevice, "CloseDevice");
 
     // 6. 获取分辨率
-    LOAD_LIBINFO_FUNC_DL(m_vLibInst, pZLGetResolution, ZLGetResolution, "GetResolution");
+    LOAD_LIBINFO_FUNC_DL(pZLGetResolution, ZLGetResolution, "GetResolution");
 
     // 7. 设置分辨率
-    LOAD_LIBINFO_FUNC_DL(m_vLibInst, pZLSetResolution, ZLSetResolution, "SetResolution");
+    LOAD_LIBINFO_FUNC_DL(pZLSetResolution, ZLSetResolution, "SetResolution");
 
     // 8. 获取设备状态
-    LOAD_LIBINFO_FUNC_DL(m_vLibInst, pZLGetDeviceStatus, ZLGetDeviceStatus, "GetDeviceStatus");
+    LOAD_LIBINFO_FUNC_DL(pZLGetDeviceStatus, ZLGetDeviceStatus, "GetDeviceStatus");
 
     return TRUE;
 }
 
-//----------------------------------SDK封装接口方法----------------------------------
+//----------------------------SDK封装接口方法-------------------------------
 // 1. 打开设备
 INT CDevImpl_ZLF1000A3::OpenDevice()
 {
@@ -305,13 +157,17 @@ INT CDevImpl_ZLF1000A3::OpenDevice()
     m_bDevOpenOk = FALSE;
 
     // so加载失败,重新加载
-    if (m_bLoadIntfFail == TRUE)
+    INT nLoadRet = SUCCESS;
+    if (GetLoadLibIsSucc() != TRUE)
     {
-        if (bDlLoadLibrary() != TRUE)
+        nLoadRet = nDlLoadLibrary(m_szLoadDllPath);
+        if (nLoadRet != SUCCESS)
         {
             if (m_nRetErrOLD[0] != IMP_ERR_LOAD_LIB)
             {
-                Log(ThisModule, __LINE__, "打开设备: 加载动态库: bDlLoadLibrary() Failed, Return: %s.",
+                Log(ThisModule, __LINE__,
+                    "打开设备: 加载动态库: nDlLoadLibrary(%s) Failed, ErrCode: %s, Return: %s.",
+                    m_szLoadDllPath, GetLibError(LOADDLL_MODE_QLIB),
                     ConvertCode_Impl2Str(IMP_ERR_LOAD_LIB));
             }
             m_nRetErrOLD[0] = IMP_ERR_LOAD_LIB;
@@ -562,10 +418,15 @@ INT CDevImpl_ZLF1000A3::GetVideoImage(LPSTIMGDATA lpImgData, INT nWidth, INT nHe
                            &nRetImgHeight, &nRetImgTimesTamp, m_bDrawCutRect);
     if (nRet != IMP_SUCCESS)
     {
-        Log(ThisModule, __LINE__,
-            "获取视频图像数据宽高: ->ZLGrabVideoData(%d, NULL, %d, %d, %d, %d, %d) fail. Return: %s.",
-            m_nOpenCamType, 0, nRetImgWidth, nRetImgHeight, nRetImgTimesTamp,
-            m_bDrawCutRect, ConvertCode_Impl2Str(nRet));
+        if (m_nRetErrOLD[4] != nRet)
+        {
+            Log(ThisModule, __LINE__,
+                "获取视频图像数据宽高: ->ZLGrabVideoData(%d, NULL, %d, %d, %d, %d, %d) fail. Return: %s.",
+                m_nOpenCamType, 0, nRetImgWidth, nRetImgHeight, nRetImgTimesTamp,
+                m_bDrawCutRect, ConvertCode_Impl2Str(nRet));
+            m_nRetErrOLD[4] = nRet;
+        }
+
         return nRet;
     }
 
@@ -672,8 +533,7 @@ INT CDevImpl_ZLF1000A3::GetVideoImage(LPSTIMGDATA lpImgData, INT nWidth, INT nHe
     return IMP_SUCCESS;
 }
 
-//----------------------------------其他接口方法----------------------------------
-
+//--------------------------其他接口方法-----------------------------
 BOOL CDevImpl_ZLF1000A3::IsDeviceOpen()
 {
     return (m_bDevOpenOk == TRUE ? TRUE : FALSE);
@@ -710,10 +570,7 @@ LPSTR CDevImpl_ZLF1000A3::ConvertCode_Impl2Str(INT nErrCode)
 }
 
 
-
-//-------------------------------------------------------------------------
-//--------------------------- 对外参数设置接口 -------------------------------
-//-------------------------------------------------------------------------
+//----------------------------对外参数设置接口-------------------------------
 // 设置断线重连标记
 INT CDevImpl_ZLF1000A3::SetReConFlag(BOOL bFlag)
 {

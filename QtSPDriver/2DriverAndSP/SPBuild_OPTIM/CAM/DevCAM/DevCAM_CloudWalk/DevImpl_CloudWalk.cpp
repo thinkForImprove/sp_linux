@@ -12,6 +12,8 @@
 
 static const CHAR *ThisFile = "DevImpl_CloudWalk.cpp";
 
+
+//-----------------------------构造/析构/初始化-----------------------------
 CDevImpl_CloudWalk::CDevImpl_CloudWalk()
 {
     SetLogFile(LOG_NAME, ThisFile);                 // 设置日志文件名和错误发生的文件
@@ -46,7 +48,6 @@ void CDevImpl_CloudWalk::Init()
 
     memset(m_szLoadDllPath, 0x00, sizeof(m_szLoadDllPath));
     sprintf(m_szLoadDllPath, "%s", strDllName.toStdString().c_str());
-    m_bLoadIntfFail = TRUE;
 
     // 变量初始化
     MSET_0(m_szDevType);                                    // 设备类型
@@ -67,66 +68,10 @@ CDevImpl_CloudWalk::~CDevImpl_CloudWalk()
     vUnLoadLibrary();
 }
 
-BOOL CDevImpl_CloudWalk::bLoadLibrary()
+//------------------------------SDK接口加载--------------------------------
+// 加载动态库接口
+INT CDevImpl_CloudWalk::nLoadLibIntf()
 {
-    THISMODULE(__FUNCTION__);
-    //AutoLogFuncBeginEnd();
-
-    m_LoadLibrary.setFileName(m_szLoadDllPath);
-    m_bLoadIntfFail = TRUE;
-
-    if (m_LoadLibrary.isLoaded() != true)
-    {
-        if (m_LoadLibrary.load() != true)
-        {
-            if (m_nRetErrOLD[0] != IMP_ERR_LOAD_LIB)
-            {
-                Log(ThisModule, __LINE__, "加载动态库<%s> fail. ReturnCode:%s.",
-                    m_szLoadDllPath, m_LoadLibrary.errorString().toStdString().c_str());
-            }
-            return FALSE;
-        } else
-        {
-            Log(ThisModule, __LINE__, "加载动态库<%s> succ. ", m_szLoadDllPath);
-        }
-    }
-
-    if (m_bLoadIntfFail)
-    {
-        if (bLoadLibIntf() != TRUE)
-        {
-            if (m_nRetErrOLD[0] != IMP_ERR_LOAD_LIB)
-            {
-                Log(ThisModule, __LINE__, "加载动态库函数接口<%s> fail. ReturnCode:%s.",
-                    m_szLoadDllPath, m_LoadLibrary.errorString().toStdString().c_str());
-            }
-            return FALSE;
-        }
-        {
-            Log(ThisModule, __LINE__, "加载动态库函数接口<%s> succ. ", m_szLoadDllPath);
-        }
-    }
-
-    return TRUE;
-}
-
-void CDevImpl_CloudWalk::vUnLoadLibrary()
-{
-    if (m_LoadLibrary.isLoaded())
-    {
-        m_LoadLibrary.unload();
-        m_bLoadIntfFail = TRUE;
-        vInitLibFunc(); // 动态库接口函数初始化
-    }
-}
-
-BOOL CDevImpl_CloudWalk::bLoadLibIntf()
-{
-    THISMODULE(__FUNCTION__);
-    //AutoLogFuncBeginEnd();
-
-    m_bLoadIntfFail = FALSE;
-
     // 1.1 创建检测对象
     LOAD_LIBINFO_FUNC(pcwEngineCreateDetector, cwEngineCreateDetector, "cwEngineCreateDetector");
 
@@ -221,6 +166,7 @@ BOOL CDevImpl_CloudWalk::bLoadLibIntf()
     return TRUE;
 }
 
+// 动态库接口初始化
 void CDevImpl_CloudWalk::vInitLibFunc()
 {
     // 动态库接口函数初始化
@@ -255,7 +201,8 @@ void CDevImpl_CloudWalk::vInitLibFunc()
     cwEngineGetFirmwareVersionEx = nullptr;     // 1.33 获得相机固件版本信息，依照相机在设备VID/PID
 }
 
-//-------------------------------------------------------------------------
+
+//----------------------------设备封装接口方法-------------------------------
 // 打开设备(加载检测对象)
 INT CDevImpl_CloudWalk::OpenDevice()
 {
@@ -273,13 +220,17 @@ INT CDevImpl_CloudWalk::OpenDevice()
     m_bDevOpenOk = FALSE;
 
     // so加载失败,重新加载
-    if (m_bLoadIntfFail == TRUE)
+    INT nLoadRet = SUCCESS;
+    if (GetLoadLibIsSucc() != TRUE)
     {
-        if (bLoadLibrary() != TRUE)
+        nLoadRet = nLoadLibrary(m_szLoadDllPath);
+        if (nLoadRet != SUCCESS)
         {
             if (m_nRetErrOLD[0] != IMP_ERR_LOAD_LIB)
             {
-                Log(ThisModule, __LINE__, "打开设备: 加载动态库: bLoadLibrary() Failed, Return: %s.",
+                Log(ThisModule, __LINE__,
+                    "打开设备: 加载动态库: nLoadLibrary(%s) Failed, ErrCode: %s, Return: %s.",
+                    m_szLoadDllPath, GetLibError(LOADDLL_MODE_QLIB),
                     ConvertCode_Impl2Str(IMP_ERR_LOAD_LIB));
             }
             m_nRetErrOLD[0] = IMP_ERR_LOAD_LIB;
@@ -335,13 +286,17 @@ INT CDevImpl_CloudWalk::OpenDevice(STDETECTINITPAR stInitPar)
     m_bDevOpenOk = FALSE;
 
     // so加载失败,重新加载
-    if (m_bLoadIntfFail == TRUE)
+    INT nLoadRet = SUCCESS;
+    if (GetLoadLibIsSucc() != TRUE)
     {
-        if (bLoadLibrary() != TRUE)
+        nLoadRet = nLoadLibrary(m_szLoadDllPath);
+        if (nLoadRet != SUCCESS)
         {
             if (m_nRetErrOLD[0] != IMP_ERR_LOAD_LIB)
             {
-                Log(ThisModule, __LINE__, "打开设备: 加载动态库: bLoadLibrary() Failed, Return: %s.",
+                Log(ThisModule, __LINE__,
+                    "打开设备: 加载动态库: nLoadLibrary(%s) Failed, ErrCode: %s, Return: %s.",
+                    m_szLoadDllPath, GetLibError(LOADDLL_MODE_QLIB),
                     ConvertCode_Impl2Str(IMP_ERR_LOAD_LIB));
             }
             m_nRetErrOLD[0] = IMP_ERR_LOAD_LIB;
@@ -542,9 +497,128 @@ INT CDevImpl_CloudWalk::GetVideoData(LPSTIMGDATA lpImgData, INT nWidth, INT nHei
     return IMP_SUCCESS;
 }
 
-//-------------------------------------------------------------------------
-//---------------------------- 封装动态库接口 -------------------------------
-//-------------------------------------------------------------------------
+// 当前SDK是否支持红外图片生成
+BOOL CDevImpl_CloudWalk::GetNirImgSup()
+{
+    if (m_wSDKVersion == 1)
+    {
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+// 错误码解析
+LPSTR CDevImpl_CloudWalk::ConvertCode_Impl2Str(LONG lErrCode)
+{
+#define YC0C98_CASE_CODE_STR(IMP, CODE, STR) \
+    case IMP: \
+        sprintf(m_szErrStr, "%ld|%s", CODE, STR); \
+        return m_szErrStr;
+
+    memset(m_szErrStr, 0x00, sizeof(m_szErrStr));
+
+    if (CHK_ERR_ISDEF(lErrCode) == TRUE)
+    {
+        DEF_ConvertCode_Impl2Str(lErrCode, m_szErrStr);
+    } else
+    {
+        switch(lErrCode)
+        {
+            // 设备返回错误码
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_SUCCESS, lErrCode, "成功");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75002001, lErrCode, "输入参数错误");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75002002, lErrCode, "相机不存在");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75002003, lErrCode, "相机打开失败");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75002004, lErrCode, "相机关闭失败");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75002005, lErrCode, "非云从相机");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75002006, lErrCode, "读取芯片授权码失败");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75002007, lErrCode, "创建相机句柄失败");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75002008, lErrCode, "相机句柄为空");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75002009, lErrCode, "不支持的相机类型");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75002010, lErrCode, "参数指针为空");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75002011, lErrCode, "成像参数读取失败");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75002012, lErrCode, "成像参数设置失败");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75002013, lErrCode, "相机参数读取失败");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75002014, lErrCode, "相机参数设置失败");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75002015, lErrCode, "枚举相机设备失败");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75002016, lErrCode, "枚举相机分辨率失败");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75002017, lErrCode, "相机运行中");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75002018, lErrCode, "操作未知的错误");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75002019, lErrCode, "设置相机休眠失败");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75002020, lErrCode, "设置相机唤醒失败");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75002021, lErrCode, "相机设备断开");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75000108, lErrCode, "输入参数错误");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75000109, lErrCode, "无效的句柄");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75000110, lErrCode, "读取芯片授权码失败");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75000111, lErrCode, "检测器未初始化");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75000112, lErrCode, "未知错误catch");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75000113, lErrCode, "设置人脸检测回调函数错误");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75000114, lErrCode, "设置活体检测回调函数错误");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75000115, lErrCode, "设置日志信息回调函数错误");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75000116, lErrCode, "抠取人脸图像错误");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75000117, lErrCode, "创建com服务错误");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75000118, lErrCode, "重复创建检测器");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75000119, lErrCode, "base64解码错误");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75000120, lErrCode, "检测到换脸");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75000121, lErrCode, "创建检测器错误");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75000123, lErrCode, "检测到多张人脸");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121000, lErrCode, "成功or合法");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121001, lErrCode, "空图像");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121002, lErrCode, "图像格式不支持");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121003, lErrCode, "没有人脸");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121004, lErrCode, "ROI设置失败");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121005, lErrCode, "最小最大人脸设置失败");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121006, lErrCode, "数据范围错误");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121007, lErrCode, "未授权");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121008, lErrCode, "尚未初始化");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121009, lErrCode, "加载检测模型失败");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121010, lErrCode, "加载关键点模型失败");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121011, lErrCode, "加载质量评估模型失败");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121012, lErrCode, "加载活体检测模型失败");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121013, lErrCode, "检测失败");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121014, lErrCode, "提取关键点失败");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121015, lErrCode, "对齐人脸失败");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121016, lErrCode, "质量评估失败");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121017, lErrCode, "活体检测错误");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121018, lErrCode, "时间戳不匹配");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121019, lErrCode, "获取检测参数失败");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121020, lErrCode, "设置检测参数失败");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121021, lErrCode, "获取版本信息失败");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121022, lErrCode, "删除文件或文件夹失败");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121030, lErrCode, "人脸检测默认值");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121031, lErrCode, "color图像通过检测");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121032, lErrCode, "人脸距离太近");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121033, lErrCode, "人脸距离太远");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121034, lErrCode, "人脸角度不满足要求");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121035, lErrCode, "人脸清晰度不满足要求");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121036, lErrCode, "检测到闭眼，仅在设置参数时eyeopen为true且检测到闭眼");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121037, lErrCode, "检测到张嘴，仅在设置参数时mouthopen为true且检测到多人时返回");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121038, lErrCode, "检测到人脸过亮，仅在设置参数时brightnessexc为true且人脸过亮时返回");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121039, lErrCode, "检测到人脸过暗，仅在设置参数时brightnessins为true且人脸过暗时返回");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121040, lErrCode, "检测到人脸置信度过低，仅在设置参数时confidence为true且人脸置信度过低时返回");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121041, lErrCode, "检测到人脸存在遮挡，仅在设置参数时occlusion为true且检测到遮挡时返回");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121042, lErrCode, "检测到黑框眼镜，仅在设置参数时blackspec为true且检测到黑框眼镜时返回");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121043, lErrCode, "检测到墨镜，仅在设置参数时sunglass为true且检测到墨镜时返回");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121044, lErrCode, "检测到口罩,仅在设置参数时proceduremask>-1且检测到口罩时返回");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121080, lErrCode, "活体检测默认值");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121081, lErrCode, "活体");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121082, lErrCode, "非活体");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121083, lErrCode, "人脸肤色检测未通过");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121084, lErrCode, "可见光和红外人脸不匹配");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121085, lErrCode, "红外输入没有人脸");
+            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121086, lErrCode, "可见光输入没有人脸");
+            default :
+                sprintf(m_szErrStr,  "%d|%s", lErrCode, "未知Code");
+                break;
+        }
+    }
+
+    return (LPSTR)m_szErrStr;
+}
+
+
+//----------------------------SDK封装接口方法-------------------------------
 // 1.3 获取COM服务及算法版本号
 INT CDevImpl_CloudWalk::GetVersion(LPSTR lpVer, long lSize)
 {
@@ -1168,127 +1242,8 @@ INT CDevImpl_CloudWalk::GetFirmwareVersionEx(LPSTR vid, LPSTR pid, LPSTR lpFmVer
     return IMP_SUCCESS;
 }
 
-// 当前SDK是否支持红外图片生成
-BOOL CDevImpl_CloudWalk::GetNirImgSup()
-{
-    if (m_wSDKVersion == 1)
-    {
-        return TRUE;
-    }
 
-    return FALSE;
-}
-
-// 错误码解析
-LPSTR CDevImpl_CloudWalk::ConvertCode_Impl2Str(LONG lErrCode)
-{
-#define YC0C98_CASE_CODE_STR(IMP, CODE, STR) \
-    case IMP: \
-        sprintf(m_szErrStr, "%ld|%s", CODE, STR); \
-        return m_szErrStr;
-
-    memset(m_szErrStr, 0x00, sizeof(m_szErrStr));
-
-    if (CHK_ERR_ISDEF(lErrCode) == TRUE)
-    {
-        DEF_ConvertCode_Impl2Str(lErrCode, m_szErrStr);
-    } else
-    {
-        switch(lErrCode)
-        {
-            // 设备返回错误码
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_SUCCESS, lErrCode, "成功");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75002001, lErrCode, "输入参数错误");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75002002, lErrCode, "相机不存在");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75002003, lErrCode, "相机打开失败");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75002004, lErrCode, "相机关闭失败");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75002005, lErrCode, "非云从相机");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75002006, lErrCode, "读取芯片授权码失败");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75002007, lErrCode, "创建相机句柄失败");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75002008, lErrCode, "相机句柄为空");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75002009, lErrCode, "不支持的相机类型");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75002010, lErrCode, "参数指针为空");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75002011, lErrCode, "成像参数读取失败");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75002012, lErrCode, "成像参数设置失败");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75002013, lErrCode, "相机参数读取失败");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75002014, lErrCode, "相机参数设置失败");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75002015, lErrCode, "枚举相机设备失败");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75002016, lErrCode, "枚举相机分辨率失败");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75002017, lErrCode, "相机运行中");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75002018, lErrCode, "操作未知的错误");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75002019, lErrCode, "设置相机休眠失败");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75002020, lErrCode, "设置相机唤醒失败");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75002021, lErrCode, "相机设备断开");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75000108, lErrCode, "输入参数错误");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75000109, lErrCode, "无效的句柄");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75000110, lErrCode, "读取芯片授权码失败");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75000111, lErrCode, "检测器未初始化");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75000112, lErrCode, "未知错误catch");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75000113, lErrCode, "设置人脸检测回调函数错误");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75000114, lErrCode, "设置活体检测回调函数错误");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75000115, lErrCode, "设置日志信息回调函数错误");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75000116, lErrCode, "抠取人脸图像错误");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75000117, lErrCode, "创建com服务错误");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75000118, lErrCode, "重复创建检测器");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75000119, lErrCode, "base64解码错误");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75000120, lErrCode, "检测到换脸");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75000121, lErrCode, "创建检测器错误");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_75000123, lErrCode, "检测到多张人脸");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121000, lErrCode, "成功or合法");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121001, lErrCode, "空图像");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121002, lErrCode, "图像格式不支持");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121003, lErrCode, "没有人脸");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121004, lErrCode, "ROI设置失败");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121005, lErrCode, "最小最大人脸设置失败");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121006, lErrCode, "数据范围错误");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121007, lErrCode, "未授权");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121008, lErrCode, "尚未初始化");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121009, lErrCode, "加载检测模型失败");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121010, lErrCode, "加载关键点模型失败");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121011, lErrCode, "加载质量评估模型失败");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121012, lErrCode, "加载活体检测模型失败");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121013, lErrCode, "检测失败");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121014, lErrCode, "提取关键点失败");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121015, lErrCode, "对齐人脸失败");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121016, lErrCode, "质量评估失败");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121017, lErrCode, "活体检测错误");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121018, lErrCode, "时间戳不匹配");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121019, lErrCode, "获取检测参数失败");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121020, lErrCode, "设置检测参数失败");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121021, lErrCode, "获取版本信息失败");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121022, lErrCode, "删除文件或文件夹失败");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121030, lErrCode, "人脸检测默认值");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121031, lErrCode, "color图像通过检测");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121032, lErrCode, "人脸距离太近");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121033, lErrCode, "人脸距离太远");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121034, lErrCode, "人脸角度不满足要求");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121035, lErrCode, "人脸清晰度不满足要求");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121036, lErrCode, "检测到闭眼，仅在设置参数时eyeopen为true且检测到闭眼");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121037, lErrCode, "检测到张嘴，仅在设置参数时mouthopen为true且检测到多人时返回");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121038, lErrCode, "检测到人脸过亮，仅在设置参数时brightnessexc为true且人脸过亮时返回");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121039, lErrCode, "检测到人脸过暗，仅在设置参数时brightnessins为true且人脸过暗时返回");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121040, lErrCode, "检测到人脸置信度过低，仅在设置参数时confidence为true且人脸置信度过低时返回");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121041, lErrCode, "检测到人脸存在遮挡，仅在设置参数时occlusion为true且检测到遮挡时返回");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121042, lErrCode, "检测到黑框眼镜，仅在设置参数时blackspec为true且检测到黑框眼镜时返回");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121043, lErrCode, "检测到墨镜，仅在设置参数时sunglass为true且检测到墨镜时返回");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121044, lErrCode, "检测到口罩,仅在设置参数时proceduremask>-1且检测到口罩时返回");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121080, lErrCode, "活体检测默认值");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121081, lErrCode, "活体");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121082, lErrCode, "非活体");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121083, lErrCode, "人脸肤色检测未通过");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121084, lErrCode, "可见光和红外人脸不匹配");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121085, lErrCode, "红外输入没有人脸");
-            YC0C98_CASE_CODE_STR(IMP_ERR_DEV_26121086, lErrCode, "可见光输入没有人脸");
-            default :
-                sprintf(m_szErrStr,  "%d|%s", lErrCode, "未知Code");
-                break;
-        }
-    }
-
-    return (LPSTR)m_szErrStr;
-}
-
-//----------------------------------对外参数设置接口----------------------------------
+//----------------------------对外参数设置接口-------------------------------
 // 设置断线重连标记
 INT CDevImpl_CloudWalk::SetReConFlag(BOOL bFlag)
 {

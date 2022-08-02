@@ -23,6 +23,7 @@
 
 static const char *ThisFile = "DevImpl_JDY5001A0809.cpp";
 
+//-----------------------------构造/析构/初始化-----------------------------
 CDevImpl_JDY5001A0809::CDevImpl_JDY5001A0809()
 {
     SetLogFile(LOG_NAME, ThisFile);                 // 设置日志文件名和错误发生的文件

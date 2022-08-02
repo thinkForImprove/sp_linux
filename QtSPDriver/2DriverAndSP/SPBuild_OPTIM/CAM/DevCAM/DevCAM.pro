@@ -38,14 +38,16 @@ INCLUDEPATH +=
 #共通
 SOURCES += \
         DevCAM.cpp \
-        DevCAM_DEF/DevCAM_DEF.cpp
+        DevCAM_DEF/DevCAM_DEF.cpp \
+        ../../../../3CommonFile/CPP/ClassCommon.cpp
 
 HEADERS += \
         IDevCAM.h \
         ../XFS_CAM/def.h \
         DevCAM.h \
         DevCAM_DEF/DevCAM_DEF.h \
-        DevCAM_DEF/DevImpl_DEF.h
+        DevCAM_DEF/DevImpl_DEF.h \
+        ClassCommon.h
 
 
 #YC-0C98(加载CPP/H)

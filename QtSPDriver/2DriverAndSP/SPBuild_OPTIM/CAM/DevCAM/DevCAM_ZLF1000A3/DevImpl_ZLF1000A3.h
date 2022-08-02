@@ -18,6 +18,7 @@
 #include "QtTypeDef.h"
 #include "ILogWrite.h"
 #include "QtDLLLoader.h"
+#include "ClassCommon.h"
 #include "../DevCAM_DEF/DevImpl_DEF.h"
 
 /***************************************************************************
@@ -35,22 +36,6 @@
 #define LOG_NAME                            "DevImpl_ZLF1000A3.log" // 缺省日志名
 #define DLL_DEVLIB_NAME                     "libVideoPro.so"        // 缺省动态库名
 
-// 加载动态库接口
-#define LOAD_LIBINFO_FUNC(LPFUNC, FUNC, FUNC2) \
-    FUNC = (LPFUNC)m_LoadLibrary.resolve(FUNC2); \
-    if(!FUNC) {   \
-        m_bLoadIntfFail = TRUE; \
-        return FALSE;   \
-    }
-
-// dlxxx加载动态库接口
-#define LOAD_LIBINFO_FUNC_DL(HANDLE, LPFUNC, FUNC, FUNC2) \
-    FUNC = (LPFUNC)dlsym(HANDLE, FUNC2); \
-    if(!FUNC) {   \
-        m_bLoadIntfFail = TRUE; \
-        Log(ThisModule, __LINE__, "dlxxx方式加载动态库接口<%s> Fail. ", FUNC2); \
-        return FALSE;   \
-    }
 
 // 摄像类型定义
 #define ZL_APPLYMODE_DOC        0       // 文档摄像头
@@ -193,7 +178,7 @@ typedef long (*pZLGetDeviceStatus)(int iDeviceIdx);
 /***************************************************************************
 // 封装类: 命令编辑、发送接收等处理。
 ***************************************************************************/
-class CDevImpl_ZLF1000A3 : public CLogManage, public CDevImpl_DEF
+class CDevImpl_ZLF1000A3 : public CLogManage, public CDevImpl_DEF, public CLibraryLoad
 {
 public:
     CDevImpl_ZLF1000A3();
@@ -240,8 +225,8 @@ private:
     BOOL            m_bDevOpenOk;                                       // 设备Open标记
     BOOL            m_bReCon;                                           // 是否断线重连状态
     INT             m_nRetErrOLD[12];                                   // 处理错误值保存(0:库加载/1:设备连接/
-                                                                        //              2:设备状态/3:Open标记检查/
-                                                                        //              4介质吸入)
+                                                                        //              2:Open标记检查/3:设备状态/
+                                                                        //              4)
     BOOL            m_bDrawCutRect;                                     // 是否绘制切边区域
     INT             m_nRetImgWidthOLD;                                  // 保存上一次图像宽
     INT             m_nRetImgHeightOLD;                                 // 保存上一次图像高
@@ -249,24 +234,11 @@ private:
     STIMGDATA       m_stImageData;                                      // 保存图像帧数据
     INT             m_nOpenCamType;                                     // 摄像头类型索引
     CHAR            m_szErrStr[1024];                                   // IMPL错误码解析
+    CHAR            m_szLoadDllPath[MAX_PATH];                          // 动态库路径
 
-private: // 接口加载(QLibrary方式)
-    BOOL    bLoadLibrary();                                             // 加载动态库(QLibrary方式)
-    void    vUnLoadLibrary();                                           // 释放动态库(QLibrary方式)
-    BOOL    bLoadLibIntf();                                             // 加载动态库接口(QLibrary方式)
-    void    vInitLibFunc();                                             // 动态库接口初始化
-
-private: // 接口加载(dlxxx方式)
-    BOOL bDlLoadLibrary();                                              // 加载动态库(dlxxx方式)
-    void vDlUnLoadLibrary();                                            // 释放动态库(dlxxx方式)
-    BOOL bDlLoadLibIntf();                                              // 加载动态库接口(dlxxx方式)
-
-private: // 接口加载
-    QLibrary    m_LoadLibrary;                                          // QLibrary方式库连接句柄
-    void*       m_vLibInst;                                             // dlxxx方式库连接句柄
-    INT         m_nDlOpenMode;                                          // dlOpen命令模式
-    char        m_szLoadDllPath[MAX_PATH];                              // 动态库路径
-    BOOL        m_bLoadIntfFail;                                        // 动态库及接口加载是否有错误
+private:    // 接口加载继承重写(dlxxx方式)
+    virtual INT nDlLoadLibIntf();                                       // 加载动态库接口(dlxxx方式)
+    virtual void vInitLibFunc();                                        // 动态库接口初始化
 
 private: // 动态库接口定义
     pZLOpenDevice               ZLOpenDevice;                           // 1. 打开摄像头

@@ -60,13 +60,9 @@ HRESULT CXFS_CAM::InnerOpen(BOOL bReConn/* = FALSE*/)
 
             // 设置设备成功Open标记
             m_wIsDevOpenFlag |= LCMODE_TO_CMODE(i);
-            //if (m_nRetErrOLD[i + 1] != nRet)
-            {
-                Log(ThisModule, __LINE__, "%s%s Device Open[%s] succ, ErrCode = %d",
-                    bReConn == TRUE ? "断线重连" : "",  MI_ModeName(i),
-                    DEVTYPE2STR(MI_GetDevType(i)), nRet);
-                m_nRetErrOLD[i + 1] = nRet;
-            }
+            Log(ThisModule, __LINE__, "%s%s Device Open[%s] succ, ErrCode = %d",
+                bReConn == TRUE ? "断线重连" : "",  MI_ModeName(i),
+                DEVTYPE2STR(MI_GetDevType(i)), nRet);
         }
     }
 
@@ -78,10 +74,7 @@ HRESULT CXFS_CAM::InnerOpen(BOOL bReConn/* = FALSE*/)
     // 组织扩展数据
     UpdateExtra();
 
-
-
     // 更新一次状态()
-    //OnStatus();
     UpdateDeviceStatus();
 
     if (bReConn == TRUE)
@@ -411,23 +404,6 @@ INT CXFS_CAM::InitConfig()
         // 图像帧是否绘制切边区域(0:不绘制, 1:绘制, 缺省1)
         m_stConfig.stDevOpenMode[LIDX_ZLF1000A3].nOtherParam[11] =
                 m_cXfsReg.GetValue(szIniAppName, "DrawCutRect", (DWORD)1);
-
-        InitConfigDef(szIniAppName, LIDX_ZLF1000A3);
-    }
-
-
-    //--------------------哲林高拍仪(ZLF1000A3)设备参数获取----------------------
-    if (m_stCamModeInfo.SearchIsDeviceType(XFS_ZLF1000A3) == TRUE)
-    {
-        // STDEVICEOPENMODE.nOtherParam[0]: 保存设备类型编号
-        m_stConfig.stDevOpenMode[LIDX_ZLF1000A3].nOtherParam[0] = XFS_ZLF1000A3;
-
-        memset(szIniAppName, 0x00, sizeof(szIniAppName));
-        sprintf(szIniAppName, "DEVICE_SET_%d", XFS_ZLF1000A3);
-
-        // 设备SDK库路径
-        strcpy(m_stConfig.szSDKPath[LIDX_ZLF1000A3],
-               m_cXfsReg.GetValue(szIniAppName, "SDK_Path", ""));
 
         InitConfigDef(szIniAppName, LIDX_ZLF1000A3);
     }
@@ -864,7 +840,7 @@ WORD CXFS_CAM::UpdateDeviceStatus()
     AutoMutex(*m_pMutexGetStatus);      // 必须加此互斥，防止同时读写数据问题
 
     INT     nRet = CAM_SUCCESS;
-    WORD    fwDevice = WFS_CAM_DEVHWERROR;
+    //WORD    fwDevice = WFS_CAM_DEVHWERROR;
     DWORD   dwHWAct = WFS_ERR_ACT_NOACTION;
     CHAR    szHWDesc[1024] = { 0x00 };
 
@@ -889,28 +865,37 @@ WORD CXFS_CAM::UpdateDeviceStatus()
                 bIsDevOffLine = TRUE;
             } else
             {
-                // 取设备状态
-                nRet = MI_DevDll(i)->GetStatus(stDevStatus);
-                switch (nRet)// 返回值处理
+                if (MI_DevDll(i) == nullptr)
                 {
-                    ;
-                }
-
-                //----------------------Device状态处理----------------------
-                m_stStatus.fwDevice = ConvertDeviceStatus2WFS(stDevStatus.wDevice);
-
-                // 设备状态处理(INI配置无设备时Device状态)
-                if (m_stConfig.wDevNotFoundStat != 0 &&
-                    m_stStatus.fwDevice == WFS_CAM_DEVNODEVICE)
+                    m_stStatus.fwDevice = WFS_CAM_DEVHWERROR;
+                    m_stStatus.fwMedia[LCMODE_TO_WMODE(i)] = WFS_CAM_MEDIAUNKNOWN;
+                    m_stStatus.fwCameras[LCMODE_TO_WMODE(i)] = WFS_CAM_CAMUNKNOWN;
+                    bIsDevOffLine = TRUE;
+                } else
                 {
-                    m_stStatus.fwDevice = WFS_CAM_DEVOFFLINE;
+                    // 取设备状态
+                    nRet = MI_DevDll(i)->GetStatus(stDevStatus);
+                    switch (nRet)// 返回值处理
+                    {
+                        ;
+                    }
+
+                    //----------------------Device状态处理----------------------
+                    m_stStatus.fwDevice = ConvertDeviceStatus2WFS(stDevStatus.wDevice);
+
+                    // 设备状态处理(INI配置无设备时Device状态)
+                    if (m_stConfig.wDevNotFoundStat != 0 &&
+                        m_stStatus.fwDevice == WFS_CAM_DEVNODEVICE)
+                    {
+                        m_stStatus.fwDevice = WFS_CAM_DEVOFFLINE;
+                    }
+
+                    //----------------------Media状态处理----------------------
+                    m_stStatus.fwMedia[LCMODE_TO_WMODE(i)] = ConvertMediaStatus2WFS(stDevStatus.wMedia[0]);
+
+                    //----------------------Cameras状态处理----------------------
+                    m_stStatus.fwCameras[LCMODE_TO_WMODE(i)] = ConvertCamerasStatus2WFS(stDevStatus.fwCameras[0]);
                 }
-
-                //----------------------Media状态处理----------------------
-                m_stStatus.fwMedia[LCMODE_TO_WMODE(i)] = ConvertMediaStatus2WFS(stDevStatus.wMedia[0]);
-
-                //----------------------Cameras状态处理----------------------
-                m_stStatus.fwCameras[LCMODE_TO_WMODE(i)] = ConvertCamerasStatus2WFS(stDevStatus.fwCameras[0]);
             }
 
             // 非连接状态下关闭摄像窗口
@@ -923,7 +908,8 @@ WORD CXFS_CAM::UpdateDeviceStatus()
                     m_wIsDevOpenFlag ^= LCMODE_TO_CMODE(i);
                 }
 
-                if (m_wDisplayOK == LCMODE_TO_CMODE(i))   // 断线时窗口有显示:执行关闭
+                if (m_wDisplayOK == LCMODE_TO_CMODE(i) &&   // 断线时窗口有显示:执行关闭
+                    MI_DevDll(i) != nullptr)
                 {
                     STDISPLAYPAR stDispPar;
                     stDispPar.wAction = WFS_CAM_DESTROY;
@@ -1068,7 +1054,7 @@ HRESULT CXFS_CAM::InnerTakePictureEx(const WFSCAMTAKEPICTEX &stTakePict, DWORD d
     AutoLogFuncBeginEnd();
 
     INT nRet = CAM_SUCCESS;
-    LPWFSCAMTAKEPICTEX	lpCmdData = NULL;
+    LPWFSCAMTAKEPICTEX	lpCmdData = nullptr;
     lpCmdData = (LPWFSCAMTAKEPICTEX)&stTakePict;
     STTAKEPICTUREPAR stTakePicPar;
 
@@ -1183,8 +1169,20 @@ HRESULT CXFS_CAM::InnerTakePictureEx(const WFSCAMTAKEPICTEX &stTakePict, DWORD d
 
     // 组织命令下发入参
     //stTakePicPar.wCameraAction = lpCmdData->wCamera;                // 摄像模式
-    MCPY_NOLEN(stTakePicPar.szCamData, lpCmdData->lpszCamData);     // 水印
+    MCPY_NOLEN(stTakePicPar.szCamData,
+               lpCmdData->lpszCamData == nullptr ? "" : lpCmdData->lpszCamData);     // 水印
     MCPY_NOLEN(stTakePicPar.szFileName, m_szFileName);              // 保存图片文件名
+
+    // 检查DevCAM连接是否正常
+    if (MI_DevDll(WMODE_TO_LCMODE(stTakePict.wCamera)) == nullptr)
+    {
+        Log(ThisModule, __LINE__,
+            "拍照: 失败: DevCAM(%s)连接为NULL, Return: %d.",
+            MI_ModeName(WMODE_TO_LCMODE(stTakePict.wCamera)),
+            WFS_ERR_INTERNAL_ERROR);
+        SetErrorDetail(EX_XFS_ConnInvalid);
+        return ConvertDevErrCode2WFS(nRet);
+    }
 
     // TakePic命令下发前,根据INI配置选择开启 活体图像检测错误事件 线程
     if (m_stConfig.wLiveErrorSup == 1)
@@ -1303,7 +1301,7 @@ HRESULT CXFS_CAM::InnerDisplay(const WFSCAMDISP &stDisplay, DWORD dwTimeout)
         lpDisplay->wHpixel = m_stConfig.stDevOpenMode[MI_GetDevType(wLCMode)].nOtherParam[2];
         Log(ThisModule, __LINE__,
             "创建摄像窗口: 入参 水平分辨率Hpixel=%d, INI设置截取画面分辨率>0, 设置水平分辨率Hpixel为%d.",
-            lpDisplay->wHpixel, m_stConfig.stDevOpenMode[MI_GetDevType(wLCMode)].nOtherParam[3]);
+            lpDisplay->wHpixel, m_stConfig.stDevOpenMode[MI_GetDevType(wLCMode)].nOtherParam[2]);
     }
 
     // 根据INI配置设置垂直分辨率参数
@@ -1314,6 +1312,17 @@ HRESULT CXFS_CAM::InnerDisplay(const WFSCAMDISP &stDisplay, DWORD dwTimeout)
         Log(ThisModule, __LINE__,
             "创建摄像窗口: 入参 垂直分辨率Vpixel=%d, INI设置截取画面分辨率>0, 设置垂直分辨率Vpixel为%d.",
             lpDisplay->wVpixel, m_stConfig.stDevOpenMode[MI_GetDevType(wLCMode)].nOtherParam[3]);
+    }
+
+    // 检查DevCAM连接是否正常
+    if (MI_DevDll(WMODE_TO_LCMODE(wLCMode)) == nullptr)
+    {
+        Log(ThisModule, __LINE__,
+            "创建摄像窗口: 失败: DevCAM(%s)连接为NULL, Return: %d.",
+            MI_ModeName(WMODE_TO_LCMODE(wLCMode)),
+            WFS_ERR_INTERNAL_ERROR);
+        SetErrorDetail(EX_XFS_ConnInvalid);
+        return ConvertDevErrCode2WFS(nRet);
     }
 
     // 命令下发

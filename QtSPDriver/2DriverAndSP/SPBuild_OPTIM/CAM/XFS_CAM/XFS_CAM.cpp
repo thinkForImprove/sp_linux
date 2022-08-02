@@ -218,7 +218,11 @@ HRESULT CXFS_CAM::OnCancelAsyncRequest()
     // 根据当前窗口运行模式选择对应的设备连接
     if (m_wWindowsRunMode > 0)
     {
-        m_stCamModeInfo.stModeList[CMODE_TO_LCMODE(m_wWindowsRunMode)].m_pCAMDev->Cancel();
+        //m_stCamModeInfo.stModeList[CMODE_TO_LCMODE(m_wWindowsRunMode)].m_pCAMDev->Cancel();
+        if (MI_DevDll(CMODE_TO_LCMODE(m_wWindowsRunMode)) != nullptr)
+        {
+            MI_DevDll(CMODE_TO_LCMODE(m_wWindowsRunMode))->Cancel();
+        }
     }
 
     return WFS_SUCCESS;
@@ -372,23 +376,26 @@ HRESULT CXFS_CAM::Reset()
         {
             m_bLiveEventWaitExit = TRUE;    // 命令返回则立即结束活体图像结果检查线程
 
-            STDISPLAYPAR stDispPar;
-            stDispPar.wAction = WFS_CAM_DESTROY;
+            if (MI_DevDll(CMODE_TO_LCMODE(m_wDisplayOK)) != nullptr)
+            {
+                STDISPLAYPAR stDispPar;
+                stDispPar.wAction = WFS_CAM_DESTROY;
 
-            nRet = MI_DevDll(CMODE_TO_LCMODE(m_wDisplayOK))->Display(stDispPar);
-            if (nRet != WFS_SUCCESS)
-            {
-                Log(ThisModule, __LINE__,
-                    "复位: 关闭摄像窗口: ->Display() Fail, ErrCode: %d, 不处理.", nRet);
-            } else
-            {
-                if (m_wWindowsRunMode == WIN_RUN_SHARED)
+                nRet = MI_DevDll(CMODE_TO_LCMODE(m_wDisplayOK))->Display(stDispPar);
+                if (nRet != WFS_SUCCESS)
                 {
-                    emit vSignHideWin();
+                    Log(ThisModule, __LINE__,
+                        "复位: 关闭摄像窗口: ->Display() Fail, ErrCode: %d, 不处理.", nRet);
+                } else
+                {
+                    if (m_wWindowsRunMode == WIN_RUN_SHARED)
+                    {
+                        emit vSignHideWin();
+                    }
+                    Log(ThisModule, __LINE__,
+                        "复位: ->Display() Succ, ErrCode: %d, 不处理.", nRet);
+                    m_wDisplayOK = 0;
                 }
-                Log(ThisModule, __LINE__,
-                    "复位: ->Display() Succ, ErrCode: %d, 不处理.", nRet);
-                m_wDisplayOK = 0;
             }
         }
     }

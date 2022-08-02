@@ -371,7 +371,7 @@ private:
     CWfsCAMCap                      m_stCaps;                       // 能力值结构体
     CExtraInforHelper               m_cStatExtra;                   // 状态扩展数据
     CExtraInforHelper               m_cCapsExtra;                   // 能力值扩展数据
-    INT                             m_nRetErrOLD[32];               // 处理错误值保存(0:重新Open/1~32:模式Open)
+    INT                             m_nRetErrOLD[32];               // 处理错误值保存(0:重新Open/1~30:模式Open)
     CHAR                            m_szFileName[MAX_PATH];         // 拍照文件名
     MainWindow                      *showWin;                       // 摄像窗口
     QSharedMemory                   *m_qSharedMemData;              // 摄像数据共享内存

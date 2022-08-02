@@ -18,6 +18,7 @@
 #include "ILogWrite.h"
 #include "QtTypeInclude.h"
 #include "QtDLLLoader.h"
+#include "ClassCommon.h"
 #include "cloudwalk.h"
 #include "../DevCAM_DEF/DevImpl_DEF.h"
 
@@ -118,15 +119,6 @@ using namespace cv;
 #define LOG_NAME                            "DevImpl_CloudWalk.log"     // 缺省日志名
 #define DLL_DEVLIB_NAME                     "libcwlivdetengine.so"      // 缺省动态库名
 
-
-// 加载动态库接口
-#define LOAD_LIBINFO_FUNC(LPFUNC, FUNC, FUNC2) \
-    FUNC = (LPFUNC)m_LoadLibrary.resolve(FUNC2); \
-    if(!FUNC) {   \
-        m_bLoadIntfFail = TRUE; \
-        return FALSE;   \
-    }
-
 // 活检获取图像类型
 #define GET_IMG_ROOM                        0x01    // 全景
 #define GET_IMG_PERSON                      0x02    // 人脸
@@ -157,7 +149,7 @@ struct st_Detect_Init_Param
 /***************************************************************************
 // 封装类: 命令编辑、发送接收等处理。
 ***************************************************************************/
-class CDevImpl_CloudWalk : public CLogManage, public CDevImpl_DEF
+class CDevImpl_CloudWalk : public CLogManage, public CDevImpl_DEF, public CLibraryLoad
 {
 public:
     CDevImpl_CloudWalk();
@@ -265,17 +257,11 @@ private:    // 变量定义
     INT             m_nLiveErrCode;                                     // 活体检测错误码保存
     STIMGDATA       m_stImageData;                                      // 保存图像帧数据
     BOOL            m_GetDataRunning;
+    CHAR            m_szLoadDllPath[MAX_PATH];                          // 动态库路径
 
-private: // 接口加载(QLibrary方式)
-    BOOL    bLoadLibrary();                                             // 加载动态库
-    void    vUnLoadLibrary();                                           // 释放动态库
-    BOOL    bLoadLibIntf();                                             // 加载动态库接口
-    void    vInitLibFunc();                                             // 动态库接口初始化
-
-private: // 接口加载(QLibrary方式)
-    char        m_szLoadDllPath[MAX_PATH];
-    QLibrary    m_LoadLibrary;
-    BOOL        m_bLoadIntfFail;
+private: // 接口加载继承重写(QLibrary方式)
+    virtual INT nLoadLibIntf();                                         // 加载动态库接口
+    virtual void vInitLibFunc();                                        // 动态库接口初始化
 
 public: // 摄像图框及图像获取函数
     void preview(const uchar* data, int width, int height, int channels, int type = 0);

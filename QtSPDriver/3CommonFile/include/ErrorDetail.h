@@ -92,6 +92,7 @@
 #define EX_XFS_FilePathCrtErr               "193"               // 文件目录创建失败
 #define EX_XFS_MemoryApply                  "194"               // 内存空间申请失败
 #define EX_XFS_CodeChange                   "195"               // 数据格式转换失败
+#define EX_XFS_ConnInvalid                  "196"               // 无效的连接
 
 
 //--------------------------DevXXX相关--------------------------

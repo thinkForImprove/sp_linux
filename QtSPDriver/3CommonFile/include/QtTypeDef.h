@@ -185,5 +185,9 @@ typedef DWORD                       COLORREF;
 #define BIT6(a)     ((a & 0x40) == 0x40)
 #define BIT7(a)     ((a & 0x80) == 0x80)
 
+// 成功/失败
+#define SUCCESS     0
+#define FAIL        1
+
 #endif
 //////////////////////////////////////////////////////////////////////////

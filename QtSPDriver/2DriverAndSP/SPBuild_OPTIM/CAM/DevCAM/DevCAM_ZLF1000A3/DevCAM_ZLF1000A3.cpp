@@ -148,11 +148,11 @@ int CDevCAM_ZLF1000A3::Reset()
     m_enDisplayStat = EN_DISP_ENDING;
 
     // 关闭设备并重新打开
-    m_pDevImpl.CloseDevice();
+    /*m_pDevImpl.CloseDevice();
     if ((nRet = m_pDevImpl.OpenDevice()) != IMP_SUCCESS)
     {
         return ConvertImplErrCode2CAM(nRet);
-    }
+    }*/
 
     return CAM_SUCCESS;
 }
@@ -591,7 +591,7 @@ INT CDevCAM_ZLF1000A3::GetViewImage(LPSTIMGDATA lpImgData, INT nWidth, INT nHeig
     THISMODULE(__FUNCTION__);
     //AutoLogFuncBeginEnd();
 
-    return m_pDevImpl.GetVideoImage(lpImgData, nWidth, nHeight, dwParam);
+    return ConvertImplErrCode2CAM(m_pDevImpl.GetVideoImage(lpImgData, nWidth, nHeight, dwParam));
 }
 
 // 拍照前运行处理(重写)
