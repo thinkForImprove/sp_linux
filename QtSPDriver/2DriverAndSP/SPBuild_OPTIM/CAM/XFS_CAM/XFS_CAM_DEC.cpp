@@ -305,10 +305,10 @@ INT CXFS_CAM::InitConfig()
         // 计入 STDEVICEOPENMODE.nOtherParam/szOtherParams
         //     其他参数使用下标从10开始, 0～9作为通用参数保留
         // 是否打开语音提示支持 -> nOtherParam[15];
-        // 截取画面帧的分辨率(Width) ->  nOtherParam[1];
-        // 截取画面帧的分辨率(Height) ->  nOtherParam[2];
+        // 截取画面帧的分辨率(Width) ->  nOtherParam[2];
+        // 截取画面帧的分辨率(Height) ->  nOtherParam[3];
         // 设置SDK版本,缺省0 -> nOtherParam[18];
-        // 摄像刷新时间 -> nOtherParam[19];
+        // 摄像刷新时间 -> nOtherParam[1];
         // 语音提示配置文件 -> szOtherParams[17];
         //******************************************************************
         // 是否打开语音提示支持(0打开/1关闭,缺省0)
@@ -641,11 +641,11 @@ INT CXFS_CAM::PrintIniData()
         PRINT_INI_BUF2("\n\t\t\t\t 是否打开语音提示支持(0:打开,1:关闭): DEVICE_SET_%d->VoiceOpen = %d", XFS_YC0C98, m_stConfig.stDevOpenMode[LIDX_YC0C98].nOtherParam[15]);
         PRINT_INI_BUF2("\n\t\t\t\t 语音提示配置文件: DEVICE_SET_%d->VoiceTipFile = %s", XFS_YC0C98, m_stConfig.stDevOpenMode[LIDX_YC0C98].szOtherParams[17]);
         PRINT_INI_BUF2("\n\t\t\t\t 设置SDK版本: DEVICE_SET_%d->SDKVersion = %d", XFS_YC0C98, m_stConfig.stDevOpenMode[LIDX_YC0C98].nOtherParam[18]);
-        PRINT_INI_BUF2("\n\t\t\t\t 摄像刷新时间(毫秒): DEVICE_SET_%d->WinRefreshTime = %d", XFS_YC0C98, m_stConfig.stDevOpenMode[LIDX_YC0C98].nOtherParam[19]);
+        PRINT_INI_BUF2("\n\t\t\t\t 摄像刷新时间(毫秒): DEVICE_SET_%d->WinRefreshTime = %d", XFS_YC0C98, m_stConfig.stDevOpenMode[LIDX_YC0C98].nOtherParam[1]);
         PRINT_INI_BUF2("\n\t\t\t\t 摄像窗口显示方式(0:SDK控制,1:SP内处理,2:外接程序窗口): DEVICE_SET_%d->ShowWinMode = %d", XFS_YC0C98, m_wDeviceShowWinMode[XFS_YC0C98]);
         PRINT_INI_BUF2("\n\t\t\t\t 摄像窗口外接程序: DEVICE_SET_%d->ShowWinMode = %s", XFS_YC0C98, m_szWinProcessPath[XFS_YC0C98]);
-        PRINT_INI_BUF2("\n\t\t\t\t 截取画面帧的分辨率: DEVICE_SET_%d->FrameResoWidth = %d", XFS_YC0C98, m_stConfig.stDevOpenMode[LIDX_YC0C98].nOtherParam[1]);
-        PRINT_INI_BUF2("\n\t\t\t\t 截取画面帧的分辨率: DEVICE_SET_%d->FrameResoHeight = %d", XFS_YC0C98, m_stConfig.stDevOpenMode[LIDX_YC0C98].nOtherParam[2]);
+        PRINT_INI_BUF2("\n\t\t\t\t 截取画面帧的分辨率: DEVICE_SET_%d->FrameResoWidth = %d", XFS_YC0C98, m_stConfig.stDevOpenMode[LIDX_YC0C98].nOtherParam[2]);
+        PRINT_INI_BUF2("\n\t\t\t\t 截取画面帧的分辨率: DEVICE_SET_%d->FrameResoHeight = %d", XFS_YC0C98, m_stConfig.stDevOpenMode[LIDX_YC0C98].nOtherParam[3]);
     }
 
     // 天诚盛业(XFS_TCF261)
@@ -665,8 +665,8 @@ INT CXFS_CAM::PrintIniData()
         PRINT_INI_BUF2("\n\t\t\t\t 摄像刷新时间(毫秒): DEVICE_SET_%d->WinRefreshTime = %d", XFS_TCF261, m_stConfig.stDevOpenMode[LIDX_TCF261].nOtherParam[19]);
         PRINT_INI_BUF2("\n\t\t\t\t 摄像窗口显示方式(0:SDK控制,1:SP内处理,2:外接程序窗口): DEVICE_SET_%d->ShowWinMode = %d", XFS_TCF261, m_wDeviceShowWinMode[LIDX_TCF261]);
         PRINT_INI_BUF2("\n\t\t\t\t 摄像窗口外接程序: DEVICE_SET_%d->ShowWinMode = %s", XFS_TCF261, m_szWinProcessPath[LIDX_TCF261]);
-        PRINT_INI_BUF2("\n\t\t\t\t 截取画面帧的分辨率: DEVICE_SET_%d->FrameResoWidth = %d", XFS_TCF261, m_stConfig.stDevOpenMode[LIDX_TCF261].nOtherParam[1]);
-        PRINT_INI_BUF2("\n\t\t\t\t 截取画面帧的分辨率: DEVICE_SET_%d->FrameResoHeight = %d", XFS_TCF261, m_stConfig.stDevOpenMode[LIDX_TCF261].nOtherParam[2]);
+        PRINT_INI_BUF2("\n\t\t\t\t 截取画面帧的分辨率: DEVICE_SET_%d->FrameResoWidth = %d", XFS_TCF261, m_stConfig.stDevOpenMode[LIDX_TCF261].nOtherParam[2]);
+        PRINT_INI_BUF2("\n\t\t\t\t 截取画面帧的分辨率: DEVICE_SET_%d->FrameResoHeight = %d", XFS_TCF261, m_stConfig.stDevOpenMode[LIDX_TCF261].nOtherParam[3]);
     }
 
     // 哲林(ZLF1000A3)
@@ -681,11 +681,11 @@ INT CXFS_CAM::PrintIniData()
             PRINT_INI_BUF2("\n\t\t\t\t Vid: DEVICE_SET_%d->Vid = %s", XFS_ZLF1000A3, m_stConfig.stDevOpenMode[LIDX_ZLF1000A3].szHidVid[0]);
             PRINT_INI_BUF2("\n\t\t\t\t Pid: DEVICE_SET_%d->Pid = %s", XFS_ZLF1000A3, m_stConfig.stDevOpenMode[LIDX_ZLF1000A3].szHidPid[0]);
         }
-        PRINT_INI_BUF2("\n\t\t\t\t 摄像刷新时间(毫秒): DEVICE_SET_%d->WinRefreshTime = %d", XFS_ZLF1000A3, m_stConfig.stDevOpenMode[LIDX_ZLF1000A3].nOtherParam[19]);
+        PRINT_INI_BUF2("\n\t\t\t\t 摄像刷新时间(毫秒): DEVICE_SET_%d->WinRefreshTime = %d", XFS_ZLF1000A3, m_stConfig.stDevOpenMode[LIDX_ZLF1000A3].nOtherParam[1]);
         PRINT_INI_BUF2("\n\t\t\t\t 摄像窗口显示方式(0:SDK控制,1:SP内处理,2:外接程序窗口): DEVICE_SET_%d->ShowWinMode = %d", XFS_ZLF1000A3, m_wDeviceShowWinMode[LIDX_ZLF1000A3]);
         PRINT_INI_BUF2("\n\t\t\t\t 摄像窗口外接程序: DEVICE_SET_%d->ShowWinMode = %s", XFS_ZLF1000A3, m_szWinProcessPath[LIDX_ZLF1000A3]);
-        PRINT_INI_BUF2("\n\t\t\t\t 截取画面帧的分辨率: DEVICE_SET_%d->FrameResoWidth = %d", XFS_ZLF1000A3, m_stConfig.stDevOpenMode[LIDX_ZLF1000A3].nOtherParam[1]);
-        PRINT_INI_BUF2("\n\t\t\t\t 截取画面帧的分辨率: DEVICE_SET_%d->FrameResoHeight = %d", XFS_ZLF1000A3, m_stConfig.stDevOpenMode[LIDX_ZLF1000A3].nOtherParam[2]);
+        PRINT_INI_BUF2("\n\t\t\t\t 截取画面帧的分辨率: DEVICE_SET_%d->FrameResoWidth = %d", XFS_ZLF1000A3, m_stConfig.stDevOpenMode[LIDX_ZLF1000A3].nOtherParam[2]);
+        PRINT_INI_BUF2("\n\t\t\t\t 截取画面帧的分辨率: DEVICE_SET_%d->FrameResoHeight = %d", XFS_ZLF1000A3, m_stConfig.stDevOpenMode[LIDX_ZLF1000A3].nOtherParam[3]);
         PRINT_INI_BUF2("\n\t\t\t\t 设备指定使用模式(0:文档模式,1:人脸模式): DEVICE_SET_%d->ApplyMode = %d", XFS_ZLF1000A3, m_stConfig.stDevOpenMode[LIDX_ZLF1000A3].nOtherParam[10]);
         PRINT_INI_BUF2("\n\t\t\t\t 图像帧是否绘制切边区域(0:不绘制,1:绘制): DEVICE_SET_%d->DrawCutRect = %d", XFS_ZLF1000A3, m_stConfig.stDevOpenMode[LIDX_ZLF1000A3].nOtherParam[11]);
     }
@@ -706,11 +706,11 @@ INT CXFS_CAM::PrintIniData()
             PRINT_INI_BUF2("\n\t\t\t\t Vid: DEVICE_SET_%d->Vid = %s", XFS_JDY5001A0809, m_stConfig.stDevOpenMode[LIDX_JDY5001A0809].szHidVid[0]);
             PRINT_INI_BUF2("\n\t\t\t\t Pid: DEVICE_SET_%d->Pid = %s", XFS_JDY5001A0809, m_stConfig.stDevOpenMode[LIDX_JDY5001A0809].szHidPid[0]);
         }
-        PRINT_INI_BUF2("\n\t\t\t\t 摄像刷新时间(毫秒): DEVICE_SET_%d->WinRefreshTime = %d", XFS_JDY5001A0809, m_stConfig.stDevOpenMode[LIDX_JDY5001A0809].nOtherParam[19]);
+        PRINT_INI_BUF2("\n\t\t\t\t 摄像刷新时间(毫秒): DEVICE_SET_%d->WinRefreshTime = %d", XFS_JDY5001A0809, m_stConfig.stDevOpenMode[LIDX_JDY5001A0809].nOtherParam[1]);
         PRINT_INI_BUF2("\n\t\t\t\t 摄像窗口显示方式(0:SDK控制,1:SP内处理,2:外接程序窗口): DEVICE_SET_%d->ShowWinMode = %d", XFS_JDY5001A0809, m_wDeviceShowWinMode[LIDX_JDY5001A0809]);
         PRINT_INI_BUF2("\n\t\t\t\t 摄像窗口外接程序: DEVICE_SET_%d->ShowWinMode = %s", XFS_JDY5001A0809, m_szWinProcessPath[LIDX_JDY5001A0809]);
-        PRINT_INI_BUF2("\n\t\t\t\t 截取画面帧的分辨率: DEVICE_SET_%d->FrameResoWidth = %d", XFS_JDY5001A0809, m_stConfig.stDevOpenMode[LIDX_JDY5001A0809].nOtherParam[1]);
-        PRINT_INI_BUF2("\n\t\t\t\t 截取画面帧的分辨率: DEVICE_SET_%d->FrameResoHeight = %d", XFS_JDY5001A0809, m_stConfig.stDevOpenMode[LIDX_JDY5001A0809].nOtherParam[2]);
+        PRINT_INI_BUF2("\n\t\t\t\t 截取画面帧的分辨率: DEVICE_SET_%d->FrameResoWidth = %d", XFS_JDY5001A0809, m_stConfig.stDevOpenMode[LIDX_JDY5001A0809].nOtherParam[2]);
+        PRINT_INI_BUF2("\n\t\t\t\t 截取画面帧的分辨率: DEVICE_SET_%d->FrameResoHeight = %d", XFS_JDY5001A0809, m_stConfig.stDevOpenMode[LIDX_JDY5001A0809].nOtherParam[3]);
     }
 
 
