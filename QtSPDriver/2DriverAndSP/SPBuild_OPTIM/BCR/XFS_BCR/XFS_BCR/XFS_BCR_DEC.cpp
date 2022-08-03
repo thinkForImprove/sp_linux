@@ -529,7 +529,7 @@ HRESULT CXFS_BCR::InnerReadBcr(LPWORD lpwSymList, DWORD dwTimeOut)
             if (stReadBcrOut.dwSymDataSize > 0)
             {
                 // DevBCR返回数据转换为ASCII格式
-                /*MSET_0(szBcrDataAscii);
+                MSET_0(szBcrDataAscii);
                 if (stReadBcrOut.wSymDataMode == SYMD_HEX)  // DevXXX返回条码数据为HEX,先转换为ASCII
                 {
                     dwBcrDataAsciiSize = DataConvertor::Hex2Ascii(stReadBcrOut.szSymData, stReadBcrOut.dwSymDataSize,
@@ -592,9 +592,10 @@ HRESULT CXFS_BCR::InnerReadBcr(LPWORD lpwSymList, DWORD dwTimeOut)
                 {
                     pData->lpxBarcodeData->usLength = (WORD)dwBcrDataResultSize;
                         memcpy(pData->lpxBarcodeData->lpbData, szBcrDataResult, dwBcrDataResultSize);
-                }*/
+                }
 
                 // 条码返回数据模式处理(16进制/ASCII)
+                /*
                 if (m_stConfig.wReadBcrRetDataMode == 0)    // INI配置返回条码数据模式为Hex
                 {
                     if (stReadBcrOut.wSymDataMode == SYMD_HEX)  // 返回条码数据为HEX(不转换)
@@ -619,6 +620,7 @@ HRESULT CXFS_BCR::InnerReadBcr(LPWORD lpwSymList, DWORD dwTimeOut)
                         pData->lpxBarcodeData->usLength = (WORD)stReadBcrOut.dwSymDataSize;
                         memcpy(pData->lpxBarcodeData->lpbData, stReadBcrOut.szSymData, stReadBcrOut.dwSymDataSize);
                     }
+                    */
                 }
             } else
             {

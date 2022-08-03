@@ -1690,7 +1690,7 @@ size_t DataConvertor::code_convert(char *from_charset, char *to_charset, const c
         return -1;
     }
     iconv_close(cd);
-
+    outlen_tmp = outlen - outlen_tmp;
     return outlen_tmp;
 }
 
