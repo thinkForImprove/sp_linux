@@ -7,7 +7,7 @@
 #include "__common_def.h"
 #include "device_object_global.h"
 #include "QtTypeDef.h"
-#include "QtTypeInclude.h"
+#include "SimpleMutex.h"
 
 using namespace std;
 using namespace cv;

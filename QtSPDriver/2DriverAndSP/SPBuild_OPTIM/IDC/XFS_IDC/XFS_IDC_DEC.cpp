@@ -75,7 +75,8 @@ HRESULT CXFS_IDC::InnerOpen(BOOL bReConn)
     UpdateExtra();
 
     // 更新一次状态
-    OnStatus();
+    //OnStatus();
+    UpdateDeviceStatus();
 
     // 初始关闭抖动进卡
     m_pIDCDev->SetData(SET_DEV_WOBBLE_CLOSE);

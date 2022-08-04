@@ -620,8 +620,8 @@ HRESULT CXFS_BCR::InnerReadBcr(LPWORD lpwSymList, DWORD dwTimeOut)
                         pData->lpxBarcodeData->usLength = (WORD)stReadBcrOut.dwSymDataSize;
                         memcpy(pData->lpxBarcodeData->lpbData, stReadBcrOut.szSymData, stReadBcrOut.dwSymDataSize);
                     }
-                    */
-                }
+
+                }*/
             } else
             {
                 pData->lpxBarcodeData->usLength = (WORD)stReadBcrOut.dwSymDataSize;

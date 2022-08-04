@@ -344,6 +344,7 @@ int CDevIDC_CRT350N::MediaReadWrite(MEDIA_RW_MODE enRWMode, STMEDIARW &stMediaDa
     INT nBuffSize = sizeof(szBuff);
     WORD wReadCnt = 0;
     WORD wTrackOnly = 0;
+    BOOL bIsReadTrackSucc = FALSE;
 
     if (enRWMode == MEDIA_READ) // 读
     {
@@ -415,6 +416,8 @@ int CDevIDC_CRT350N::MediaReadWrite(MEDIA_RW_MODE enRWMode, STMEDIARW &stMediaDa
                     return ConvertImplErrCode2IDC(nRet);
                 }
 
+                bIsReadTrackSucc = TRUE;
+
                 if (wReadCnt == 1)  // 只读一个磁道
                 {
                     // 组织证件数据写入应答
@@ -478,9 +481,16 @@ int CDevIDC_CRT350N::MediaReadWrite(MEDIA_RW_MODE enRWMode, STMEDIARW &stMediaDa
                 {
                     Log(ThisModule, __LINE__,
                         "介质读写: 读芯片: ->ChipOperation(%d) Fail, ErrCode: %d, Return: %d",
-                        SND_CMD_CHIP_PRESS, nRet, ConvertImplErrCode2IDC(nRet));
-                    stMediaData.Clear();
-                    return ConvertImplErrCode2IDC(nRet);
+                        CHIP_PRESS, nRet, ConvertImplErrCode2IDC(nRet));
+                    if (bIsReadTrackSucc != TRUE)
+                    {
+                        stMediaData.Clear();
+                        return ConvertImplErrCode2IDC(nRet);
+                    } else
+                    {
+                        stMediaData.SetData(3, RW_RESULT_MISS, nullptr, 0);
+                        return IDC_SUCCESS;
+                    }
                 }
                 m_bICPress = TRUE;
 
@@ -491,9 +501,16 @@ int CDevIDC_CRT350N::MediaReadWrite(MEDIA_RW_MODE enRWMode, STMEDIARW &stMediaDa
                 {
                     Log(ThisModule, __LINE__,
                         "介质读写: 读芯片: ->ChipOperation(%d) Fail, ErrCode: %d, Return: %d",
-                        SND_CMD_CHIP_PRESS, nRet, ConvertImplErrCode2IDC(nRet));
-                    stMediaData.Clear();
-                    return ConvertImplErrCode2IDC(nRet);
+                        CHIP_ACTIVE, nRet, ConvertImplErrCode2IDC(nRet));
+                    if (bIsReadTrackSucc != TRUE)
+                    {
+                        stMediaData.Clear();
+                        return ConvertImplErrCode2IDC(nRet);
+                    } else
+                    {
+                        stMediaData.SetData(3, RW_RESULT_MISS, nullptr, 0);
+                        return IDC_SUCCESS;
+                    }
                 }
                 stMediaData.SetData(3, RW_RESULT_SUCC, szBuff, nBuffSize);
                 m_bICActive = TRUE;

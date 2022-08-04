@@ -1132,7 +1132,7 @@ public:
             case ERR_IDC_OTHER:             return WFS_ERR_HARDWARE_ERROR;      // 其它错误(知道错误原因,不细分类别)
             case ERR_IDC_UNKNOWN:           return WFS_ERR_HARDWARE_ERROR;      // 未知错误(不知原因的错误)
             // 通信错误
-            case ERR_IDC_COMM_ERR:          return WFS_ERR_CONNECTION_LOST;     // 通讯错误
+            case ERR_IDC_COMM_ERR:          return WFS_ERR_HARDWARE_ERROR;      // 通讯错误
             case ERR_IDC_READ_ERR:          return WFS_ERR_HARDWARE_ERROR;      // 读数据错误
             case ERR_IDC_WRITE_ERR:         return WFS_ERR_HARDWARE_ERROR;      // 写数据错误
             case ERR_IDC_READ_TIMEOUT:      return WFS_ERR_TIMEOUT;             // 读数据超时
