@@ -1,6 +1,6 @@
 /********************************************************************************
 * 文件名称: device_port.cpp
-* 文件描述: 定义静态库的函数(设备处理相关)
+* 文件描述: 定义静态库的函数(设备接口处理相关)
 *
 * 版本历史信息
 * 变更说明: 建立文件
@@ -9,14 +9,14 @@
 *********************************************************************************/
 
 #include "framework.h"
-#include "device_port.h"
+#include "device_object.h"
 
 
 /*********************************************************************************
- @功能:	根据Vid+Pid取得摄像设备索引序号
- @参数:	入参: lpcVid:设备VID(16进制字符串,4位)
-             lpcVid:设备VID(16进制字符串,4位)
- @返回:	>=0:设备索引, -1/-1:实例化失败, -99:设备未找到， 其他<0:错误
+// 功能:	根据Vid+Pid取得摄像设备索引序号
+// 参数:	入参: lpcVid:设备VID(16进制字符串,4位)
+//            lpcVid:设备VID(16进制字符串,4位)
+// 返回:	>=0:设备索引, -1/-1:实例化失败, -99:设备未找到， 其他<0:错误
 *********************************************************************************/
 INT CDevicePort::SearchVideoIdxFromVidPid(LPCSTR lpcVid, LPCSTR lpcPid)
 {
@@ -78,9 +78,9 @@ INT CDevicePort::SearchVideoIdxFromVidPid(LPCSTR lpcVid, LPCSTR lpcPid)
 }
 
 /*********************************************************************************
- @功能:	查找设备名是否存在
- @参数:	入参: lpcDevName 设备名
- @返回:	参考返回值宏定义
+// 功能:	查找设备名是否存在
+// 参数:	入参: lpcDevName 设备名
+// 返回:	参考返回值宏定义
 *********************************************************************************/
 INT CDevicePort::SearchDeviceNameIsHave(LPCSTR lpcDevName)
 {
@@ -88,10 +88,10 @@ INT CDevicePort::SearchDeviceNameIsHave(LPCSTR lpcDevName)
 }
 
 /*********************************************************************************
- @功能:	查找设备名是否存在
- @参数:	入参: lpcVid:设备VID(16进制字符串,4位)
-             lpcVid:设备VID(16进制字符串,4位)
- @返回:	参考返回值宏定义
+// 功能:	查找设备名是否存在
+// 参数:	入参: lpcVid:设备VID(16进制字符串,4位)
+//            lpcVid:设备VID(16进制字符串,4位)
+// 返回:	参考返回值宏定义
 *********************************************************************************/
 INT CDevicePort::SearchDeviceVidPidIsHave(LPCSTR lpcVid, LPCSTR lpcPid)
 {
@@ -99,9 +99,9 @@ INT CDevicePort::SearchDeviceVidPidIsHave(LPCSTR lpcVid, LPCSTR lpcPid)
 }
 
 /*********************************************************************************
- @功能:	查找/dev/videoX是否存在
- @参数:	入参: wVideoX:
- @返回:	参考返回值宏定义
+// 功能:	查找/dev/videoX是否存在
+// 参数:	入参: wVideoX:
+// 返回:	参考返回值宏定义
 *********************************************************************************/
 INT CDevicePort::SearchVideoXIsHave(WORD wVideoX)
 {
@@ -112,9 +112,9 @@ INT CDevicePort::SearchVideoXIsHave(WORD wVideoX)
 }
 
 /*********************************************************************************
- @功能:	查找摄像设备索引序号是否存在
- @参数:	入参: wVideoX:
- @返回:	参考返回值宏定义
+// 功能:	查找摄像设备索引序号是否存在
+// 参数:	入参: wVideoX:
+// 返回:	参考返回值宏定义
 *********************************************************************************/
 INT CDevicePort::SearchVideoIdxIsHave(WORD wIdx)
 {
@@ -125,10 +125,10 @@ INT CDevicePort::SearchVideoIdxIsHave(WORD wIdx)
 }
 
 /*********************************************************************************
- @功能:	查找设备名是否存在
- @参数:	入参: lpcVid:设备VID(16进制字符串,4位)
-             lpcVid:设备VID(16进制字符串,4位)
- @返回:	参考返回值宏定义
+// 功能:	查找设备名是否存在
+// 参数:	入参: lpcVid:设备VID(16进制字符串,4位)
+//           lpcVid:设备VID(16进制字符串,4位)
+// 返回:	参考返回值宏定义
 *********************************************************************************/
 INT CDevicePort::GetComDevName(LPCSTR lpMode, LPSTR lpDevName, INT nDevNameLen)
 {
@@ -150,11 +150,11 @@ INT CDevicePort::GetComDevName(LPCSTR lpMode, LPSTR lpDevName, INT nDevNameLen)
 }
 
 /*********************************************************************************
- @功能:	查找设备是否存在
- @参数:	入参: wMode: 查找方式(0设备名, 1VidPid, 2videoX, 3摄像设备索引)
-             lpcVid:设备VID(16进制字符串,4位)
-             lpcVid:设备VID(16进制字符串,4位)
- @返回:	参考返回值宏定义
+// 功能:	查找设备是否存在
+// 参数:	入参: wMode: 查找方式(0设备名, 1VidPid, 2videoX, 3摄像设备索引)
+//            lpcVid:设备VID(16进制字符串,4位)
+//            lpcVid:设备VID(16进制字符串,4位)
+// 返回:	参考返回值宏定义
 *********************************************************************************/
 INT CDevicePort::SearchDeviceIsHave(WORD wMode, LPCSTR lpcDevName, LPCSTR lpcVid, LPCSTR lpcPid)
 {
@@ -310,12 +310,12 @@ INT CDevicePort::SearchDeviceIsHave(WORD wMode, LPCSTR lpcDevName, LPCSTR lpcVid
     return nRet;
 }
 
-/**
- @功能：	字串转换为大写
- @参数：	 lpHex: 转换源字串(16进制)   dwHexSize: : 转换源字串大小
- @       lpAscii: 返回转换后ASCII字串空间  dwAsciiSize: 返回转换后ASCII字串大小
- @返回：	转换成功, 返回转换的字串长度, 字串无效或不成功返回0
- */
+/*********************************************************************************
+// 功能: 字串转换为大写
+// 参数:	lpcSource: 转换源字串   dwSourceSize: 转换源字串大小
+//      lpDest: 返回转换后字串空间  dwDestSize: 返回转换后字串大小
+// 返回:	转换成功, 返回转换的字串长度, 字串无效或不成功返回0
+*********************************************************************************/
 DWORD CDevicePort::str_to_toupper(LPCSTR lpcSource, DWORD dwSourceSize, LPSTR lpDest, DWORD dwDestSize)
 {
     DWORD dwSize = 0;
@@ -350,9 +350,9 @@ DWORD CDevicePort::str_to_toupper(LPCSTR lpcSource, DWORD dwSourceSize, LPSTR lp
 
     dwSize = stdToupper.length();
 
-
-
     memcpy(lpDest, stdToupper.c_str(), dwSize >= dwDestSize ? dwDestSize : dwSize);
 
     return dwSize;
 }
+
+// -------------------------------------- END --------------------------------------

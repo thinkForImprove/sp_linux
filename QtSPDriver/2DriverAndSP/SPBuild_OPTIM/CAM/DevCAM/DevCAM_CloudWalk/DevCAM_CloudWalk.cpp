@@ -11,7 +11,6 @@
 #include <unistd.h>
 
 #include "DevCAM_CloudWalk.h"
-#include "device_port.h"
 #include "file_access.h"
 
 static const char *ThisFile = "DevCAM_CloudWalk.cpp";
@@ -86,21 +85,27 @@ int CDevCAM_CloudWalk::Open(LPCSTR lpMode)
         nDevPort2IsHave = CDevicePort::SearchDeviceVidPidIsHave(m_stOpenMode.szHidVid[1],
                                                                 m_stOpenMode.szHidPid[1]);
 
-        m_bDevPortIsHaveOLD[0] = (nDevPort1IsHave == DP_RET_NOTHAVE ? FALSE : TRUE);
-        m_bDevPortIsHaveOLD[1] = (nDevPort2IsHave == DP_RET_NOTHAVE ? FALSE : TRUE);
+        if (m_bDevPortIsHaveOLD[0] != (nDevPort1IsHave == DP_RET_NOTHAVE ? FALSE : TRUE) ||
+            m_bDevPortIsHaveOLD[1] != (nDevPort2IsHave == DP_RET_NOTHAVE ? FALSE : TRUE))
+        {
+            Log(ThisModule, __LINE__,
+                "打开设备: 检查设备: VidPid[%s:%s%s, %s:%s%s].",
+                m_stOpenMode.szHidVid[0], m_stOpenMode.szHidPid[0],
+                nDevPort1IsHave == DP_RET_NOTHAVE ? "未连接" : "已连接",
+                m_stOpenMode.szHidVid[1], m_stOpenMode.szHidPid[1],
+                nDevPort2IsHave == DP_RET_NOTHAVE ? "未连接" : "已连接");
+            m_bDevPortIsHaveOLD[0] = (nDevPort1IsHave == DP_RET_NOTHAVE ? FALSE : TRUE);
+            m_bDevPortIsHaveOLD[1] = (nDevPort2IsHave == DP_RET_NOTHAVE ? FALSE : TRUE);
+        }
 
         if (nDevPort1IsHave == DP_RET_NOTHAVE || nDevPort2IsHave == DP_RET_NOTHAVE)
         {
-            if (m_nRetErrOLD[3] != ERR_CAM_NODEVICE)
+            if (m_nRetErrOLD[1] != ERR_CAM_NODEVICE)
             {
                 Log(ThisModule, __LINE__,
-                    "打开设备: 检查设备: VidPid方式打开: VidPid[%s:%s%s, %s:%s%s], Return: %s.",
-                    m_stOpenMode.szHidVid[0], m_stOpenMode.szHidPid[0],
-                    nDevPort1IsHave == DP_RET_NOTHAVE ? "未连接" : "已连接",
-                    m_stOpenMode.szHidVid[1], m_stOpenMode.szHidPid[1],
-                    nDevPort2IsHave == DP_RET_NOTHAVE ? "未连接" : "已连接",
+                    "打开设备: 检查设备: 存在未连接, Return: %s.",
                     ConvertDevErrCodeToStr(ERR_CAM_NODEVICE));
-                m_nRetErrOLD[3] = ERR_CAM_NODEVICE;
+                m_nRetErrOLD[1] = ERR_CAM_NODEVICE;
             }
             return ERR_CAM_NODEVICE;
         }

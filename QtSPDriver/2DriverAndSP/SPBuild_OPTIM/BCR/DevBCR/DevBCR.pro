@@ -49,9 +49,9 @@ HEADERS += \
 
 #配置依赖库目录
 CONFIG(debug, debug|release) {
-    LIBS += -lfile_accessd -ldata_convertord -ldevice_portd -ludev
+    LIBS += -lfile_accessd -ldata_convertord -ldevice_objectd -ludev
 }else:CONFIG(release, debug|release) {
-    LIBS += -lfile_access -ldata_convertor -ldevice_port -ludev
+    LIBS += -lfile_access -ldata_convertor -ldevice_object -ludev
 }
 
 unix {

@@ -14,7 +14,6 @@
 #include <unistd.h>
 #include <QObject>
 
-#include "device_port.h"
 #include "file_access.h"
 
 static const char *ThisFile = "DevCAM_TCF261.cpp";
@@ -70,21 +69,27 @@ int CDevCAM_TCF261::Open(LPCSTR lpMode)
         nDevPort1IsHave = CDevicePort::SearchDeviceVidPidIsHave(m_stOpenMode.szHidVid[0],
                                                                 m_stOpenMode.szHidPid[0]);
         nDevPort2IsHave = CDevicePort::SearchDeviceVidPidIsHave(m_stOpenMode.szHidVid[1],
-                                                                m_stOpenMode.szHidPid[1]);
+                                                                m_stOpenMode.szHidPid[1]);        
 
-        m_bDevPortIsHaveOLD[0] = (nDevPort1IsHave == DP_RET_NOTHAVE ? FALSE : TRUE);
-        m_bDevPortIsHaveOLD[1] = (nDevPort2IsHave == DP_RET_NOTHAVE ? FALSE : TRUE);
+        if (m_bDevPortIsHaveOLD[0] != (nDevPort1IsHave == DP_RET_NOTHAVE ? FALSE : TRUE) ||
+            m_bDevPortIsHaveOLD[1] != (nDevPort2IsHave == DP_RET_NOTHAVE ? FALSE : TRUE))
+        {
+            Log(ThisModule, __LINE__,
+                "打开设备: 检查设备: VidPid[%s:%s%s, %s:%s%s].",
+                m_stOpenMode.szHidVid[0], m_stOpenMode.szHidPid[0],
+                nDevPort1IsHave == DP_RET_NOTHAVE ? "未连接" : "已连接",
+                m_stOpenMode.szHidVid[1], m_stOpenMode.szHidPid[1],
+                nDevPort2IsHave == DP_RET_NOTHAVE ? "未连接" : "已连接");
+            m_bDevPortIsHaveOLD[0] = (nDevPort1IsHave == DP_RET_NOTHAVE ? FALSE : TRUE);
+            m_bDevPortIsHaveOLD[1] = (nDevPort2IsHave == DP_RET_NOTHAVE ? FALSE : TRUE);
+        }
 
         if (nDevPort1IsHave == DP_RET_NOTHAVE || nDevPort2IsHave == DP_RET_NOTHAVE)
         {
             if (m_nRetErrOLD[1] != ERR_CAM_NODEVICE)
             {
                 Log(ThisModule, __LINE__,
-                    "打开设备: 检查设备: VidPid[%s:%s%s, %s:%s%s], Return: %s.",
-                    m_stOpenMode.szHidVid[0], m_stOpenMode.szHidPid[0],
-                    nDevPort1IsHave == DP_RET_NOTHAVE ? "未连接" : "已连接",
-                    m_stOpenMode.szHidVid[1], m_stOpenMode.szHidPid[1],
-                    nDevPort2IsHave == DP_RET_NOTHAVE ? "未连接" : "已连接",
+                    "打开设备: 检查设备: 存在未连接, Return: %s.",
                     ConvertDevErrCodeToStr(ERR_CAM_NODEVICE));
                 m_nRetErrOLD[1] = ERR_CAM_NODEVICE;
             }
@@ -111,9 +116,10 @@ int CDevCAM_TCF261::Open(LPCSTR lpMode)
     }
 
     Log(ThisModule, __LINE__,
-        "%s打开设备: ->OpenDevice(%d, %d) Succ.",
+        "%s打开设备(VidPid方式): ->OpenDevice(%s:%s, %s:%s) Succ.",
         m_bReCon == TRUE ? "断线重连: " : "",
-        m_stOpenMode.nHidVid[0], m_stOpenMode.nHidVid[1]);
+        m_stOpenMode.szHidVid[0], m_stOpenMode.szHidPid[0],
+        m_stOpenMode.szHidVid[1], m_stOpenMode.szHidPid[1]);
     m_bReCon = FALSE; // 是否断线重连状态: 初始F
 
     return CAM_SUCCESS;
@@ -567,12 +573,24 @@ INT CDevCAM_TCF261::VideoCameraOpen(STDISPLAYPAR stDisplayIn)
 
     INT nRet = IMP_SUCCESS;
 
+    // 打开人脸设备
+    nRet = m_pDevImpl.StartCamera();
+    if (nRet != IMP_SUCCESS)
+    {
+        Log(ThisModule, __LINE__,
+            "打开设备摄像画面: ->StartCamera() Fail, ErrCode: %s, Return: %s.",
+            m_pDevImpl.ConvertCode_Impl2Str(nRet),
+            ConvertDevErrCodeToStr(ConvertImplErrCode2CAM(nRet)));
+        return ConvertImplErrCode2CAM(nRet);
+    }
+
+    // 建立预览窗体
     nRet = m_pDevImpl.CreateWindow(stDisplayIn.hWnd, stDisplayIn.wX, stDisplayIn.wY,
                                    stDisplayIn.wWidth, stDisplayIn.wHeight);
     if (nRet != IMP_SUCCESS)
     {
         Log(ThisModule, __LINE__,
-            "打开设备摄像画面: ->CreateWindow(%d, %d, %d, %d, %d) Fail, ErrCode: %s, Return: %s.",
+            "建立预览窗体: ->CreateWindow(%d, %d, %d, %d, %d) Fail, ErrCode: %s, Return: %s.",
             stDisplayIn.hWnd, stDisplayIn.wX, stDisplayIn.wY, stDisplayIn.wWidth,
             stDisplayIn.wHeight, m_pDevImpl.ConvertCode_Impl2Str(nRet),
             ConvertDevErrCodeToStr(ConvertImplErrCode2CAM(nRet)));
@@ -594,6 +612,9 @@ INT CDevCAM_TCF261::VideoCameraClose()
 
     // 停止连续活体检测
     m_pDevImpl.StopLiveDetecte();
+
+    // 关闭人脸设备
+    m_pDevImpl.StopCamera();
 
     // 关闭所有相机
     nRet = m_pDevImpl.CloseWindow();

@@ -135,7 +135,7 @@ INT CDevImpl_ZLF1000A3::nDlLoadLibIntf()
     // 8. 获取设备状态
     LOAD_LIBINFO_FUNC_DL(pZLGetDeviceStatus, ZLGetDeviceStatus, "GetDeviceStatus");
 
-    return TRUE;
+    return SUCCESS;
 }
 
 //----------------------------SDK封装接口方法-------------------------------
@@ -172,10 +172,13 @@ INT CDevImpl_ZLF1000A3::OpenDevice()
             }
             m_nRetErrOLD[0] = IMP_ERR_LOAD_LIB;
             return IMP_ERR_LOAD_LIB;
+        } else
+        {
+            Log(ThisModule, __LINE__,
+                "打开设备: 加载动态库: nDlLoadLibrary(%s) Succ.", m_szLoadDllPath);
+            m_nRetErrOLD[0] = IMP_SUCCESS;
         }
-        m_nRetErrOLD[0] = IMP_SUCCESS;
     }
-    m_nRetErrOLD[0] = IMP_SUCCESS;
 
     //-----------------------打开设备-----------------------
     nRet = ZLOpenDevice(m_nOpenCamType);
@@ -237,21 +240,6 @@ INT CDevImpl_ZLF1000A3::CloseDevice()
     // 设备Open标记=F
     m_bDevOpenOk = FALSE;
 
-    return IMP_SUCCESS;
-
-    if (m_bDevOpenOk == TRUE)
-    {
-        if (ZLCloseDevice(m_nOpenCamType) != IMP_SUCCESS)
-        {
-            if (ZLCloseDevice(m_nOpenCamType) != IMP_SUCCESS)
-            {
-                ZLCloseDevice(m_nOpenCamType);
-            }
-        }
-    }
-
-    vUnLoadLibrary();
-    m_bDevOpenOk = FALSE;
     return IMP_SUCCESS;
 }
 
@@ -365,15 +353,8 @@ INT CDevImpl_ZLF1000A3::GetResolut(UINT unResoBuf[30][2])
     CHK_DEV_OPEN_FLAG(m_bDevOpenOk);    // 检查设备OPEN标记
 
     INT nRet = ZLGetResolution(m_nOpenCamType, unResoBuf);
-    if (nRet != IMP_SUCCESS)
-    {
-        Log(ThisModule, __LINE__,
-            "获取分辨率: ZLGetResolution(%d) fail. Return: %s.",
-            m_nOpenCamType, ConvertCode_Impl2Str(nRet));
-        return nRet;
-    }
 
-    return IMP_SUCCESS;
+    return nRet;
 }
 
 // 8. 设置分辨率

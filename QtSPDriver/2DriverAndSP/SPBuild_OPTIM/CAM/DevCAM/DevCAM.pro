@@ -90,19 +90,21 @@ HEADERS += \
 
 #配置依赖库目录
 CONFIG(debug, debug|release) {
-    LIBS += -lfile_accessd -ldata_convertord -ldevice_portd
+    LIBS += -lfile_accessd -ldata_convertord -ldevice_objectd
 } else:CONFIG(release, debug|release) {
-    LIBS += -lfile_access -ldata_convertor -ldevice_port
+    LIBS += -lfile_access -ldata_convertor -ldevice_object
 }
 
 #Opencv库依赖设定
 LIBS += -lopencv_video \
         -lopencv_videoio \
-        -ludev
+       # -ludev
 
 #云从摄像依赖加载
 LIBS += -lcwlivdetengine \
         -lcwauthorize_x64
+
+#LIBS += -lv4l1compat -lv4l2
 
 unix {
     target.path = /usr/lib

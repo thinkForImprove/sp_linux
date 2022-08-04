@@ -11,7 +11,7 @@ QT -= gui
 
 TEMPLATE = lib
 CONFIG += staticlib
-DEFINES += DEVICE_PORT_LIBRARY
+DEFINES += DEVICE_OBJECT_LIBRARY
 
 CONFIG += c++11
 
@@ -28,20 +28,21 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 #配置输出文件名和目录
 CONFIG(debug, debug|release){
-    TARGET = device_portd
+    TARGET = device_objectd
 }else:CONFIG(release, debug|release){
-    TARGET = device_port
+    TARGET = device_object
 }
 
 #配置包含目录
 #INCLUDEPATH += $$PWD/../include
 
 SOURCES += \
-    device_port.cpp
+    device_port.cpp \
+    device_video.cpp
 
 HEADERS += \
-    device_port_global.h \
-    device_port.h \
+    device_object_global.h \
+    device_object.h \
     framework.h
 
 # Default rules for deployment.
@@ -57,15 +58,20 @@ CONFIG(debug, debug|release) {
 CONFIG(release, debug|release) {
     LIBS += -lfile_access -ldata_convertor -ludev
 }
+LIBS += -lopencv_video \
+        -lopencv_videoio \
 
+#LIBS += -lv4l1compat
+
+# -lv4l2
 #unix {
 #!build_pass:system("cp -f file_access_global.h ../../CommonFile/include/")
 #!build_pass:system("cp -f file_access.h ../../CommonFile/include/")
 #}
 
 #建立头文件链接
-QMAKE_POST_LINK += ln -sf $$PWD/device_port_global.h $$PWD/../../../3CommonFile/include/device_port_global.h;
-QMAKE_POST_LINK += ln -sf $$PWD/device_port.h $$PWD/../../../3CommonFile/include/device_port.h;
+QMAKE_POST_LINK += ln -sf $$PWD/device_object_global.h $$PWD/../../../3CommonFile/include/device_object_global.h;
+QMAKE_POST_LINK += ln -sf $$PWD/device_object.h $$PWD/../../../3CommonFile/include/device_object.h;
 
 
 

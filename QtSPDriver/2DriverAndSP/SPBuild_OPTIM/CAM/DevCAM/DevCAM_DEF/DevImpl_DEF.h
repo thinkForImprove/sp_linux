@@ -13,6 +13,7 @@
 
 #include "QtTypeDef.h"
 #include "malloc.h"
+#include "device_object.h"
 
 /***************************************************************************
 // 返回值/错误码　宏定义 (0~-300共通定义)
@@ -50,42 +51,8 @@ enum EN_DEVSTAT
     DEV_UNKNOWN     = 4,    // 设备状态未知
 };
 
-enum EN_VIDEOMODE
-{
-    VM_WIDTH        = 0,    // 宽度
-    VM_HEIGHT       = 1,    // 高度
-    VM_FPS          = 2,    // 帧率(帧/秒)
-    VM_BRIGHT       = 3,    // 亮度(-255 ~ 255)(RGB相关)
-    VM_CONTRAST     = 4,    // 对比度
-    VM_SATURATION   = 5,    // 饱和度
-    VM_HUE          = 6,    // 色调
-    VM_EXPOSURE     = 7,    // 曝光
-};
-
-typedef struct ST_IMAGE_DATA
-{
-    INT nWidth;                 // 图像宽
-    INT nHeight;                // 图像高
-    INT nFormat;                // 图像通道数
-    UCHAR *ucImgData;           // 图像数据Buffer
-    ULONG ulImagDataLen;        // 图像数据BufferSize
-    INT nOtherParam[24];        // 其他参数
-
-    ST_IMAGE_DATA()
-    {
-        memset(this, 0x00, sizeof(ST_IMAGE_DATA));
-    }
-
-    void Clear()
-    {
-        if (ucImgData != nullptr)
-        {
-            free(ucImgData);
-            ucImgData = nullptr;
-        }
-        memset(this, 0x00, sizeof(ST_IMAGE_DATA));
-    }
-} STIMGDATA, *LPSTIMGDATA;
+typedef STIMAGEDATA STIMGDATA;
+typedef LPSTIMAGEDATA LPSTIMGDATA;
 
 // CDevImpl共通类
 class CDevImpl_DEF

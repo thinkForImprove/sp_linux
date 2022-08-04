@@ -53,7 +53,38 @@ int CDevCAM_JDY5001A0809::Open(LPCSTR lpMode)
 
     INT nRet = IMP_SUCCESS;
 
+    INT nDevPort1IsHave = 0;   // 设备连接1是否存在
+
     m_pDevImpl.CloseDevice();
+
+    // 检查VidPid是否存在
+    if (m_stOpenMode.wOpenMode == 1)
+    {
+        nDevPort1IsHave = CDevicePort::SearchDeviceVidPidIsHave(m_stOpenMode.szHidVid[0],
+                                                                m_stOpenMode.szHidPid[0]);
+
+        if (m_bDevPortIsHaveOLD[0] != (nDevPort1IsHave == DP_RET_NOTHAVE ? FALSE : TRUE))
+        {
+            Log(ThisModule, __LINE__,
+                "打开设备: 检查设备: VidPid[%s:%s%s].",
+                m_stOpenMode.szHidVid[0], m_stOpenMode.szHidPid[0],
+                nDevPort1IsHave == DP_RET_NOTHAVE ? "未连接" : "已连接");
+            m_bDevPortIsHaveOLD[0] = (nDevPort1IsHave == DP_RET_NOTHAVE ? FALSE : TRUE);
+            m_bDevPortIsHaveOLD[0] = (nDevPort1IsHave == DP_RET_NOTHAVE ? FALSE : TRUE);
+        }
+
+        if (nDevPort1IsHave == DP_RET_NOTHAVE)
+        {
+            if (m_nRetErrOLD[1] != ERR_CAM_NODEVICE)
+            {
+                Log(ThisModule, __LINE__,
+                    "打开设备: 检查设备: 存在未连接, Return: %s.",
+                    ConvertDevErrCodeToStr(ERR_CAM_NODEVICE));
+                m_nRetErrOLD[1] = ERR_CAM_NODEVICE;
+            }
+            return ERR_CAM_NODEVICE;
+        }
+    }
 
     // 连接共享内存
     nRet = ConnSharedMemory(m_szSharedDataName);
@@ -89,19 +120,12 @@ int CDevCAM_JDY5001A0809::Open(LPCSTR lpMode)
             return ConvertImplErrCode2CAM(nRet);
         }
     }
-    if (m_bReCon == TRUE)
-    {
-        Log(ThisModule, __LINE__, "断线重连: 打开设备: : ->OpenDevice(%s, %s) Succ.",
-            m_stOpenMode.szHidVid[0], m_stOpenMode.szHidPid[0]);
-        m_bReCon = FALSE; // 是否断线重连状态: 初始F
-    } else
-    {
-        Log(ThisModule, __LINE__,  "打开设备: ->OpenDevice(%s, %s) Succ.",
-            m_stOpenMode.szHidVid[0], m_stOpenMode.szHidPid[0]);
-    }
+
+    Log(ThisModule, __LINE__, "%s打开设备: ->OpenDevice(%s, %s) Succ.",
+        m_bReCon == TRUE ? "断线重连: " : "", m_stOpenMode.szHidVid[0], m_stOpenMode.szHidVid[1]);
+    m_bReCon = FALSE; // 是否断线重连状态: 初始F
 
     // 设置摄像模式
-    //m_pDevImpl.SetVideoCaptMode(m_stVideoParam);
     SetVideoMode(m_stVideoParam);
 
     // 取摄像参数
@@ -295,6 +319,22 @@ int CDevCAM_JDY5001A0809::SetData(unsigned short usType, void *vData/* = nullptr
             {
                 memcpy(&(m_stOpenMode), ((LPSTDEVICEOPENMODE)vData), sizeof(STDEVICEOPENMODE));
                 m_nRefreshTime = ((LPSTDEVICEOPENMODE)vData)->nOtherParam[1];
+                // 图像镜像模式转换
+                if (((LPSTDEVICEOPENMODE)vData)->nOtherParam[4] == 1)
+                {
+                    m_nClipMode = EN_CLIP_LR;
+                } else
+                if (((LPSTDEVICEOPENMODE)vData)->nOtherParam[4] == 2)
+                {
+                    m_nClipMode = EN_CLIP_UD;
+                } else
+                if (((LPSTDEVICEOPENMODE)vData)->nOtherParam[4] == 3)
+                {
+                    m_nClipMode = EN_CLIP_UDLR;
+                } else
+                {
+                    m_nClipMode = EN_CLIP_NO;
+                }
             }
             break;
         }
@@ -303,22 +343,6 @@ int CDevCAM_JDY5001A0809::SetData(unsigned short usType, void *vData/* = nullptr
             if (vData != nullptr)
             {
                 memcpy(&(m_stVideoParam), ((LPSTVIDEOPARAM)vData), sizeof(STVIDEOPAMAR));
-                // 图像镜像模式转换
-                if (m_stVideoParam.nOtherParam[0] == 1)
-                {
-                    m_nClipMode = EN_CLIP_LR;
-                } else
-                if (m_stVideoParam.nOtherParam[0] == 2)
-                {
-                    m_nClipMode = EN_CLIP_UD;
-                } else
-                if (m_stVideoParam.nOtherParam[0] == 3)
-                {
-                    m_nClipMode = EN_CLIP_UDLR;
-                } else
-                {
-                    m_nClipMode = EN_CLIP_NO;
-                }
             }
             break;
         }

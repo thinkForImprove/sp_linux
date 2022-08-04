@@ -20,7 +20,6 @@
 #include "ILogWrite.h"
 #include "QtDLLLoader.h"
 #include "../../XFS_HCAM/def.h"
-#include "device_port.h"
 
 using namespace std;
 using namespace cv;

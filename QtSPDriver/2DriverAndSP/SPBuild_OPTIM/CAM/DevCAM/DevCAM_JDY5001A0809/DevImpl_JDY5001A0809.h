@@ -19,12 +19,12 @@
 #include "QtTypeDef.h"
 #include "ILogWrite.h"
 #include "QtDLLLoader.h"
+#include "QtTypeInclude.h"
 #include "../../XFS_CAM/def.h"
 #include "../DevCAM_DEF/DevImpl_DEF.h"
-#include "device_port.h"
+#include "device_object.h"
 
 using namespace std;
-using namespace cv;
 
 /***************************************************************************
 // 返回值/错误码　宏定义 (0~-300通用定义, 见DevImpl_DEF.h)
@@ -90,6 +90,7 @@ public:
                           INT nWidth = 0, INT nHeight = 0,
                           WORD wFlip = 0);                          // 取图像帧数据
     INT     SaveImageFile(LPSTR lpFileName);                        // 保存图像文件
+    INT     ConvertCode_DPErr2Impl(INT nErrCode);                   // DeviceVideo错误码转换为Impl错误码
     LPSTR   ConvertCode_Impl2Str(INT nErrCode);                     // Impl错误码转换解释字符串
 
 
@@ -97,12 +98,14 @@ private:
     void    Init();                                                 // 参数初始化
 
 private:
+    CSimpleMutex    m_cMutex;
+    CDeviceVideo    m_clDevVideo;
     CHAR            m_szDevType[64];                                // 设备类型
     VideoCapture    m_cvVideoCapt;                                  // 设备句柄
     BOOL            m_bDevOpenOk;                                   // 设备是否Open
     CHAR            m_szDevVidPid[2][16];                           // 保存设备VIDPID
     INT             m_nRetErrOLD[8];                                // 处理错误值保存(0:USB动态库/1:设备连接/
-                                                                    //  2:设备初始化/3/4)
+                                                                    //  2:状态/3/4)
     STIMGDATA       m_stImageData;                                  // 保存图像帧数据
     Mat             m_cvMatImg;
     CHAR            m_szErrStr[1024];                               // IMPL错误解释

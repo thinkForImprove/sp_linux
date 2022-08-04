@@ -176,10 +176,13 @@ INT CDevImpl_TCF261::OpenDevice()
             }
             m_nRetErrOLD[0] = IMP_ERR_LOAD_LIB;
             return IMP_ERR_LOAD_LIB;
+        } else
+        {
+            Log(ThisModule, __LINE__,
+                "打开设备: 加载动态库: nLoadLibrary(%s) Succs.", m_szLoadDllPath);
+            m_nRetErrOLD[0] = IMP_SUCCESS;
         }
-        m_nRetErrOLD[0] = IMP_SUCCESS;
     }
-    m_nRetErrOLD[0] = IMP_SUCCESS;
 
     //-----------------------打开设备-----------------------
     // 初始化SDK
@@ -196,8 +199,12 @@ INT CDevImpl_TCF261::OpenDevice()
         return ConvertCode_TCF2Impl(nRet);
     }
 
+    FR_StopCamera();
+    FR_StopLiveDetect();
+    FR_CloseWindow();
+
     // 打开人脸设备
-    nRet = FR_StartCamera();
+    /*nRet = FR_StartCamera();
     if (nRet != FR_RET_SUCC)
     {
         if (m_nRetErrOLD[2] != nRet)
@@ -208,8 +215,7 @@ INT CDevImpl_TCF261::OpenDevice()
             m_nRetErrOLD[2] = nRet;
         }
         return ConvertCode_TCF2Impl(nRet);
-    }
-
+    }*/
 
     m_bDevOpenOk = TRUE;
 
@@ -233,6 +239,7 @@ INT CDevImpl_TCF261::CloseDevice()
     if(m_bDevOpenOk == TRUE)
     {
         FR_StopCamera();
+        DestroyFaceCallBack();
     }
 
     // 非断线重连时关闭需释放动态库

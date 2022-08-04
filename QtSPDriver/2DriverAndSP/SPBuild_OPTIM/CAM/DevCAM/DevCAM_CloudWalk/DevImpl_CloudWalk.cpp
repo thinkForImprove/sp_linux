@@ -163,7 +163,7 @@ INT CDevImpl_CloudWalk::nLoadLibIntf()
     // 1.33 获得相机固件版本信息，依照相机在设备VID/PID
     LOAD_LIBINFO_FUNC(pcwEngineGetFirmwareVersionEx, cwEngineGetFirmwareVersionEx, "cwEngineGetFirmwareVersionEx");
 
-    return TRUE;
+    return SUCCESS;
 }
 
 // 动态库接口初始化
@@ -235,10 +235,13 @@ INT CDevImpl_CloudWalk::OpenDevice()
             }
             m_nRetErrOLD[0] = IMP_ERR_LOAD_LIB;
             return IMP_ERR_LOAD_LIB;
+        } else
+        {
+            Log(ThisModule, __LINE__,
+                "打开设备: 加载动态库: nLoadLibrary(%s) Succ.", m_szLoadDllPath);
+            m_nRetErrOLD[0] = IMP_SUCCESS;
         }
-        m_nRetErrOLD[0] = IMP_SUCCESS;
     }
-    m_nRetErrOLD[0] = IMP_SUCCESS;
 
     //-----------------------打开设备-----------------------
     // 1. 设备句柄非NULL, 先释放
@@ -301,10 +304,13 @@ INT CDevImpl_CloudWalk::OpenDevice(STDETECTINITPAR stInitPar)
             }
             m_nRetErrOLD[0] = IMP_ERR_LOAD_LIB;
             return IMP_ERR_LOAD_LIB;
+        } else
+        {
+            Log(ThisModule, __LINE__,
+                "打开设备: 加载动态库: nLoadLibrary(%s) Succ.", m_szLoadDllPath);
+            m_nRetErrOLD[0] = IMP_SUCCESS;
         }
-        m_nRetErrOLD[0] = IMP_SUCCESS;
     }
-    m_nRetErrOLD[0] = IMP_SUCCESS;
 
     //-----------------------打开设备-----------------------
     // 1. 设备句柄非NULL, 先释放

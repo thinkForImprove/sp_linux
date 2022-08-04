@@ -14,7 +14,6 @@
 
 #include "DevCAM_ZLF1000A3.h"
 #include "opencv2/opencv.hpp"
-#include "device_port.h"
 
 static const char *ThisFile = "DevCAM_ZLF1000A3.cpp";
 
@@ -53,7 +52,6 @@ int CDevCAM_ZLF1000A3::Open(LPCSTR lpMode)
     INT nRet = IMP_SUCCESS;
 
     INT nDevPort1IsHave = 0;   // 设备连接1是否存在
-    INT nDevPort2IsHave = 0;   // 设备连接2是否存在
 
     m_pDevImpl.CloseDevice();
 
@@ -63,38 +61,25 @@ int CDevCAM_ZLF1000A3::Open(LPCSTR lpMode)
         nDevPort1IsHave = CDevicePort::SearchDeviceVidPidIsHave(m_stOpenMode.szHidVid[0],
                                                                 m_stOpenMode.szHidPid[0]);
 
-        m_bDevPortIsHaveOLD[0] = (nDevPort1IsHave == DP_RET_NOTHAVE ? FALSE : TRUE);
+        if (m_bDevPortIsHaveOLD[0] != (nDevPort1IsHave == DP_RET_NOTHAVE ? FALSE : TRUE))
+        {
+            Log(ThisModule, __LINE__,
+                "打开设备: 检查设备: VidPid[%s:%s%s].",
+                m_stOpenMode.szHidVid[0], m_stOpenMode.szHidPid[0],
+                nDevPort1IsHave == DP_RET_NOTHAVE ? "未连接" : "已连接");
+            m_bDevPortIsHaveOLD[0] = (nDevPort1IsHave == DP_RET_NOTHAVE ? FALSE : TRUE);
+        }
 
         if (nDevPort1IsHave == DP_RET_NOTHAVE)
         {
             if (m_nRetErrOLD[1] != ERR_CAM_NODEVICE)
             {
                 Log(ThisModule, __LINE__,
-                    "打开设备: 检查设备: VidPid[%s:%s%s], Return: %s.",
-                    m_stOpenMode.szHidVid[0], m_stOpenMode.szHidPid[0],
-                    nDevPort1IsHave == DP_RET_NOTHAVE ? "未连接" : "已连接",
+                    "打开设备: 检查设备: 存在未连接, Return: %s.",
                     ConvertDevErrCodeToStr(ERR_CAM_NODEVICE));
                 m_nRetErrOLD[1] = ERR_CAM_NODEVICE;
             }
             return ERR_CAM_NODEVICE;
-        }
-    }
-
-    // 打开设备
-    if (m_pDevImpl.IsDeviceOpen() != TRUE)
-    {
-        nRet = m_pDevImpl.OpenDevice();
-        if (nRet != IMP_SUCCESS)
-        {
-            if (m_nRetErrOLD[0] != nRet)
-            {
-                Log(ThisModule, __LINE__,
-                    "打开设备: ->OpenDevice() Fail, ErrCode: %s, Return: %s.",
-                    m_pDevImpl.ConvertCode_Impl2Str(nRet),
-                    ConvertDevErrCodeToStr(ConvertImplErrCode2CAM(nRet)));
-                m_nRetErrOLD[0] = nRet;
-            }
-            return ConvertImplErrCode2CAM(nRet);
         }
     }
 
@@ -114,8 +99,27 @@ int CDevCAM_ZLF1000A3::Open(LPCSTR lpMode)
         return ERR_CAM_OTHER;
     }
 
-    Log(ThisModule, __LINE__, "%s打开设备: ->OpenDevice(%d, %d) Succ.",
-        m_bReCon == TRUE ? "断线重连: " : "", m_stOpenMode.nHidVid[0], m_stOpenMode.nHidVid[1]);
+
+    // 打开设备
+    if (m_pDevImpl.IsDeviceOpen() != TRUE)
+    {
+        nRet = m_pDevImpl.OpenDevice();
+        if (nRet != IMP_SUCCESS)
+        {
+            if (m_nRetErrOLD[0] != nRet)
+            {
+                Log(ThisModule, __LINE__,
+                    "打开设备: ->OpenDevice() Fail, ErrCode: %s, Return: %s.",
+                    m_pDevImpl.ConvertCode_Impl2Str(nRet),
+                    ConvertDevErrCodeToStr(ConvertImplErrCode2CAM(nRet)));
+                m_nRetErrOLD[0] = nRet;
+            }
+            return ConvertImplErrCode2CAM(nRet);
+        }
+    }
+
+    Log(ThisModule, __LINE__, "%s打开设备: ->OpenDevice(%s, %s) Succ.",
+        m_bReCon == TRUE ? "断线重连: " : "", m_stOpenMode.szHidVid[0], m_stOpenMode.szHidVid[1]);
     m_bReCon = FALSE; // 是否断线重连状态: 初始F
 
     // 枚举当前设备所支持的分辨率
@@ -143,7 +147,7 @@ int CDevCAM_ZLF1000A3::Reset()
     THISMODULE(__FUNCTION__);
     AutoLogFuncBeginEnd();
 
-    INT nRet = IMP_SUCCESS;
+    //INT nRet = IMP_SUCCESS;
 
     m_enDisplayStat = EN_DISP_ENDING;
 

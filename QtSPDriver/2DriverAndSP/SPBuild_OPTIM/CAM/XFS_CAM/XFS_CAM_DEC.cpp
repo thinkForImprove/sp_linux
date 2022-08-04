@@ -158,20 +158,6 @@ INT CXFS_CAM::InitConfig()
     // 设备未连接时状态显示(0:NODEVICE, 1:OFFLINE, 缺省0)
     m_stConfig.wDevNotFoundStat = m_cXfsReg.GetValue("CONFIG", "DevNotFoundStat", (DWORD)0);
 
-    // 截取画面帧的分辨率(Width),缺省0
-    //m_stConfig.wFrameResoWidth = m_cXfsReg.GetValue("CONFIG", "FrameResoWidth", (DWORD)0);
-
-    // 截取画面帧的分辨率(Height),缺省0
-    //m_stConfig.wFrameResoHeight = m_cXfsReg.GetValue("CONFIG", "FrameResoHeight", (DWORD)0);
-
-    // 镜像转换, 0:不转换, 1:左右转换, 2:上下转换, 3:上下左右转换, 缺省0
-    m_stConfig.wDisplayFlip = m_cXfsReg.GetValue("CONFIG", "DisplayFlip", (DWORD)0);
-    if (m_stConfig.wDisplayFlip < 0 || m_stConfig.wDisplayFlip > 3)
-    {
-        m_stConfig.wDisplayFlip = 0;
-    }
-    m_stConfig.stVideoPar.nOtherParam[0] = m_stConfig.wDisplayFlip;
-
     // Display采用图像帧方式刷新时,取图像帧数据接口错误次数上限,缺省500
     m_stConfig.stInitPar.nParInt[2] =
             m_cXfsReg.GetValue("CONFIG", "DisplayGetVideoMaxErrCnt", (DWORD)500);
@@ -520,7 +506,7 @@ INT CXFS_CAM::InitConfig()
 
     //--------------------------指定银行相关设置参数获取--------------------------
     // 指定银行，缺省0
-    m_stConfig.wBank = (WORD)m_cXfsReg.GetValue("BANK", "BankNo", (DWORD)BANK_NOALL);
+    m_stConfig.wBank = (WORD)m_cXfsReg.GetValue("BANK_CONFIG", "BankNo", (DWORD)BANK_NOALL);
     m_stConfig.stInitPar.nParInt[1] = m_stConfig.wBank;
 
     //--------------------------指定错误码相关设置参数获取--------------------------
@@ -595,10 +581,7 @@ INT CXFS_CAM::PrintIniData()
 
     // CONFIG
     PRINT_INI_BUF("\n\t\t\t\t 设备未连接时状态显示(0:NODEVICE,1:OFFLINE): CONFIG->DevNotFoundStat = %d", m_stConfig.wDevNotFoundStat);
-    PRINT_INI_BUF("\n\t\t\t\t 截取画面帧的分辨率(Width): CONFIG->FrameResoWidth = %d", m_stConfig.wFrameResoWidth);
-    PRINT_INI_BUF("\n\t\t\t\t 截取画面帧的分辨率(Height): CONFIG->FrameResoHeight = %d", m_stConfig.wFrameResoHeight);
-    PRINT_INI_BUF("\n\t\t\t\t 镜像转换(0:不转换,1:左右转换,2:上下转换,3:上下左右转换): CONFIG->DisplayFlip = %d", m_stConfig.wDisplayFlip);
-    PRINT_INI_BUF("\n\t\t\t\t isplay采用图像帧方式刷新时,取图像帧数据接口错误次数上限: CONFIG->DisplayGetVideoMaxErrCnt = %d", m_stConfig.stInitPar.nParInt[2]);
+    PRINT_INI_BUF("\n\t\t\t\t Display采用图像帧方式刷新时,取图像帧数据接口错误次数上限: CONFIG->DisplayGetVideoMaxErrCnt = %d", m_stConfig.stInitPar.nParInt[2]);
 
     // DEVICE_CFG
     PRINT_INI_BUF("\n\t\t\t\t 环境摄像设备类型(0无效): DEVICE_CFG->DeviceRoomType = %d", m_stConfig.wDeviceRoomType);
@@ -646,6 +629,7 @@ INT CXFS_CAM::PrintIniData()
         PRINT_INI_BUF2("\n\t\t\t\t 摄像窗口外接程序: DEVICE_SET_%d->ShowWinMode = %s", XFS_YC0C98, m_szWinProcessPath[XFS_YC0C98]);
         PRINT_INI_BUF2("\n\t\t\t\t 截取画面帧的分辨率: DEVICE_SET_%d->FrameResoWidth = %d", XFS_YC0C98, m_stConfig.stDevOpenMode[LIDX_YC0C98].nOtherParam[2]);
         PRINT_INI_BUF2("\n\t\t\t\t 截取画面帧的分辨率: DEVICE_SET_%d->FrameResoHeight = %d", XFS_YC0C98, m_stConfig.stDevOpenMode[LIDX_YC0C98].nOtherParam[3]);
+        PRINT_INI_BUF2("\n\t\t\t\t 镜像转换(0:不转换,1:左右转换,2:上下转换,3:上下左右转换): DEVICE_SET_%d->DisplayFlip = %d", XFS_YC0C98, m_stConfig.stDevOpenMode[LIDX_YC0C98].nOtherParam[4]);
     }
 
     // 天诚盛业(XFS_TCF261)
@@ -667,6 +651,7 @@ INT CXFS_CAM::PrintIniData()
         PRINT_INI_BUF2("\n\t\t\t\t 摄像窗口外接程序: DEVICE_SET_%d->ShowWinMode = %s", XFS_TCF261, m_szWinProcessPath[LIDX_TCF261]);
         PRINT_INI_BUF2("\n\t\t\t\t 截取画面帧的分辨率: DEVICE_SET_%d->FrameResoWidth = %d", XFS_TCF261, m_stConfig.stDevOpenMode[LIDX_TCF261].nOtherParam[2]);
         PRINT_INI_BUF2("\n\t\t\t\t 截取画面帧的分辨率: DEVICE_SET_%d->FrameResoHeight = %d", XFS_TCF261, m_stConfig.stDevOpenMode[LIDX_TCF261].nOtherParam[3]);
+        PRINT_INI_BUF2("\n\t\t\t\t 镜像转换(0:不转换,1:左右转换,2:上下转换,3:上下左右转换): DEVICE_SET_%d->DisplayFlip = %d", XFS_TCF261, m_stConfig.stDevOpenMode[LIDX_TCF261].nOtherParam[4]);
     }
 
     // 哲林(ZLF1000A3)
@@ -686,6 +671,7 @@ INT CXFS_CAM::PrintIniData()
         PRINT_INI_BUF2("\n\t\t\t\t 摄像窗口外接程序: DEVICE_SET_%d->ShowWinMode = %s", XFS_ZLF1000A3, m_szWinProcessPath[LIDX_ZLF1000A3]);
         PRINT_INI_BUF2("\n\t\t\t\t 截取画面帧的分辨率: DEVICE_SET_%d->FrameResoWidth = %d", XFS_ZLF1000A3, m_stConfig.stDevOpenMode[LIDX_ZLF1000A3].nOtherParam[2]);
         PRINT_INI_BUF2("\n\t\t\t\t 截取画面帧的分辨率: DEVICE_SET_%d->FrameResoHeight = %d", XFS_ZLF1000A3, m_stConfig.stDevOpenMode[LIDX_ZLF1000A3].nOtherParam[3]);
+        PRINT_INI_BUF2("\n\t\t\t\t 镜像转换(0:不转换,1:左右转换,2:上下转换,3:上下左右转换): DEVICE_SET_%d->DisplayFlip = %d", XFS_ZLF1000A3, m_stConfig.stDevOpenMode[LIDX_ZLF1000A3].nOtherParam[4]);
         PRINT_INI_BUF2("\n\t\t\t\t 设备指定使用模式(0:文档模式,1:人脸模式): DEVICE_SET_%d->ApplyMode = %d", XFS_ZLF1000A3, m_stConfig.stDevOpenMode[LIDX_ZLF1000A3].nOtherParam[10]);
         PRINT_INI_BUF2("\n\t\t\t\t 图像帧是否绘制切边区域(0:不绘制,1:绘制): DEVICE_SET_%d->DrawCutRect = %d", XFS_ZLF1000A3, m_stConfig.stDevOpenMode[LIDX_ZLF1000A3].nOtherParam[11]);
     }
@@ -711,8 +697,10 @@ INT CXFS_CAM::PrintIniData()
         PRINT_INI_BUF2("\n\t\t\t\t 摄像窗口外接程序: DEVICE_SET_%d->ShowWinMode = %s", XFS_JDY5001A0809, m_szWinProcessPath[LIDX_JDY5001A0809]);
         PRINT_INI_BUF2("\n\t\t\t\t 截取画面帧的分辨率: DEVICE_SET_%d->FrameResoWidth = %d", XFS_JDY5001A0809, m_stConfig.stDevOpenMode[LIDX_JDY5001A0809].nOtherParam[2]);
         PRINT_INI_BUF2("\n\t\t\t\t 截取画面帧的分辨率: DEVICE_SET_%d->FrameResoHeight = %d", XFS_JDY5001A0809, m_stConfig.stDevOpenMode[LIDX_JDY5001A0809].nOtherParam[3]);
+        PRINT_INI_BUF2("\n\t\t\t\t 镜像转换(0:不转换,1:左右转换,2:上下转换,3:上下左右转换): DEVICE_SET_%d->DisplayFlip = %d", XFS_JDY5001A0809, m_stConfig.stDevOpenMode[LIDX_JDY5001A0809].nOtherParam[4]);
     }
 
+    qsIniPrt.append("\n\t\t\t\t ----------------------------------------------------------------------------------");
 
     // VIDEO_CONFIG
     PRINT_INI_BUF("\n\t\t\t\t 亮度: VIDEO_CONFIG->Video_Bright = %f", m_stConfig.stVideoPar.duBright);
@@ -737,7 +725,7 @@ INT CXFS_CAM::PrintIniData()
     PRINT_INI_BUF("\n\t\t\t\t Reset执行时是否支持关闭摄像窗口(0:不支持,1支持): RESET_CONFIG->ResetCloseDiaplay = %d", m_stConfig.wResetCloseDiaplay);
 
     // BANK
-    PRINT_INI_BUF("\n\t\t\t\t 指定银行: BANK->BankNo = %d", m_stConfig.wBank);
+    PRINT_INI_BUF("\n\t\t\t\t 指定银行: BANK_CONFIG->BankNo = %d", m_stConfig.wBank);
 
     // ERRDETAIL_CONFIG
     PRINT_INI_BUF("\n\t\t\t\t 是否支持Status显示错误码(0:不支持,1:支持显示当前错误码,2:支持显示当前和上一次错误码): ERRDETAIL_CONFIG->ErrDetailShowSup = %d", m_stConfig.wErrDetailShowSup);
@@ -1198,7 +1186,13 @@ HRESULT CXFS_CAM::InnerTakePictureEx(const WFSCAMTAKEPICTEX &stTakePict, DWORD d
                 m_thRunLiveEventWait.detach();
             }
         }
-    }
+    }    
+
+    // 设置摄像模式
+    stTakePicPar.wCameraAction = WMODE_TO_DMODE(stTakePict.wCamera);
+
+    // TakePicture命令执行前处理
+    InnerTakePicFrontMothod(*lpCmdData, stTakePicPar);
 
     // 按不同摄像模式下发命令
     stTakePicPar.wCameraAction = WMODE_TO_DMODE(stTakePict.wCamera);
@@ -1494,6 +1488,28 @@ void CXFS_CAM::SharedMemRelease()
 }
 
 //-----------------------------其他处理----------------------------------------
+// TakePicture命令执行前处理
+INT CXFS_CAM::InnerTakePicFrontMothod(WFSCAMTAKEPICTEX stTakePict,
+                                      STTAKEPICTUREPAR &stTakePar)
+{
+    THISMODULE(__FUNCTION__);
+
+    if (m_stConfig.wBank == BANK_CSCB)  // 长沙银行特殊处理
+    {
+        if (strlen(m_stConfig.stInitPar.szParStr[10]) > 0 &&
+            stTakePict.wCamera == WFS_CAM_PERSON)
+        {
+            stTakePar.wCameraAction = WMODE_TO_DMODE(WFS_CAM_ROOM);
+            Log(ThisModule, __LINE__,
+                "TakePicture命令执行前处理: 长沙银行: TakePic入参Camera类型为[Person], "
+                "INI设定[MT1_PerSonName]非空[%s], 修正调用DevCam.TackPic命令Camera为[ROOM].",
+                m_stConfig.stInitPar.szParStr[10]);
+        }
+    }
+
+    return WFS_SUCCESS;
+}
+
 // TakePicture命令完成后处理
 INT CXFS_CAM::InnerTakePicAfterMothod()
 {
@@ -1662,6 +1678,7 @@ INT CXFS_CAM::InitConfigDef(LPCSTR lpsKeyName, WORD wDeviceType)
 
     CHAR    szBuffer[MAX_PATH];
 
+    // ----------------------计入STDEVOPENMODE结构体------------------------
     // 使用0～9通用参数范围
     // 摄像刷新时间(毫秒,缺省30)
     m_stConfig.stDevOpenMode[wDeviceType].nOtherParam[1] =
@@ -1687,6 +1704,17 @@ INT CXFS_CAM::InitConfigDef(LPCSTR lpsKeyName, WORD wDeviceType)
         m_stConfig.stDevOpenMode[wDeviceType].nOtherParam[3] = 0;
     }
 
+    // 镜像转换, 0:不转换, 1:左右转换, 2:上下转换, 3:上下左右转换, 缺省0
+    m_stConfig.stDevOpenMode[wDeviceType].nOtherParam[4] =
+            m_cXfsReg.GetValue(lpsKeyName, "DisplayFlip", (DWORD)0);
+    if (m_stConfig.stDevOpenMode[wDeviceType].nOtherParam[4] < 0 ||
+        m_stConfig.stDevOpenMode[wDeviceType].nOtherParam[4] > 3)
+    {
+        m_stConfig.stDevOpenMode[wDeviceType].nOtherParam[4] = 0;
+    }
+
+
+    // -----------------------------其他--------------------------------
     // 摄像窗口显示方式(0:SDK控制, 1:SP内处理, 2:外接程序窗口, 缺省0)
     m_wDeviceShowWinMode[wDeviceType] = m_cXfsReg.GetValue(lpsKeyName, "ShowWinMode", (DWORD)0);
     if (m_wDeviceShowWinMode[wDeviceType] == 1)

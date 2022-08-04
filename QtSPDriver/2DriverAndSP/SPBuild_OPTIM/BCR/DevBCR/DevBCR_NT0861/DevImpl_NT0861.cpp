@@ -9,7 +9,7 @@
 ***************************************************************************/
 #include "DevImpl_NT0861.h"
 #include "data_convertor.h"
-#include "device_port.h"
+#include "device_object.h"
 
 static const char *ThisFile = "DevImpl_NT0861.cpp";
 

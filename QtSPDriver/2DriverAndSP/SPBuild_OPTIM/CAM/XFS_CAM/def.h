@@ -51,12 +51,6 @@ static const BYTE byDevVRTU[17] = {"Dev020100"};        // DevHCAM 版本号
 #define PIC_JPG                 2           // JPG格式
 #define PIC_BMP                 4           // BMP格式
 
-// 银行类型编码
-#define BANK_NOALL              0           // 通用
-#define BANK_PINGAN             1           // 平安银行
-#define BANK_BCS                2           // 长沙银行
-#define BANK_CMB                3           // 招商银行
-
 // 摄像数据共享内存名/Size
 #define SHAREDMEMNAME_CAMDATA   "CamShowSharedMemData"
 #define SHAREDMEMSIZE_CAMDATA   1024 * 1024 * 10
@@ -141,9 +135,6 @@ typedef struct ST_CAM_INI_CONFIG
     CHAR                    szSDKPath[32][256];                 // 设备SDK路径
     // INI配置Config相关
     WORD                    wDevNotFoundStat;                   // 设备未连接时状态显示
-    WORD                    wFrameResoWidth;                    // 截取画面帧的分辨率(Width)
-    WORD                    wFrameResoHeight;                   // 截取画面帧的分辨率(Height)
-    WORD                    wDisplayFlip;                       // 图像镜像模式转换
     // INI配置DEVICE_CFG相关
     WORD                    wDeviceRoomType;                    // 环境摄像设备类型
     WORD                    wDevicePersonType;                  // 人脸摄像设备类型
@@ -197,5 +188,6 @@ typedef struct ST_CAM_INI_CONFIG
 //   nOtherParam[1]: 摄像刷新时间
 //   nOtherParam[2]: 水平分辨率
 //   nOtherParam[3]: 垂直分辨率
+//   nOtherParam[4]: 镜像转换
 
 // -------------------------------------- END --------------------------------------

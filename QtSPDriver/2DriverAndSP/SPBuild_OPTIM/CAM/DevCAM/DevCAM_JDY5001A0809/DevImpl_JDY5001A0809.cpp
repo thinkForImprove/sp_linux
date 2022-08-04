@@ -10,16 +10,6 @@
 
 #include "DevImpl_JDY5001A0809.h"
 
-// open()必需头文件
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-// close()必需头文件
-#include <unistd.h>
-// ioctl()必需头文件
-#include <sys/ioctl.h>
-
-//#include <linux/videodev2.h>
 
 static const char *ThisFile = "DevImpl_JDY5001A0809.cpp";
 
@@ -68,20 +58,22 @@ INT CDevImpl_JDY5001A0809::OpenDevice(LPSTR lpVid, LPSTR lpPid)
     THISMODULE(__FUNCTION__);
     //AutoLogFuncBeginEnd();
 
-    INT nRet = IMP_SUCCESS;
+    INT nRet = DP_RET_SUCC;
 
-    // 通过Vid/Pid检索设备索引
-    INT nIdx = CDevicePort::SearchVideoIdxFromVidPid(lpVid, lpPid);
-    if (nIdx < 0)
-    {
-        return IMP_ERR_VIDEOIDX_NOTFOUND;
-    }
+    m_clDevVideo.Close();
 
-    // cv::VideoCapture()打开设备
-    nRet = m_cvVideoCapt.open(nIdx);
-    if (nRet != true || m_cvVideoCapt.isOpened() != true)
+    nRet = m_clDevVideo.Open(lpVid, lpPid);
+    if (nRet != DP_RET_SUCC)
     {
-        return IMP_ERR_OPENFAIL;
+        if (m_nRetErrOLD[1] != nRet)
+        {
+            Log(ThisModule, __LINE__,
+                "打开设备: CDeviceVideo.Open(%s, %s, Video%d) fail, ErrCode: %s, Return: %s",
+                lpVid, lpPid, m_clDevVideo.GetOpenVideoX(), m_clDevVideo.GetErrorStr(nRet),
+                ConvertCode_Impl2Str(ConvertCode_DPErr2Impl(nRet)));
+            m_nRetErrOLD[1] = nRet;
+        }
+        return ConvertCode_DPErr2Impl(nRet);
     }
 
     // 保存设备VIDPID
@@ -90,6 +82,9 @@ INT CDevImpl_JDY5001A0809::OpenDevice(LPSTR lpVid, LPSTR lpPid)
 
     // 设备Open标记=T
     m_bDevOpenOk = TRUE;
+
+    Log(ThisModule, __LINE__, "打开设备: CDeviceVideo.Open(%s, %s, video%d) Succ",
+         lpVid, lpPid, m_clDevVideo.GetOpenVideoX());
 
     memset(m_nRetErrOLD, 0, sizeof(m_nRetErrOLD));
 
@@ -105,7 +100,7 @@ INT CDevImpl_JDY5001A0809::CloseDevice()
 {
     if (m_bDevOpenOk == TRUE)
     {
-        m_cvVideoCapt.release();
+        m_clDevVideo.Close();
     }
 
     m_bDevOpenOk = FALSE;
@@ -122,7 +117,7 @@ INT CDevImpl_JDY5001A0809::CloseDevice()
 ***************************************************************************/
 BOOL CDevImpl_JDY5001A0809::IsDeviceOpen()
 {
-    return (m_bDevOpenOk == TRUE ? TRUE : FALSE);
+    return ((m_bDevOpenOk == TRUE && m_clDevVideo.IsOpen() == TRUE) ? TRUE : FALSE);
 }
 
 /***************************************************************************
@@ -148,32 +143,34 @@ INT CDevImpl_JDY5001A0809::GetDeviceStatus()
     THISMODULE(__FUNCTION__);
     //AutoLogFuncBeginEnd();
 
-    if (CDevicePort::SearchVideoIdxFromVidPid(m_szDevVidPid[0], m_szDevVidPid[1]) == DP_RET_NOTHAVE)
+    INT nStat = m_clDevVideo.GetStatus();
+
+    if (m_nRetErrOLD[2] != nStat)
     {
-        /*if (m_bDevOpenOk == TRUE)
-        {
-            CloseDevice();
-        }*/
-        return DEV_NOTFOUND;
+        Log(ThisModule, __LINE__,
+            "取设备状态: m_clDevVideo.GetStatus(): %s -> %s",
+            m_clDevVideo.GetErrorStr(m_nRetErrOLD[2]),
+            m_clDevVideo.GetErrorStr(nStat));
+        m_nRetErrOLD[2] = nStat;
     }
 
-    if (m_bDevOpenOk == TRUE)
+    switch(nStat)
     {
-        if (m_cvVideoCapt.isOpened() != true)
-        {
+        case DP_RET_SUCC:       // 成功/存在/已打开/正常
+            return DEV_OK;
+        case DP_RET_NOTHAVE:    // 不存在
+            return DEV_NOTFOUND;
+        case DP_RET_NOTOPEN:    // 没有Open
+            return DEV_NOTOPEN;
+        case DP_RET_OFFLINE:    // 已Open但已断线
             return DEV_OFFLINE;
-        }
-        return DEV_OK;
-    } else
-    {
-        return DEV_NOTOPEN;
+        default:
+            return DEV_UNKNOWN;
     }
-
-    return DEV_OK;
 }
 
 /***************************************************************************
- * 功能: 设置视频捕获宽高
+ * 功能: 取摄像宽高
  * 参数: 无
  * 返回值: 参考错误码
 ***************************************************************************/
@@ -182,35 +179,23 @@ INT CDevImpl_JDY5001A0809::GetVideoCaptWH(INT &nWidth, INT &nHeight)
     THISMODULE(__FUNCTION__);
     //AutoLogFuncBeginEnd();
 
-    Mat cvReadMat;
+    INT nRet = DP_RET_SUCC;
 
-    // 检查设备状态
-    CHECK_DEVICE_STAT(GetDeviceStatus());
-
-    if (m_cvVideoCapt.read(cvReadMat) != true)
+    nRet = m_clDevVideo.GetVideoWH(nWidth, nHeight);
+    if (nRet != DP_RET_SUCC)
     {
-        if (m_cvVideoCapt.read(cvReadMat) != true)
-        {
-            if (m_cvVideoCapt.read(cvReadMat) != true)
-            {
-                return IMP_ERR_UNKNOWN;
-            }
-        }
+        Log(ThisModule, __LINE__,
+            "取摄像宽高: CDeviceVideo.GetVideoWH(%d, %d) fail, ErrCode: %s, Return: %s",
+            nWidth, nHeight, m_clDevVideo.GetErrorStr(nRet),
+            ConvertCode_Impl2Str(ConvertCode_DPErr2Impl(nRet)));
+        return ConvertCode_DPErr2Impl(nRet);
     }
-
-    if (m_cvMatImg.empty())
-    {
-        return IMP_ERR_UNKNOWN;
-    }
-
-    nWidth = cvReadMat.cols;
-    nHeight = cvReadMat.rows;
 
     return IMP_SUCCESS;
 }
 
 /***************************************************************************
- * 功能: 设置视频捕获宽高
+ * 功能: 设置摄像宽高
  * 参数: 无
  * 返回值: 参考错误码
 ***************************************************************************/
@@ -219,34 +204,16 @@ INT CDevImpl_JDY5001A0809::SetVideoCaptWH(INT nWidth, INT nHeight)
     THISMODULE(__FUNCTION__);
     //AutoLogFuncBeginEnd();
 
-    Mat cvReadMat;
+    INT nRet = DP_RET_SUCC;
 
-    // 检查设备状态
-    CHECK_DEVICE_STAT(GetDeviceStatus());
-
-    m_cvVideoCapt.set(CV_CAP_PROP_FRAME_WIDTH, nWidth);
-    m_cvVideoCapt.set(CV_CAP_PROP_FRAME_HEIGHT, nHeight);
-
-    if (m_cvVideoCapt.read(cvReadMat) != true)
+    nRet = m_clDevVideo.SetVideoWH(nWidth, nHeight);
+    if (nRet != DP_RET_SUCC)
     {
-        if (m_cvVideoCapt.read(cvReadMat) != true)
-        {
-            if (m_cvVideoCapt.read(cvReadMat) != true)
-            {
-                return IMP_ERR_SET_RESO;
-            }
-        }
-    }
-
-    if (m_cvMatImg.empty())
-    {
-        return IMP_ERR_SET_RESO;
-    }
-
-    if (cvReadMat.cols != nWidth ||
-        cvReadMat.rows != nHeight)
-    {
-        return IMP_ERR_SET_RESO;
+        Log(ThisModule, __LINE__,
+            "设置摄像宽高: CDeviceVideo.SetVideoWH(%d, %d) fail, ErrCode: %s, Return: %s",
+            nWidth, nHeight, m_clDevVideo.GetErrorStr(nRet),
+            ConvertCode_Impl2Str(ConvertCode_DPErr2Impl(nRet)));
+        return ConvertCode_DPErr2Impl(nRet);
     }
 
     return IMP_SUCCESS;
@@ -300,60 +267,20 @@ INT CDevImpl_JDY5001A0809::GetVideoCaptMode(STVIDEOPAMAR &stVideoPar)
 ***************************************************************************/
 INT CDevImpl_JDY5001A0809::SetVideoCaptMode(EN_VIDEOMODE enVM, DOUBLE duData)
 {
-    //THISMODULE(__FUNCTION__);
+    THISMODULE(__FUNCTION__);
     //AutoLogFuncBeginEnd();
 
-    bool bRet = FALSE;
+    INT nRet = DP_RET_SUCC;
 
-    if (duData == 99999999.00)
+    nRet = m_clDevVideo.SetVideoMode(enVM, duData);
+    if (nRet != DP_RET_SUCC)
     {
-        return IMP_ERR_PARAM_INVALID;
+        Log(ThisModule, __LINE__,
+            "设置摄像模式: CDeviceVideo.SetVideoMode(%d, %f) fail, ErrCode: %s, Return: %s",
+            enVM, duData, m_clDevVideo.GetErrorStr(nRet),
+            ConvertCode_Impl2Str(ConvertCode_DPErr2Impl(nRet)));
+        return ConvertCode_DPErr2Impl(nRet);
     }
-
-    switch(enVM)
-    {
-        case VM_WIDTH:          // 宽度
-        {
-            bRet = m_cvVideoCapt.set(CV_CAP_PROP_FRAME_WIDTH, duData);
-            break;
-        }
-        case VM_HEIGHT:         // 高度
-        {
-            bRet = m_cvVideoCapt.set(CV_CAP_PROP_FRAME_HEIGHT, duData);
-            break;
-        }
-        case VM_FPS:            // 帧率(帧/秒)
-        {
-            bRet = m_cvVideoCapt.set(CV_CAP_PROP_FPS, duData);
-            break;
-        }
-        case VM_BRIGHT:         // 亮度
-        {
-            bRet = m_cvVideoCapt.set(CV_CAP_PROP_BRIGHTNESS, duData);
-            break;
-        }
-        case VM_CONTRAST:       // 对比度
-        {
-            bRet = m_cvVideoCapt.set(CV_CAP_PROP_CONTRAST, duData);
-            break;
-        }
-        case VM_SATURATION:     // 饱和度
-        {
-            bRet = m_cvVideoCapt.set(CV_CAP_PROP_SATURATION, duData);
-            break;
-        }
-        case VM_HUE:            // 色调
-        {
-            bRet = m_cvVideoCapt.set(CV_CAP_PROP_HUE, duData);
-            break;
-        }
-        case VM_EXPOSURE:       // 曝光
-        {
-            bRet = m_cvVideoCapt.set(CV_CAP_PROP_EXPOSURE, duData);
-            break;
-        }
-    }
-    return bRet == true ? IMP_SUCCESS : IMP_ERR_UNKNOWN;
 }
 
 /***************************************************************************
@@ -365,27 +292,8 @@ DOUBLE CDevImpl_JDY5001A0809::GetVideoCaptMode(EN_VIDEOMODE enVM)
 {
     //THISMODULE(__FUNCTION__);
     //AutoLogFuncBeginEnd();
-    switch(enVM)
-    {
-        case VM_WIDTH:          // 宽度
-            return m_cvVideoCapt.get(CV_CAP_PROP_FRAME_WIDTH);
-        case VM_HEIGHT:         // 高度
-            return m_cvVideoCapt.get(CV_CAP_PROP_FRAME_HEIGHT);
-        case VM_FPS:            // 帧率(帧/秒)
-            return m_cvVideoCapt.get(CV_CAP_PROP_FPS);
-        case VM_BRIGHT:         // 亮度
-            return m_cvVideoCapt.get(CV_CAP_PROP_BRIGHTNESS);
-        case VM_CONTRAST:       // 对比度
-            return m_cvVideoCapt.get(CV_CAP_PROP_CONTRAST);
-        case VM_SATURATION:     // 饱和度
-            return m_cvVideoCapt.get(CV_CAP_PROP_SATURATION);
-        case VM_HUE:            // 色调
-            return m_cvVideoCapt.get(CV_CAP_PROP_HUE);
-        case VM_EXPOSURE:       // 曝光
-            return m_cvVideoCapt.get(CV_CAP_PROP_EXPOSURE);
-    }
 
-    return (DOUBLE)0.0;
+    return m_clDevVideo.GetVideoMode(enVM);
 }
 
 /***************************************************************************
@@ -397,90 +305,14 @@ INT CDevImpl_JDY5001A0809::GetVideoImage(LPSTIMGDATA lpImgData, INT nWidth, INT 
 {
     THISMODULE(__FUNCTION__);
     //AutoLogFuncBeginEnd();
+    AutoMutex(m_cMutex);
 
     INT nRet = IMP_SUCCESS;
 
-    Mat cvMatImg_RGB;
-    INT nBuffSize = 0;
-    BOOL bIsChange = FALSE;
-
-    nRet = m_cvVideoCapt.read(m_cvMatImg);
-    if (nRet != true)
-    {        
-        CHECK_DEVICE_STAT(GetDeviceStatus());   // 检查设备状态
-        return IMP_ERR_GET_IMGDATA_FAIL;
-    }
-
-    if (m_cvMatImg.empty())
+    nRet = m_clDevVideo.GetVideoImage(lpImgData, nWidth, nHeight, wFlip);
+    if (nRet != DP_RET_SUCC)
     {
-        return IMP_ERR_GET_IMGDATA_ISNULL;
-    }
-
-    // 镜像转换
-    if (wFlip == EN_CLIP_LR)    // 左右转换
-    {
-        flip(m_cvMatImg, m_cvMatImg, 1);
-    } else
-    if (wFlip == EN_CLIP_UD)    // 上下转换
-    {
-        flip(m_cvMatImg, m_cvMatImg, 0);
-    } else
-    if (wFlip == EN_CLIP_UDLR)  // 上下左右转换
-    {
-        flip(m_cvMatImg, m_cvMatImg, -1);
-    }
-
-    // 通道转换: BGR->RGB
-    cvtColor(m_cvMatImg, cvMatImg_RGB, cv::COLOR_BGR2RGB);    
-
-    // 图像数据转换
-    if (nWidth > 0 && nHeight > 0)
-    {
-        cv::resize(cvMatImg_RGB, cvMatImg_RGB, cv::Size(nWidth, nHeight));
-        bIsChange = TRUE;
-    }
-
-    if (cvMatImg_RGB.cols != m_stImageData.nWidth ||
-        cvMatImg_RGB.rows != m_stImageData.nHeight ||
-        cvMatImg_RGB.channels() != m_stImageData.nFormat)
-    {
-        m_stImageData.Clear();
-
-        nBuffSize = cvMatImg_RGB.cols * cvMatImg_RGB.rows * cvMatImg_RGB.channels() + 1 + 5;
-
-        m_stImageData.ucImgData = (UCHAR*)malloc(sizeof(UCHAR) * nBuffSize);
-        if (m_stImageData.ucImgData == nullptr)
-        {
-            return IMP_ERR_GET_IMGDATA_BUFFER;
-        }
-        m_stImageData.nWidth = cvMatImg_RGB.cols;
-        m_stImageData.nHeight = cvMatImg_RGB.rows;
-        m_stImageData.nFormat = cvMatImg_RGB.channels();
-        memset(m_stImageData.ucImgData, 0x00, nBuffSize);
-    } else
-    {
-        nBuffSize = m_stImageData.ulImagDataLen + 1;
-    }
-
-    sprintf((CHAR*)m_stImageData.ucImgData, "%c%c%c%c%c",
-            m_stImageData.nWidth / 255, m_stImageData.nWidth % 255,
-            m_stImageData.nHeight / 255, m_stImageData.nHeight % 255,
-            m_stImageData.nFormat);
-    m_stImageData.ulImagDataLen = nBuffSize - 1;
-    MCPY_LEN(m_stImageData.ucImgData + 5, cvMatImg_RGB.data, nBuffSize - 1 - 5);
-
-    lpImgData->nWidth = m_stImageData.nWidth;
-    lpImgData->nHeight = m_stImageData.nHeight;
-    lpImgData->nFormat = m_stImageData.nFormat;
-    lpImgData->ulImagDataLen = m_stImageData.ulImagDataLen;
-    lpImgData->ucImgData = m_stImageData.ucImgData;
-
-    lpImgData->nOtherParam[0] = 0;
-    if (bIsChange == TRUE)
-    {
-        lpImgData->nOtherParam[0] = 1;
-        lpImgData->nOtherParam[1] = m_cvMatImg.cols;
-        lpImgData->nOtherParam[2] = m_cvMatImg.rows;
+        return ConvertCode_DPErr2Impl(nRet);
     }
 
     return IMP_SUCCESS;
@@ -498,23 +330,39 @@ INT CDevImpl_JDY5001A0809::SaveImageFile(LPSTR lpFileName)
 
     INT nRet = IMP_SUCCESS;
 
-    // 检查设备状态
-    CHECK_DEVICE_STAT(GetDeviceStatus());
-
-    // 颜色顺序转换: BGR->RGB
-    Mat cvMatImg;
-    cvtColor(m_cvMatImg, cvMatImg, cv::COLOR_BGR2RGB);
-
-    nRet = imwrite(lpFileName, m_cvMatImg);
-    if (nRet != true)
+    nRet = m_clDevVideo.SaveImageFile(lpFileName);
+    if (nRet != DP_RET_SUCC)
     {
-        return IMP_ERR_SAVE_IMAGE_FILE;
+        return ConvertCode_DPErr2Impl(nRet);
     }
-
     return IMP_SUCCESS;
 }
 
 //----------------------------------对外参数设置接口----------------------------------
+// DeviceVideo错误码转换为Impl错误码
+INT CDevImpl_JDY5001A0809::ConvertCode_DPErr2Impl(INT nErrCode)
+{
+#define CASE_DEVICEVIDEO_2_IMPL(DP, IMPL) \
+    case DP: return IMPL;
+
+    switch(nErrCode)
+    {
+        CASE_DEVICEVIDEO_2_IMPL(DP_RET_SUCC, IMP_SUCCESS);                          // 成功/存在/已打开/正常
+        CASE_DEVICEVIDEO_2_IMPL(DP_RET_FAIL, IMP_ERR_UNKNOWN);                      // 失败/错误
+        CASE_DEVICEVIDEO_2_IMPL(DP_RET_INST_ERR, IMP_ERR_UNKNOWN);                  // 有关实例化失败
+        CASE_DEVICEVIDEO_2_IMPL(DP_RET_INPUT_INV, IMP_ERR_PARAM_INVALID);           // 无效的入参
+        CASE_DEVICEVIDEO_2_IMPL(DP_RET_NOTHAVE, IMP_ERR_NODEVICE);                  // 不存在
+        CASE_DEVICEVIDEO_2_IMPL(DP_RET_OPENFAIL, IMP_ERR_OPENFAIL);                 // Open错误
+        CASE_DEVICEVIDEO_2_IMPL(DP_RET_NOTOPEN, IMP_ERR_NOTOPEN);                   // 没有Open
+        CASE_DEVICEVIDEO_2_IMPL(DP_RET_OFFLINE, IMP_ERR_OFFLINE);                   // 已Open但已断线
+        CASE_DEVICEVIDEO_2_IMPL(DP_RET_GETIMG_FAIL, IMP_ERR_GET_IMGDATA_FAIL);      // 取图像数据失败
+        CASE_DEVICEVIDEO_2_IMPL(DP_RET_IMGDATA_INV, IMP_ERR_GET_IMGDATA_ISNULL);    // 图像数据无效
+        CASE_DEVICEVIDEO_2_IMPL(DP_RET_MEMAPPLY_FAIL, IMP_ERR_GET_IMGDATA_BUFFER);  // 内存申请失败
+        CASE_DEVICEVIDEO_2_IMPL(DP_RET_IMG2FILE, IMP_ERR_SAVE_IMAGE_FILE);          // 图像数据保存到文件失败
+        default: return IMP_ERR_UNKNOWN;
+    }
+}
+
 // Impl错误码转换解释字符串
 LPSTR CDevImpl_JDY5001A0809::ConvertCode_Impl2Str(INT nErrCode)
 {

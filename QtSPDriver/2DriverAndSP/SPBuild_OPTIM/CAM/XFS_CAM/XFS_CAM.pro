@@ -63,6 +63,7 @@ SOURCES += \
 
 HEADERS += \
         XFS_CAM.h \
+        XFS_CAM_DEC.h \
         IDevCAM.h \
         ISPBaseCAM.h \
         def.h
