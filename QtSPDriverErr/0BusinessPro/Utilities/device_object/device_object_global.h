@@ -1,0 +1,12 @@
+#ifndef DEVICE_OBJECT_GLOBAL_H
+#define DEVICE_OBJECT_GLOBAL_H
+
+#include <QtCore/qglobal.h>
+
+#if defined(DEVICE_OBJECT_LIBRARY)
+#  define DEVICE_OBJECT_EXPORT Q_DECL_EXPORT
+#else
+#  define DEVICE_OBJECT_EXPORT Q_DECL_IMPORT
+#endif
+
+#endif // DEVICE_OBJECT_GLOBAL_H

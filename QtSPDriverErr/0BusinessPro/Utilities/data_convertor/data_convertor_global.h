@@ -1,0 +1,12 @@
+#ifndef DATA_CONVERTOR_GLOBAL_H
+#define DATA_CONVERTOR_GLOBAL_H
+
+#include <QtCore/qglobal.h>
+
+#if defined(DATA_CONVERTOR_LIBRARY)
+#  define DATA_CONVERTOR_EXPORT Q_DECL_EXPORT
+#else
+#  define DATA_CONVERTOR_EXPORT Q_DECL_IMPORT
+#endif
+
+#endif // DATA_CONVERTOR_GLOBAL_H

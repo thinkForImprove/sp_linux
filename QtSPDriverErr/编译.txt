@@ -1,0 +1,22 @@
+﻿1. GlobalSysTypeAll.pri 中指定对应银行。
+2. 打开对应银行的Pro工程。
+
+1. 0BusinessPro：工具类: 包含工程如下:
+2. 1DriverPlatform: 
+3. 2DriverAndSP: 
+4. 3CommonFile: 
+
+
+工程分类：
+AllBuild: 通用
+AllBuild_CMBC: 民生银行
+AllBuild_CSCB: 长沙银行
+AllBuild_JIANGNAN: 江南银行
+AllBuild_SXXH: 陕西信合
+AllBuild_ICBC: 工商银行
+AllBuild_OPTIM: 工程优化(仅用做SP优化处理)
+ 
+
+
+分类、顺序及依赖关系：
+1. 
