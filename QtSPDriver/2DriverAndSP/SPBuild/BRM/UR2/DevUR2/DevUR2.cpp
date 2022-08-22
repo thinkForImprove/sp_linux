@@ -3494,6 +3494,22 @@ char pMaintenanceInfo[MAINTENANCE_INFO_LENGTH]
         iCmdLen += 6;
     }
 
+    //30-00-00-00(FS#0025) add start
+    //8.BV重处理
+    memset(szCmdParam, 0, sizeof(szCmdParam));
+    if(m_bHeavyPrincipleModeSupp){
+        szCmdParam[0] = 0x05;
+        szCmdParam[1] = 0x3A;
+        szCmdParam[2] = 0x00;
+        szCmdParam[3] = 0x06;
+        szCmdParam[4] = 0x00;
+        szCmdParam[5] = 0x00;
+
+        memcpy(szCmdData + iCmdLen, szCmdParam, 8);
+        iCmdLen += 8;
+    }
+    //30-00-00-00(FS#0025) add end
+
     szCmdData[0] = static_cast<char>((iCmdLen >> 8) & 0xFF);
     szCmdData[1] = static_cast<char>(iCmdLen & 0xFF);
 
@@ -4103,6 +4119,22 @@ char pMaintenanceInfo[MAINTENANCE_INFO_LENGTH]
         iCmdLen += 6;
     }
 
+    //30-00-00-00(FS#0025) add start
+    //5.BV重处理
+    memset(szCmdParam, 0, sizeof(szCmdParam));
+    if(m_bHeavyPrincipleModeSupp){
+        szCmdParam[0] = 0x05;
+        szCmdParam[1] = 0x3A;
+        szCmdParam[2] = 0x00;
+        szCmdParam[3] = 0x06;
+        szCmdParam[4] = 0x00;
+        szCmdParam[5] = 0x00;
+
+        memcpy(szCmdData + iCmdLen, szCmdParam, 8);
+        iCmdLen += 8;
+    }
+    //30-00-00-00(FS#0025) add end
+
     szCmdData[0] = static_cast<char>((iCmdLen >> 8) & 0xFF);
     szCmdData[1] = static_cast<char>(iCmdLen & 0xFF);
 
@@ -4261,7 +4293,7 @@ char pMaintenanceInfo[MAINTENANCE_INFO_LENGTH]
 
     //拼接命令数据
     USHORT iCmdLen = 2; //Total Message Length(itself 2 bytes)
-    char szCmdData[14 + 1] = {0};
+    char szCmdData[22 + 1] = {0};                       //30-00-00-00(FS#0025)
     if (iValidateMode == VALIDATION_MODE_REAL)
     {
         MOSAICCMND(szCmdData, iCmdLen, 0x3100);
@@ -4271,6 +4303,23 @@ char pMaintenanceInfo[MAINTENANCE_INFO_LENGTH]
         MOSAICCMND(szCmdData, iCmdLen, 0x3900);
     }
     iCmdLen += 6;
+
+    //30-00-00-00(FS#0025) add start
+    //1.BV重处理
+    char szCmdParam[64] = {0};
+    memset(szCmdParam, 0, sizeof(szCmdParam));
+    if(m_bHeavyPrincipleModeSupp){
+        szCmdParam[0] = 0x05;
+        szCmdParam[1] = 0x3A;
+        szCmdParam[2] = 0x00;
+        szCmdParam[3] = 0x06;
+        szCmdParam[4] = 0x00;
+        szCmdParam[5] = 0x00;
+
+        memcpy(szCmdData + iCmdLen, szCmdParam, 8);
+        iCmdLen += 8;
+    }
+    //30-00-00-00(FS#0025) add end
 
     szCmdData[0] = static_cast<char>((iCmdLen >> 8) & 0xFF);
     szCmdData[1] = static_cast<char>(iCmdLen & 0xFF);
@@ -4650,6 +4699,22 @@ char pMaintenanceInfo[MAINTENANCE_INFO_LENGTH]
         memcpy(szCmdData + iCmdLen, szCmdParam, 6);
         iCmdLen += 6;
     }
+
+    //30-00-00-00(FS#0025) add start
+    //6.BV重处理
+    memset(szCmdParam, 0, sizeof(szCmdParam));
+    if(m_bHeavyPrincipleModeSupp){
+        szCmdParam[0] = 0x05;
+        szCmdParam[1] = 0x3A;
+        szCmdParam[2] = 0x00;
+        szCmdParam[3] = 0x06;
+        szCmdParam[4] = 0x00;
+        szCmdParam[5] = 0x00;
+
+        memcpy(szCmdData + iCmdLen, szCmdParam, 8);
+        iCmdLen += 8;
+    }
+    //30-00-00-00(FS#0025) add end
 
     szCmdData[0] = static_cast<char>((iCmdLen >> 8) & 0xFF);
     szCmdData[1] = static_cast<char>(iCmdLen & 0xFF);
@@ -7904,13 +7969,284 @@ int CUR2Drv::SelfCount(VALIDATION_MODE iValidateMode,                   //真币
 //30-00-00-00(FS#0016)
 void CUR2Drv::ReadConfig()
 {
-    m_bUseFuncLib = false;
+    CINIFileReader iniFile;
+    std::string iniFilePath = string(SPETCPATH) + "/" + "BRMSPConfig.ini";
+    if(FALSE == iniFile.LoadINIFile(iniFilePath)){
+        Log(__FUNCTION__, __LINE__, "配置文件%s加载失败", iniFilePath.c_str());
+    }
+    CINIReader iniReader = iniFile.GetReaderSection("BRMInfo");
+    m_bUseFuncLib = (int)iniReader.GetValue("UseFuncLib", 0) == 1;
 
-    CINIFileReader ini;
-    if(ini.LoadINIFile(string(SPETCPATH) + "/" + "BRMSPConfig.ini")){
-        CINIReader iniReader = ini.GetReaderSection("BRMInfo");
-        m_bUseFuncLib = (int)iniReader.GetValue("UseFuncLib", 0) == 1;
+    iniFilePath = string(SPETCPATH) + "/" + "AdpConfig_UR2.ini";
+    if(FALSE == iniFile.LoadINIFile(iniFilePath)){
+        Log(__FUNCTION__, __LINE__, "配置文件%s加载失败", iniFilePath.c_str());
     }
 
+    iniReader = iniFile.GetReaderSection("ZeroBVSetting");
+    m_bHeavyPrincipleModeSupp = (int)iniReader.GetValue("HeavyPrincipleModeSupp", 0);
+
     return;
+}
+
+//30-00-00-00(FS#0025)
+// byCmdType 0:CashCount 1:StoreMoney 2:Dispense
+long CUR2Drv::ZeroBVOptionCmdEdit(LPBYTE pbyCmd, BYTE byCmdType, BYTE byCmdNo, BYTE bySettingLevel)
+{
+    LONG lSize = sizeof(BVOPTSNDDATA_FULL) - 256;
+    memset(pbyCmd, 0x00, sizeof(BVOPTSNDDATA_FULL));
+
+    BYTE bySettingOffset = bySettingLevel - 1;
+
+    if (bySettingLevel == FLG_AGILE_SETTING) {
+        if (byCmdNo == 1) {
+            memcpy(pbyCmd, byFLG_CMD_1, sizeof(byFLG_CMD_1));
+            pbyCmd[0x4F] = m_stAgileSetting[byCmdType].byFLG_CMD_1_4F;
+            pbyCmd[0x51] = m_stAgileSetting[byCmdType].byFLG_CMD_1_51;
+            pbyCmd[0x53] = m_stAgileSetting[byCmdType].byFLG_CMD_1_53;
+            pbyCmd[0x55] = m_stAgileSetting[byCmdType].byFLG_CMD_1_55;
+            pbyCmd[0x57] = m_stAgileSetting[byCmdType].byFLG_CMD_1_57;
+            pbyCmd[0x59] = m_stAgileSetting[byCmdType].byFLG_CMD_1_59;
+            pbyCmd[0x5B] = m_stAgileSetting[byCmdType].byFLG_CMD_1_5B;
+            pbyCmd[0x5D] = m_stAgileSetting[byCmdType].byFLG_CMD_1_5D;
+            pbyCmd[0x5F] = m_stAgileSetting[byCmdType].byFLG_CMD_1_5F;
+            pbyCmd[0x61] = m_stAgileSetting[byCmdType].byFLG_CMD_1_61;
+            pbyCmd[0x63] = m_stAgileSetting[byCmdType].byFLG_CMD_1_63;
+            pbyCmd[0x65] = m_stAgileSetting[byCmdType].byFLG_CMD_1_65;
+            lSize = sizeof(byFLG_CMD_1);
+        } else if(byCmdNo == 3){
+            memcpy(pbyCmd, byFLG_CMD_3, sizeof(byFLG_CMD_3));
+            lSize = sizeof(byFLG_CMD_3);
+        } else {
+            memcpy(pbyCmd, byFLG_CMD_2, sizeof(byFLG_CMD_2));
+            pbyCmd[0x4F] = m_stAgileSetting[byCmdType].byFLG_CMD_2_4F;
+            lSize = sizeof(byFLG_CMD_2);
+        }
+    } else {
+        if (byCmdNo == 1) {
+            memcpy(pbyCmd, byFLG_CMD_1, sizeof(byFLG_CMD_1));
+            pbyCmd[0x4F] = bvSetting[bySettingOffset][byCmdType].byFLG_CMD_1_4F;
+            pbyCmd[0x51] = bvSetting[bySettingOffset][byCmdType].byFLG_CMD_1_51;
+            pbyCmd[0x53] = bvSetting[bySettingOffset][byCmdType].byFLG_CMD_1_53;
+            pbyCmd[0x55] = bvSetting[bySettingOffset][byCmdType].byFLG_CMD_1_55;
+            pbyCmd[0x57] = bvSetting[bySettingOffset][byCmdType].byFLG_CMD_1_57;
+            pbyCmd[0x59] = bvSetting[bySettingOffset][byCmdType].byFLG_CMD_1_59;
+            pbyCmd[0x5B] = bvSetting[bySettingOffset][byCmdType].byFLG_CMD_1_5B;
+            pbyCmd[0x5D] = bvSetting[bySettingOffset][byCmdType].byFLG_CMD_1_5D;
+            pbyCmd[0x5F] = bvSetting[bySettingOffset][byCmdType].byFLG_CMD_1_5F;
+            pbyCmd[0x61] = bvSetting[bySettingOffset][byCmdType].byFLG_CMD_1_61;
+            pbyCmd[0x63] = bvSetting[bySettingOffset][byCmdType].byFLG_CMD_1_63;
+            pbyCmd[0x65] = bvSetting[bySettingOffset][byCmdType].byFLG_CMD_1_65;
+            lSize = sizeof(byFLG_CMD_1);
+        } else {
+            memcpy(pbyCmd, byFLG_CMD_2, sizeof(byFLG_CMD_2));
+            pbyCmd[0x4F] = bvSetting[bySettingOffset][byCmdType].byFLG_CMD_2_4F;
+            lSize = sizeof(byFLG_CMD_2);
+        }
+    }
+
+    return lSize;
+}
+
+//30-00-00-00(FS#0025)
+int CUR2Drv::ZeroBVOptionCmdExec(LPBYTE byCmd, long lBufSize)
+{
+    const char *ThisModule = "ZeroBVOptionCmdExec";
+
+    //发送并接收响应
+    char szResp[HT_RESP_LEN_MAX] = {0};
+    USHORT dwRespLen = HT_RESP_LEN_MAX; // 输入：缓冲区长度，输出：实际接收响应字节数
+    int iRet = ExecuteCmd((LPCSTR)byCmd, lBufSize, szResp, dwRespLen, 0x24,  HT_RESP_TIMEOUT_20, ThisModule, CONNECT_TYPE_ZERO);
+    if(iRet != ERR_UR_SUCCESS){
+        Log(ThisModule, __LINE__, "设定BV鉴别级别信息命令执行失败:%d", iRet);
+        return iRet;
+    }
+
+    if(szResp[4] != 0x10){
+        Log(ThisModule, __LINE__, "设定BV鉴别级别信息命令失败");
+        return ERR_UR_USB_OTHER;
+    }
+
+    return ERR_UR_SUCCESS;
+}
+
+//30-00-00-00(FS#0025)
+BOOL CUR2Drv::ZeroBVAgileSettingInit(LPCSTR lpBVSettingInfo)
+{
+    if(nullptr == lpBVSettingInfo || strlen(lpBVSettingInfo) == 0){
+        return FALSE;
+    }
+
+//    const CHAR cParten[3][66] = {{"C(.*)/(.*)/(.*)/(.*)/(.*)/(.*)/(.*)/(.*)/(.*)/(.*)/(.*)/(.*)/(.*)"},
+//                                 {"S(.*)/(.*)/(.*)/(.*)/(.*)/(.*)/(.*)/(.*)/(.*)/(.*)/(.*)/(.*)/(.*)"},
+//                                 {"D(.*)/(.*)/(.*)/(.*)/(.*)/(.*)/(.*)/(.*)/(.*)/(.*)/(.*)/(.*)/(.*)"}};
+
+    memset(&m_stAgileSetting, 0, sizeof(m_stAgileSetting));
+    QStringList itemList = QString(lpBVSettingInfo).split(",");
+    if(itemList.size() != 3){
+        Log(__FUNCTION__, __LINE__, "BV设定信息项数[%d]非法", itemList.size());
+        return FALSE;
+    }
+
+    for(int i = 0; i < itemList.size(); i++){
+        LPBYTE pbyData = nullptr;
+        pbyData = (BYTE *)&m_stAgileSetting[i];
+
+        QString strSubItemList = itemList.at(i);
+        //去掉C/S/D
+        strSubItemList.remove(0, 1);
+        QStringList subItemList = strSubItemList.split("/");
+        if(subItemList.size() > 13){
+            Log(__FUNCTION__, __LINE__, "BV设定信息项[%d]中子项数[%d]非法", i, itemList.size());
+            return FALSE;
+        }
+        for(int j = 0; j < subItemList.size(); j++){
+            pbyData[j] = atoi(subItemList.at(j).toStdString().c_str());
+        }
+    }
+
+    return TRUE;
+}
+
+//30-00-00-00(FS#0025)
+// byCmdType 0:CashCount 1:StoreMoney 2:Dispense
+int CUR2Drv::SetZeroBVSettingInfo(BYTE byCmdType, BYTE byBVSettingLevel, LPCSTR lpBVSettingInfo)
+{
+    int iRet = ERR_UR_SUCCESS;
+    LONG lBufSize = 0;
+    BYTE byCmd[sizeof(BVOPTSNDDATA_FULL)];
+
+    memset(byCmd, 0, sizeof(byCmd));
+
+    if ((byBVSettingLevel != FLG_ADVANCE_SETTING) &&
+        (byBVSettingLevel != FLG_RADICAL_SETTING) &&
+        (byBVSettingLevel != FLG_BLANCED_SETTING) &&
+        (byBVSettingLevel != FLG_DEFAULT_SETTING) &&
+        (byBVSettingLevel != FLG_AGILE_SETTING))
+    {
+        std::string strConfigFile = string(SPETCPATH) + "/" + "AdpConfig_UR2.ini";
+        CINIFileReader iniFile;
+        if(iniFile.LoadINIFile(strConfigFile)){
+            CINIWriter cINI = iniFile.GetWriterSection("ZeroBVSetting");
+            cINI.SetValue("LevelSetting", 0);
+        }
+        Log(__FUNCTION__, __LINE__, "BV鉴别设定Level值[%d]非法", byBVSettingLevel);
+        return ERR_UR_USB_OTHER;
+    } else if(byBVSettingLevel == FLG_AGILE_SETTING){
+        BOOL bRet = ZeroBVAgileSettingInit(lpBVSettingInfo);
+        if (bRet == FALSE) {
+            return ERR_UR_USB_OTHER;
+        }
+    }
+
+    // FLG_CMD_1   损券Level设定
+    lBufSize = ZeroBVOptionCmdEdit(byCmd, byCmdType, FLG_CMD_1, byBVSettingLevel);
+    iRet = ZeroBVOptionCmdExec(byCmd, lBufSize);
+    if(iRet != ERR_UR_SUCCESS){
+        return iRet;
+    }
+
+    // FLG_CMD_2  真伪Level设定
+    lBufSize = ZeroBVOptionCmdEdit(byCmd, byCmdType, FLG_CMD_2, byBVSettingLevel);
+    iRet = ZeroBVOptionCmdExec(byCmd, lBufSize);
+    if(iRet != ERR_UR_SUCCESS){
+        return iRet;
+    }
+
+    // FLG_CMD_3   Option机能设定  for bin29
+//    lBufSize = ZeroBVOptionCmdEdit(byCmd, byCmdType, FLG_CMD_3, byBVSettingLevel);
+//    iRet = ZeroBVOptionCmdExec(byCmd, lBufSize);
+//    if(iRet != ERR_UR_SUCCESS){
+//        return iRet;
+//    }
+
+    return iRet;
+}
+
+//功能：设置纸币BlackList
+//输入：vctBlackListInfoList: 纸币BlackList信息（空: 清空Blacklist）
+//返回：0：成功，其他：失败
+int CUR2Drv::SetBlackList(std::vector<BLACKLIST_INFO>& vctBlackListInfoList)
+{
+    const char *ThisModule = "SetBlackList";
+    DWORD dwRestInfoCount = 0, dwInfoCount = 0;
+    DWORD dwSendingCount = 0, dwSentCount = 0;
+    ST_BLACKLISTDDATA stBlackData;
+    char* szSendData = (char*)(&stBlackData);
+    USHORT usSendDataSize = 0;
+    bool bFirst = true;
+    char szRespData[HT_RESP_LEN_ZERO] = {0};
+    USHORT usRespLen = (USHORT)sizeof(szRespData);
+    int iRet = 0;
+
+    dwInfoCount = (DWORD)vctBlackListInfoList.size();
+    dwRestInfoCount = dwInfoCount;
+
+    do {
+        dwSendingCount = (dwRestInfoCount > MAX_BLACKLIST_BLOCK) ? MAX_BLACKLIST_BLOCK : dwRestInfoCount;
+        usSendDataSize = BlackListEdit(
+                    szSendData, bFirst,
+                    ((dwRestInfoCount == 0) ? nullptr : &vctBlackListInfoList[dwSentCount]),
+                    dwSendingCount, dwInfoCount, dwSentCount);
+        if (usSendDataSize == 0) {
+            return ERR_UR_PARAM;
+        }
+        if (bFirst) {
+            bFirst = false;
+        }
+        dwRestInfoCount -= dwSendingCount;
+        dwSentCount += dwSendingCount;
+        iRet = ExecuteCmd(szSendData, usSendDataSize, szRespData, usRespLen, usRespLen, HT_RESP_TIMEOUT_10, ThisModule, CONNECT_TYPE_ZERO);
+        if (iRet < 0) {
+            Log(ThisModule, iRet, "设置纸币黑名单命令通信失败");
+            return iRet;
+        }
+        if ((szRespData[4] != 0x10))
+        {
+            Log(ThisModule, ERR_UR_USB_OTHER, "设置纸币黑名单失败<%02X>", szRespData[4]);
+            return ERR_UR_USB_OTHER;
+        }
+    } while (dwRestInfoCount > 0);
+
+    return ERR_UR_SUCCESS;
+}
+
+USHORT CUR2Drv::BlackListEdit(char* szCmdData, bool bFirstBlock, LPBLACKLIST_INFO lpBlacklistInfo, DWORD dwInfoNum, DWORD dwTotalInfoNum, DWORD dwSentInfoNum)
+{
+    USHORT usDataSize = 0;
+    ST_BLACKLISTDDATA* lpBLData = (ST_BLACKLISTDDATA*)szCmdData;
+    DWORD dwBLDataSize = 0;
+    DWORD dwIdx = 0;
+
+    if (szCmdData == nullptr) {
+        return 0;
+    }
+    if (lpBlacklistInfo == nullptr) {
+        dwInfoNum = 0;
+    }
+    if (dwInfoNum > MAX_BLACKLIST_BLOCK) {
+        dwInfoNum = MAX_BLACKLIST_BLOCK;
+    }
+
+    dwBLDataSize = (DWORD)(sizeof(ST_BL_BLOCKDATA) * dwInfoNum);
+    usDataSize = (USHORT)(sizeof(ST_BLACKLISTDDATA) - sizeof(ST_BL_BLOCKDATA)*MAX_BLACKLIST_BLOCK);
+    memset(lpBLData, 0x00, usDataSize);
+
+    lpBLData->wCmdSize = EXWORDHL(0x44 + dwBLDataSize);
+    lpBLData->byFunc = 0x00;
+    lpBLData->byBVCmd = 0x06;
+    lpBLData->byMode = (bFirstBlock ? 0x00 : 0x01);
+    lpBLData->dwDataSize = EXDWORDHL(dwBLDataSize);
+    lpBLData->dwTotalDataSize = EXDWORDHL(sizeof(ST_BL_BLOCKDATA) * dwTotalInfoNum);
+    lpBLData->dwSentDataSize = EXDWORDHL(sizeof(ST_BL_BLOCKDATA) * dwSentInfoNum);
+
+    for (dwIdx = 0; dwIdx < dwInfoNum; dwIdx++) {
+        memset(&lpBLData->stData[dwIdx], 0x20, sizeof(lpBLData->stData[dwIdx]));
+        memcpy(lpBLData->stData[dwIdx].byCurrencyID, lpBlacklistInfo[dwIdx].cCurrency, strlen(lpBlacklistInfo[dwIdx].cCurrency));
+        memcpy(lpBLData->stData[dwIdx].byValues, lpBlacklistInfo[dwIdx].cValue, strlen(lpBlacklistInfo[dwIdx].cValue));
+        lpBLData->stData[dwIdx].byRelease = (BYTE)lpBlacklistInfo[dwIdx].cVersion;
+        lpBLData->stData[dwIdx].byType = (BYTE)lpBlacklistInfo[dwIdx].cAction;
+        memcpy(lpBLData->stData[dwIdx].byNumber, lpBlacklistInfo[dwIdx].cSerialNumber, strlen(lpBlacklistInfo[dwIdx].cSerialNumber));
+    }
+
+    return usDataSize + (USHORT)dwBLDataSize;
 }

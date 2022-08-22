@@ -15,9 +15,11 @@ void *ControlSKMLampFlashHT(void *pDev){
     while(true){
         for(int i = 0; i < SKM_LAMP_MAX; i++){
             LPSKMLAMPFLASH lpLamp = &(pDevSiuIomc->m_stSkmLampFlash[i]);
-            if(lpLamp->iFlashInterval > 0){
+            if(lpLamp->iOnTime > 0 && lpLamp->iOffTime > 0){
                 ULONG curTime = CQtTime::GetSysTick();
-                if(lpLamp->ulLastOnTime == 0 || curTime > (lpLamp->ulLastOnTime + lpLamp->iFlashInterval)){
+                int iInterval = lpLamp->bLedOn ? lpLamp->iOnTime : lpLamp->iOffTime ;
+                if(lpLamp->ulLastOnOffTime == 0 || (curTime - lpLamp->ulLastOnOffTime > iInterval)){
+                    lpLamp->bLedOn = !lpLamp->bLedOn;
                     int iStartIndex = (lpLamp->byPortNum - 1) * 4;
                     STR_DRV  stDrv;
                     IOMCCOMMONOUTPUT stIomcCommonOutput;
@@ -30,10 +32,7 @@ void *ControlSKMLampFlashHT(void *pDev){
                     stIomcCommonOutput.wCNTLCmd = 0x01A3;
                     stIomcCommonOutput.wOutput1Id = 0x0107;
                     stIomcCommonOutput.wOutput1Len = 0x2200;
-                    stIomcCommonOutput.byOutput1Data[iStartIndex] = 0x01;
-                    stIomcCommonOutput.byOutput1Data[iStartIndex + 1] = 0x0A;
-                    stIomcCommonOutput.byOutput1Data[iStartIndex + 2] = 0x0A;
-                    stIomcCommonOutput.byOutput1Data[iStartIndex + 3] = 0x01;
+                    stIomcCommonOutput.byOutput1Data[iStartIndex] = (lpLamp->bLedOn ? 0x01 : 0x02);
 
                     stDrv.usParam          = USB_PRM_NO_RSP;                   // Parameter(Call type): No Resp STD40-00-00-01
                     stDrv.uiDataInBuffSz   = 0x2C;                             // Input data size: 28byte
@@ -43,7 +42,7 @@ void *ControlSKMLampFlashHT(void *pDev){
                     pDevSiuIomc->SendCmdData(USB_DRV_FN_DATASEND, &stDrv);
 
                     //更新最后一次亮灯时间
-                    lpLamp->ulLastOnTime = curTime;
+                    lpLamp->ulLastOnOffTime = curTime;
                 }
             }
         }
@@ -198,7 +197,11 @@ long CDevSIU_IOMC::Reset()
     } else {                                        //30-00-00-00(FS#0012)
          //关闭SKM灯闪烁
     	for(int i = 0; i < SKM_LAMP_MAX; i++){
-        	m_stSkmLampFlash[i].iFlashInterval = 0;
+            if(m_stSkmLampFlash[i].iOnTime > 0 && m_stSkmLampFlash[i].iOffTime > 0){
+                m_stSkmLampFlash[i].iOffTime = 0;
+                m_stSkmLampFlash[i].iOnTime = 0;
+                SetSKMLampCmd(GUIDLIGHT_OFF, i + 1);
+            }
     	}
     }                                               //30-00-00-00(FS#0012)
     STR_IOMC strIomc;
@@ -598,7 +601,6 @@ long CDevSIU_IOMC::SetLightsCmd(WORD wID, WORD wCmd)
             //        }
         } else {
             return SetSKMLampCmd(wCmd, 3);
-//        stFlickerSetData.Flk[IOMC_FLK_ID_ICRW_FLK] = byNewStatus;
         }
     }
         break;
@@ -998,7 +1000,7 @@ long CDevSIU_IOMC::SetSKMLampCmd(WORD wCmd,  BYTE byPortNum)
     THISMODULE(__FUNCTION__);
     AutoLogFuncBeginEnd();
 
-	if(byPortNum > SKM_LAMP_MAX){
+    if(byPortNum > SKM_LAMP_MAX || byPortNum < 1){
         return ERR_IOMC_PARAM;
     }
 
@@ -1009,7 +1011,8 @@ long CDevSIU_IOMC::SetSKMLampCmd(WORD wCmd,  BYTE byPortNum)
     case GUIDLIGHT_CONTINUOUS:
     {
         //停止闪烁
-        m_stSkmLampFlash[byPortNum - 1].iFlashInterval = 0;
+        m_stSkmLampFlash[byPortNum - 1].iOffTime = 0;
+        m_stSkmLampFlash[byPortNum - 1].iOnTime = 0;
 
         int iStartIndex = (byPortNum - 1) * 4;
         STR_DRV  stDrv;
@@ -1043,15 +1046,18 @@ long CDevSIU_IOMC::SetSKMLampCmd(WORD wCmd,  BYTE byPortNum)
     case GUIDLIGHT_MEDIUM_FLASH:
     case GUIDLIGHT_QUICK_FLASH:
     {
-        int iFlashInterval = m_iSlowFlashSleepTime;
+        m_stSkmLampFlash[byPortNum - 1].iOnTime = m_byOnOffTime[0] * 10;
+        m_stSkmLampFlash[byPortNum - 1].iOffTime = m_byOnOffTime[1] * 10;
         if(wCmd == GUIDLIGHT_MEDIUM_FLASH){
-            iFlashInterval = m_iMediumFlashSleepTime;
+            m_stSkmLampFlash[byPortNum - 1].iOnTime = m_byOnOffTime[2] * 10;
+            m_stSkmLampFlash[byPortNum - 1].iOffTime = m_byOnOffTime[3] * 10;
         } else if(wCmd == GUIDLIGHT_QUICK_FLASH){
-            iFlashInterval = m_iQuickFlashSleepTime;
+            m_stSkmLampFlash[byPortNum - 1].iOnTime = m_byOnOffTime[4] * 10;
+            m_stSkmLampFlash[byPortNum - 1].iOffTime = m_byOnOffTime[5] * 10;
         }
 
-        m_stSkmLampFlash[byPortNum - 1].iFlashInterval = iFlashInterval;
-        m_stSkmLampFlash[byPortNum - 1].ulLastOnTime = 0;
+        m_stSkmLampFlash[byPortNum - 1].ulLastOnOffTime = 0;
+        m_stSkmLampFlash[byPortNum - 1].bLedOn = FALSE;
     }
         break;
     default:

@@ -1,0 +1,3 @@
+#comment line start with ; or #
+#Currency,Value,Version(B C D),Action('R':Reject 'U':Retract),SerialNumber('*'support)
+;CNY,100,D,R,HD90**4567

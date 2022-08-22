@@ -4,6 +4,7 @@
 #include "qstringlistmodel.h"
 #include "qstandarditemmodel.h"
 
+const char* szIniFilePath = "/usr/local/CFES/ETC/AtmStartConfig.ini";
 
 CDevSIUTest::CDevSIUTest(QWidget *parent) :
     QWidget(parent),
@@ -33,7 +34,11 @@ void CDevSIUTest::on_pbt_Open_clicked()
     THISMODULE(__FUNCTION__);
     if (m_pDev == nullptr)
     {
-        m_pDev.Load("DevSIU_IOMC.dll", "CreateIDevSIU", "HT");
+        CINIFileReader iniFile;
+        iniFile.LoadINIFile(szIniFilePath);
+        CINIReader iniReader = iniFile.GetReaderSection("DEVICE");
+        string strPortParam = (LPCSTR)iniReader.GetValue("PortParam", "");
+        m_pDev.Load("DevSIU_IOMC.dll", "CreateIDevSIU", strPortParam.empty() ? "HT" : "CFES");
     }
     if (m_pDev == nullptr)
         return;

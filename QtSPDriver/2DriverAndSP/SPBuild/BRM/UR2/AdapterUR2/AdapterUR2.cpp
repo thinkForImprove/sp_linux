@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <map>
 #include <QDir>
+#include <QTextStream>
 using namespace std;
 
 #define THIS_FILE_ADP       "UR2_Adapter"   //适配层模块名
@@ -462,6 +463,17 @@ long CUR2Adapter::InitADPConfig()
     m_stHWConfig.bSelfCountRB5CfgAutoSwitch = (int)cINI.GetValue("SelfCountRB5CfgAutoSwitch", 1);            //30-00-00-00(FS#0022)
     m_stHWConfig.bSelfCountRB5SameDenoLimit = (int)cINI.GetValue("SelfCountRB5SameDenoLimit", 0);            //30-00-00-00(FS#0022)
     m_stHWConfig.bSelfCountDiffDenoAbort = (int)cINI.GetValue("SelfCountDiffDenoAbort", 0);                  //30-00-00-00(FS#0022)
+
+    //获取BV鉴伪级别设定
+    cINI = m_ReaderConfigFile.GetReaderSection("ZeroBVSetting");                                                    //30-00-00-00(FS#0025)
+    m_sDevConfigInfo.byBVSettingLevel = (int)cINI.GetValue("LevelSetting", 255);                                    //30-00-00-00(FS#0025)
+    m_sDevConfigInfo.strBVSettingInfo = (LPCSTR)cINI.GetValue("AgileSetting", "C40/69/60/127/127/254/5/7/127/255/255/254/48,S40/69/60/127/127/254/5/7/127/255/255/254/48,D40/69/60/127/127/254/5/7/127/255/255/254/48");    //30-00-00-00(FS#0025)
+
+    //SNBlacklist
+    szValue = (LPCSTR)cINI.GetValue("SNBlacklistFile", "");
+    if ((szValue != nullptr) && (strlen(szValue) > 0)) {
+        m_sDevConfigInfo.strSNBlacklistFile = string(SPETCPATH) + "/" +szValue;
+    }
 
     InitCapabilities();
 
@@ -1777,6 +1789,7 @@ long CUR2Adapter::ValidateAndCounting(char pResult[256], ULONG &ulRejCount, ADP_
 
     Log(ThisModule, 0, "CashCount 最大张数：%d, 最大金额为:%d", iValue, iAmountLimit);
     m_sDevConfigInfo.stBVDependentMode = m_sDevConfigInfo.stCashInBVDependentMode;              //30-00-00-00(FS#0030)
+    m_pUR2Dev->SetZeroBVSettingInfo(BVSET_CMDTYPE_CASHCOUNT, m_sDevConfigInfo.byBVSettingLevel, m_sDevConfigInfo.strBVSettingInfo.c_str());     //30-00-00-00(FS#0025)
     int iRet = m_pUR2Dev->CashCount(m_sDevConfigInfo.CashInNoteType,  iValue, iAmount, iPowerIndex,
                                     bArryAcceptDeno, m_sDevConfigInfo.stBVDependentMode, iTotalCashInURJB,
                                     iNumStackedToCS, iNumStackedToESC, pNumStackedToPerCass, iNumCSFed, iNumESCFed, pNumPerCassFed,
@@ -1951,6 +1964,7 @@ long CUR2Adapter::StoreCash(char ppNoteCounts[ADP_MAX_CU_SIZE][256], ADP_CUERROR
     ST_TOTAL_STACKE_NOTES_DENO_INFO stStackeRejectNotesDenoInfo;
     char pMaintenanceInfo[MAINTENANCE_INFO_LENGTH] = {0};
     m_sDevConfigInfo.stBVDependentMode = m_sDevConfigInfo.stCashInEndBVDependentMode;       //30-00-00-00(FS#0030)
+    m_pUR2Dev->SetZeroBVSettingInfo(BVSET_CMDTYPE_STOREMONEY, m_sDevConfigInfo.byBVSettingLevel, m_sDevConfigInfo.strBVSettingInfo.c_str());    //30-00-00-00(FS#0025)
     int iRet = m_pUR2Dev->StoreMoney(
                m_sDevConfigInfo.CashInNoteType,
                bCheckCS,
@@ -2957,6 +2971,7 @@ long CUR2Adapter::DispenseFromAllCass(const ULONG aryCassCount[ADP_MAX_CU_SIZE],
     SetRejectCounterfeitNote();
 
     m_sDevConfigInfo.stBVDependentMode = m_sDevConfigInfo.stDispenseBVDependentMode;        //30-00-00-00(FS#0030)
+    m_pUR2Dev->SetZeroBVSettingInfo(BVSET_CMDTYPE_DISPENSE, m_sDevConfigInfo.byBVSettingLevel, m_sDevConfigInfo.strBVSettingInfo.c_str());          //30-00-00-00(FS#0025)
     int iRet = m_pUR2Dev->Dispense(m_sDevConfigInfo.CashOutNoteType, ucProhibited,
                                    bDispenseByDeno ? pArryDispDeno : NULL, bDispenseByDeno ? NULL : pArryDispRoom,
                                    m_sDevConfigInfo.stBVDependentMode, iTotalCashInURJB, iNumStackedToCS, iNumStackedToESC,
@@ -4800,6 +4815,83 @@ string CUR2Adapter::GetIOMCHWType()
     }
 
     return strHWType;
+}
+
+bool CUR2Adapter::SetBlacklistInfo()
+{
+    if (m_sDevConfigInfo.strSNBlacklistFile.empty()) {
+        return true;
+    }
+
+    QFile qCSVFile(QString::fromStdString(m_sDevConfigInfo.strSNBlacklistFile));
+    if (!qCSVFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        return true;
+    }
+
+    std::vector<BLACKLIST_INFO> infoList;
+    QTextStream textStream(&qCSVFile);
+    textStream.setCodec("UTF-8");
+    while (!textStream.atEnd()) {
+        QString line = textStream.readLine().trimmed();
+        if (line.isEmpty()) {
+            break;
+        }
+        if ((line.at(0) == '#') || (line.at(0) == ';')) {
+            continue;
+        }
+        QStringList qslFields = line.split(",");
+        if (qslFields.size() < 5) {
+            continue;
+        }
+        BLACKLIST_INFO info;
+        bool illegal = false;
+        for (int i = 0; i < 5; i++) {
+            const char* field = qslFields.at(i).trimmed().toStdString().c_str();
+            if (i == 0) {
+                if (strlen(field) != 3) {
+                    illegal = true;
+                    break;
+                }
+                strcpy(info.cCurrency, field);
+            } else if (i == 1) {
+                if ((strlen(field) == 0) || (strlen(field) > 4)) {
+                    illegal = true;
+                    break;
+                }
+                strcpy(info.cValue, field);
+            } else if (i == 2) {
+                if (strlen(field) != 1) {
+                    illegal = true;
+                    break;
+                }
+                info.cVersion = field[0];
+            } else if (i == 3) {
+                if (strlen(field) != 1) {
+                    illegal = true;
+                    break;
+                }
+                info.cAction = field[0];
+            } else if (i == 4) {
+                if ((strlen(field) == 0) || (strlen(field) > 16)) {
+                    illegal = true;
+                    break;
+                }
+                strcpy(info.cSerialNumber, field);
+            }
+        }
+        if (illegal) {
+            continue;
+        }
+        infoList.push_back(info);
+    }
+    qCSVFile.close();
+
+    int iRet = m_pUR2Dev->SetBlackList(infoList);
+    if (iRet != ERR_UR_SUCCESS) {
+        return false;
+    }
+
+    return true;
 }
 
 //功能：删除目录下的文件，包括子文件夹

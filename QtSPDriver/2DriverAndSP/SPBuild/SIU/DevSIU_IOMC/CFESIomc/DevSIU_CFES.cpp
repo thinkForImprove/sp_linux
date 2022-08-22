@@ -9,7 +9,7 @@ void *ControlSKMLampFlash(void *pDev){
     CDevSIU_CFES *pDevSiuIomc = (CDevSIU_CFES *)pDev;
     while(true){
         for(int i = 0; i < SKM_LAMP_MAX; i++){
-            LPSKMLAMPFLASHCFES lpLamp = &(pDevSiuIomc->m_stSkmLampFlash[i]);
+            LPSKMLAMPFLASH lpLamp = &(pDevSiuIomc->m_stSkmLampFlash[i]);
             if(lpLamp->iOnTime > 0 && lpLamp->iOffTime > 0){
                 ULONG curTime = CQtTime::GetSysTick();
                 int iInterval = lpLamp->bLedOn ? lpLamp->iOnTime : lpLamp->iOffTime ;
@@ -29,9 +29,6 @@ void *ControlSKMLampFlash(void *pDev){
                     stIomcCommonOutput.wOutput1Id = 0x0107;
                     stIomcCommonOutput.wOutput1Len = 0x2200;
                     stIomcCommonOutput.byOutput1Data[iStartIndex] = (lpLamp->bLedOn ? 0x01 : 0x02);
-//                    stIomcCommonOutput.byOutput1Data[iStartIndex + 1] = 0x0A;
-//                    stIomcCommonOutput.byOutput1Data[iStartIndex + 2] = 0x0A;
-//                    stIomcCommonOutput.byOutput1Data[iStartIndex + 3] = 0x01;
 
                     stIomcCommonOutput.wOutput2Id = 0x0307;
                     stIomcCommonOutput.wOutput2Len = 0x0600;
@@ -443,7 +440,6 @@ int CDevSIU_CFES::SetFlickerLed(int iFlickerLedIdx, int iAction)
     strDrv.pvDataInBuffPtr  = &strIomc;                         // Input data pointer
     strDrv.uiTimer          = EN_IOMCTOUT_FLICKER_CONTROL;      // Command time out
 
-//    long lRet = m_cDev.USBDrvCall(USB_DRV_FN_DATASEND, &strDrv);
     long lRet = SendAndReadCmd(&strDrv);
     if (lRet != 0)
     {
@@ -479,7 +475,6 @@ int CDevSIU_CFES::SetSkimLed(int iFlickerLedIdx, int iAction)
     stDrv.pvDataInBuffPtr  = &stIomcCommonOutput;              // Input data pointer
     stDrv.uiTimer          = 10;                               // Command time out
 
-//    long lRet = m_cDev.USBDrvCall(USB_DRV_FN_DATASEND, &stDrv);
     long lRet = SendAndReadCmd(&stDrv);
     if (lRet != 0)
     {
@@ -924,7 +919,7 @@ long CDevSIU_CFES::SetSKMLampCmd(WORD wCmd,  BYTE byPortNum)
     THISMODULE(__FUNCTION__);
     AutoLogFuncBeginEnd();
 
-    if(byPortNum > SKM_LAMP_MAX){
+    if(byPortNum > SKM_LAMP_MAX || byPortNum < 1){
         return ERR_IOMC_PARAM;
     }
 
@@ -1103,10 +1098,46 @@ long CDevSIU_CFES::SetFlashRecycleParamer()
     WORD wCmdId = EN_IOMC_CMD_DATA_WRITE;
     iOffset += AddPkgData(m_bySendBuff + iOffset, EN_IOMC_CMDID_CMDCODE, (LPBYTE)&wCmdId, sizeof(wCmdId));
 
+    //时间
+    BYTE byTime[8] = {0};
+    SYSTEMTIME currentTime = CQtTime::CurrentTime();
+    byTime[0] = HEXTOBCD(currentTime.wYear/100);
+    byTime[1] = HEXTOBCD(currentTime.wYear%100);
+    byTime[2] = HEXTOBCD(currentTime.wMonth);
+    byTime[3] = HEXTOBCD(currentTime.wDay);
+    byTime[4] = HEXTOBCD(currentTime.wDayOfWeek % 7);
+    byTime[5] = HEXTOBCD(currentTime.wHour);
+    byTime[6] = HEXTOBCD(currentTime.wMinute);
+    byTime[7] = HEXTOBCD(currentTime.wSecond);
+    iOffset += AddPkgData(m_bySendBuff + iOffset, EN_IOMC_CMDID_DATETIMESET, byTime, sizeof(byTime));
+
     BYTE byFlkcycleMode[2 * 8];
     memset(byFlkcycleMode, 0, sizeof(byFlkcycleMode));
     memcpy(byFlkcycleMode, m_byOnOffTime, sizeof(m_byOnOffTime));
     iOffset += AddPkgData(m_bySendBuff + iOffset, EN_IOMC_CMDID_FLKCYCLE, byFlkcycleMode, sizeof(byFlkcycleMode));
+
+    BYTE byTemp[12] = {0};
+    byTemp[0] = 70;
+    byTemp[1] = 30;
+    byTemp[2] = 40;
+    byTemp[3] = 20;
+    iOffset += AddPkgData(m_bySendBuff + iOffset, EN_IOMC_CMDID_LMCLEDCYCLE, byTemp, 4);
+    iOffset += AddPkgData(m_bySendBuff + iOffset, EN_IOMC_CMDID_STLMPCYCLE, byTemp, 4);
+    iOffset += AddPkgData(m_bySendBuff + iOffset, EN_IOMC_CMDID_LMCBZRCYCLE, byTemp, 4);
+
+    memset(byTemp, 0, sizeof(byTemp));
+    byTemp[0] = 0xFF;
+    iOffset += AddPkgData(m_bySendBuff + iOffset, 0x4A07, byTemp, 2);
+    iOffset += AddPkgData(m_bySendBuff + iOffset, 0x4207, byTemp, 2);
+    iOffset += AddPkgData(m_bySendBuff + iOffset, 0x4607, byTemp, 2);
+    iOffset += AddPkgData(m_bySendBuff + iOffset, 0x4507, byTemp, 8);
+    iOffset += AddPkgData(m_bySendBuff + iOffset, 0x5007, byTemp, 2);
+    iOffset += AddPkgData(m_bySendBuff + iOffset, 0x5107, byTemp, 2);
+    iOffset += AddPkgData(m_bySendBuff + iOffset, 0x5207, byTemp, 2);
+    iOffset += AddPkgData(m_bySendBuff + iOffset, 0x5E07, byTemp, 2);
+    iOffset += AddPkgData(m_bySendBuff + iOffset, 0x6007, byTemp, 4);
+    iOffset += AddPkgData(m_bySendBuff + iOffset, 0x1507, byTemp, 4);
+    iOffset += AddPkgData(m_bySendBuff + iOffset, 0x4E07, byTemp, 6);
 
     m_bySendBuff[0] = HIWORD(iOffset);
     m_bySendBuff[1] = LOWORD(iOffset);

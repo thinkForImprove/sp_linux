@@ -6,10 +6,9 @@
 #include "AutoQtHelpClass.h"
 #include "QtDLLLoader.h"
 #include "IDevSIU.h"
-
+#include "INIFileReader.h"
 
 #define THISMODULE(X)       const char* ThisModule = X
-
 
 namespace Ui
 {

@@ -19,7 +19,7 @@ SUBDIRS += \
     SPBuild_SXXH/IDCBuild.pro \
     SPBuild/IDXBuild.pro \
     SPBuild/MSRBuild.pro \
-    SPBuild_SXXH/PINBuild.pro \
+    SPBuild/PINBuild.pro \
     SPBuild/PTRBuild.pro \
     SPBuild/PPRBuild.pro \
     SPBuild/SIGBuild.pro \

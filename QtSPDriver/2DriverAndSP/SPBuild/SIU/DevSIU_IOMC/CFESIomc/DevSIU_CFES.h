@@ -14,17 +14,6 @@ using namespace std;
 //////////////////////////////////////////////////////////////////////////
 #define DEF_CMD_TIMEOUT                           (30*1000)
 //////////////////////////////////////////////////////////////////////////
-#pragma pack(push, 1)
-//SKM接口灯闪烁参数结构体
-typedef struct _SKMLAMPFLASHCFES{
-    BYTE        byPortNum;                      // SKM端口号(1~8)
-    BOOL        bLedOn;                         // 灯亮标志
-    int         iOnTime;                        // 灯亮时间ms
-    int         iOffTime;                       // 灯灭时间ms
-    ULONG       ulLastOnOffTime;                // 最后一次亮灭起始时间　0:未记录时间
-}SKMLAMPFLASHCFES, *LPSKMLAMPFLASHCFES;
-#pragma pack(pop)
-//////////////////////////////////////////////////////////////////////////
 class CDevSIU_CFES: public IDevSIU, public CLogManage
 {
 public:
@@ -67,7 +56,7 @@ public:
 public:
     // 线程使用接口
     long SendCmdData(WORD wCmd, PSTR_DRV pParam);
-    SKMLAMPFLASHCFES m_stSkmLampFlash[SKM_LAMP_MAX];
+    SKMLAMPFLASH m_stSkmLampFlash[SKM_LAMP_MAX];
 protected:
     // 设置灯信息
     long SetLightsCmd(WORD wID, WORD wCmd);

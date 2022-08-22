@@ -345,11 +345,17 @@ long CUSBDrive::SendAndReadData(LPBYTE lpbySendData, UINT uiSendLen, LPBYTE lpby
     }
 
     long lRet = ERR_DEVPORT_SUCCESS;
-    //数据发送
-    uiSendLen = ((uiSendLen + 63)/64) * 64;
-    lRet = m_pDevPort->Send((LPCSTR)lpbySendData, uiSendLen, DEF_WRITE_TIMEOUT);
-    if(lRet != ERR_DEVPORT_SUCCESS){
-        return ERR_DEVPORT_WRITE;
+    //数据发送：分割为64字节包发送，最后不足64字节，用0补足
+    int iPkgCnt = (uiSendLen + (HID_REPORT_SIZE - 1))/HID_REPORT_SIZE;
+    BYTE byPkgData[HID_REPORT_SIZE] = {0};
+    for(int i = 0; i < iPkgCnt; i++){
+        memset(byPkgData, 0, sizeof(byPkgData));
+        int iCopySize = (i == iPkgCnt - 1) ? (uiSendLen - HID_REPORT_SIZE * i) : HID_REPORT_SIZE;
+        mempcpy(byPkgData, lpbySendData + i * HID_REPORT_SIZE, iCopySize);
+        lRet = m_pDevPort->Send((LPCSTR)byPkgData, HID_REPORT_SIZE, DEF_WRITE_TIMEOUT);
+        if(lRet != ERR_DEVPORT_SUCCESS){
+            return ERR_DEVPORT_WRITE;
+        }
     }
 
     //如果输出buffer为空，不读取返回数据

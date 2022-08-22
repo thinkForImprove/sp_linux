@@ -176,7 +176,7 @@ enum EN_IOMC_CMD_ID
     EN_IOMC_CMDID_FLKCYCLE                  = 0x4007,   // CMD[0x0600]-Filcker Cycle
     EN_IOMC_CMDID_LMCLEDCYCLE               = 0x4807,   // CMD[0x0600]-LMC-LED Cycle
     EN_IOMC_CMDID_STLMPCYCLE                = 0x4907,   // CMD[0x0600]-Status Lamp Cycle
-    //  EN_IOMC_CMDID_LMCBZRCYCLE               = 0x4107,   // CMD[0x0600]-LMC buzzer cycle
+    EN_IOMC_CMDID_LMCBZRCYCLE               = 0x4107,   // CMD[0x0600]-LMC buzzer cycle
     EN_IOMC_CMDID_EARPHONEMUTE              = 0x4607,   // CMD[0x0600]-earphone mute setting
     EN_IOMC_CMDID_CUDWNFANCTRL              = 0x5E07,   // CMD[0x0600]-Fan action after CU shutdown.
     EN_IOMC_CMDID_POWERCUT                  = 0x6007,   // CMD[0x0600]-power cut setting

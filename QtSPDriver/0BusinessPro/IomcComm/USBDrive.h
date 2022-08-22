@@ -9,6 +9,7 @@
 #include "IOMCDef.h"
 #include "IOMCUsbdef.h"
 
+#define HID_REPORT_SIZE 64
 //////////////////////////////////////////////////////////////////////////
 //IOMC 类型
 enum IOMCTYPE{

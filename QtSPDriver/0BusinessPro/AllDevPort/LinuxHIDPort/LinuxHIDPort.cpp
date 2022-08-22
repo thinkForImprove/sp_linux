@@ -119,7 +119,6 @@ long CLinuxHIDPort::Send(LPCSTR lpData, DWORD dwDataLen, DWORD dwTimeOut)
     //int nRet = libusb_control_transfer(m_hComm, uRequestType, uRequest, wValue, 0x00, (BYTE*)lpData, dwDataLen, dwTimeOut);
     int nRet = hid_write(m_pdev, (const unsigned char *)lpData, dwDataLen);
     fflush(stdout);
-    usleep(100 * 1000);
     if (nRet == (int)dwDataLen)
     {
         return ERR_PORT_SUCCESS;

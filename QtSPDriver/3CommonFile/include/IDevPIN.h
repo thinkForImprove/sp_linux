@@ -205,7 +205,7 @@ struct  IDevPIN
     // 加解密
     virtual long DataCrypt(UINT uKeyNo, UINT uMode, LPCSTR lpCryptData, BYTE bPadding, LPCSTR lpIVData, QByteArray &vtResultData) = 0;
     // 计算MAC
-#if defined(SET_BANK_CMBC) | defined(SET_BANK_CSCB) | defined(SET_BANK_SXXH)
+#if defined(SET_BANK_CMBC) | defined(SET_BANK_CSCB)
     virtual long DataMAC(UINT uKeyNo, UINT uMode, LPCSTR lpMacData, LPCSTR lpIVData, LPSTR lpData) = 0;
 #else
     virtual long DataMAC(UINT uKeyNo, UINT uMode, LPCSTR lpMacData, LPCSTR lpIVData, QByteArray &vtResultData, BYTE byPad = 0xFF) = 0;
@@ -213,7 +213,7 @@ struct  IDevPIN
     // 从键盘中获取32位长度的随机数
     virtual long RandData(LPSTR lpData) = 0;
     // 读取对称密钥KCV
-#if defined(SET_BANK_CMBC) | defined(SET_BANK_CSCB) | defined(SET_BANK_SXXH)
+#if defined(SET_BANK_CMBC) | defined(SET_BANK_CSCB)
     virtual long ReadSymmKeyKCV(UINT uKeyNo, BYTE byKcvMode, LPSTR lpKcv) = 0;
 #else
     virtual long ReadSymmKeyKCV(UINT uKeyNo, BYTE byKcvMode, LPSTR lpKcv, BYTE bySymmKeyType = 0) = 0;
@@ -224,7 +224,7 @@ struct  IDevPIN
     // 读取国密芯片（A980）固件信息
     virtual long SMGetFirmware(LPSTR lpSMVer) = 0;
     // 导入主密钥，uMKeyNo：0x01 ~ 0x10
-#if defined(SET_BANK_CMBC) | defined(SET_BANK_CSCB) | defined(SET_BANK_SXXH)
+#if defined(SET_BANK_CMBC) | defined(SET_BANK_CSCB)
     virtual long SM4ImportMKey(UINT uMKeyNo, LPCSTR lpKeyVal, LPSTR lpKCV) = 0;
 #else
     virtual long SM4ImportMKey(UINT uMKeyNo, LPCSTR lpKeyVal, LPSTR lpKCV, UINT uEncKeyNo = 0xFF) = 0;
@@ -245,7 +245,7 @@ struct  IDevPIN
      *         lpSignatureVal:行方SM2私钥签名值
      *         lpKCV:SM4密钥KCV
      *****************************************************/
-#if defined(SET_BANK_CMBC) | defined(SET_BANK_CSCB) | defined(SET_BANK_SXXH)
+#if defined(SET_BANK_CMBC) | defined(SET_BANK_CSCB)
 	virtual long SM4RemoteImportKey(UINT uKeyNo, UINT uEppSKeyNo, UINT uHostSM2PKeyNo, UINT uKeyUse, LPCSTR lpZA, LPCSTR lpKeyVal, LPCSTR lpSignKeyVal, LPSTR lpKCV) = 0;
 #else
     virtual long SM4RemoteImportKey(UINT uKeyNo, UINT uEppSKeyNo, UINT uHostSM2PKeyNo,
@@ -255,7 +255,7 @@ struct  IDevPIN
     // 加解密
     virtual long SM4CryptData(UINT uKeyNo, UINT uMode, LPCSTR lpCryptData, BYTE bPadding, LPCSTR lpIVData, QByteArray &vtResultData) = 0;
     // MAC加密数据
-#if defined(SET_BANK_CMBC)  | defined(SET_BANK_CSCB) | defined(SET_BANK_SXXH)
+#if defined(SET_BANK_CMBC)  | defined(SET_BANK_CSCB)
     virtual long SM4MACData(UINT uKeyNo, UINT uMode, LPCSTR lpCryptData, LPCSTR lpIVData, LPSTR lpData) = 0;
 #else	
     virtual long SM4MACData(UINT uKeyNo, UINT uMode, LPCSTR lpCryptData, LPCSTR lpIVData, QByteArray &vtResultData, BYTE byPad = 0xFF) = 0;
@@ -273,7 +273,7 @@ struct  IDevPIN
     virtual long SM2SignData(LPCSTR lpSM2SKeyData, LPCSTR lpZA, LPCSTR lpData, LPSTR lpSignData) = 0;
     // 公钥验签
     virtual long SM2VerifySign(LPCSTR lpSM2PKeyData, LPCSTR lpZA, LPCSTR lpData, LPCSTR lpSignData) = 0;
-#elif defined(SET_BANK_CSCB) | defined(SET_BANK_SXXH)
+#elif defined(SET_BANK_CSCB)
     // 公钥加密数据
     virtual long SM2EncryptData(UINT uPKeyNo, LPCSTR lpData, LPSTR lpCryptData) = 0;
     // 私钥解密数据
@@ -297,7 +297,7 @@ struct  IDevPIN
     // 随机生成SM密钥对
     virtual long SM2GenerateKey(UINT uSKeyNo, UINT uPKeyNo) = 0;
     // 生成随机数ZA
-#if defined(SET_BANK_CMBC) | defined(SET_BANK_CSCB) | defined(SET_BANK_SXXH)
+#if defined(SET_BANK_CMBC) | defined(SET_BANK_CSCB)
     virtual long SM3CaculateZAData(LPCSTR lpUserData, LPSTR lpData) = 0;
 #else	
     virtual long SM3CaculateZAData(LPCSTR lpUserData, UINT uPKNum, QByteArray &resultData) = 0;       //30-00-00-00(FS#0005)
@@ -342,7 +342,7 @@ struct  IDevPIN
     virtual long RSAExportEppRandData(QByteArray &strRandData) = 0;
     // 导入MK（主密钥）：使用PK（加密公钥）加密MK（主密钥），然后SK（HOST私钥）签名MK（主密钥）
     virtual long RSAImportDesKey(UINT uMKeyNo, QByteArray strMKVal, QByteArray strSignMKVal, QByteArray &strKCV) = 0;
-#if defined(SET_BANK_CSCB) | defined(SET_BANK_SXXH)
+#if defined(SET_BANK_CSCB)
     virtual long RSAImportDesKey(UINT uKeyNo, UINT uEppSKeyNo, UINT uHostPKeyNo,
                              RSADATAALGOTYPE  eRSAEncAlgo, RSASIGNALGOTYPE eRSASignAlgo,
                              QByteArray strKeyVal, QByteArray strSignVal,

@@ -134,6 +134,7 @@ typedef struct _SYSTEMTIME
 #define LOBYTE(w)               ((BYTE)(w))
 #define HIBYTE(w)               ((BYTE)(((WORD)(w) >> 8) & 0xFF))
 #define EXWORDHL(X)             (WORD)((((WORD)LOBYTE(X))<<8) | (HIBYTE(X)))
+#define	EXDWORDHL(X)            (DWORD)((((DWORD)EXWORDHL(LOWORD(X)))<<16) | (EXWORDHL(HIWORD(X))))
 #define ZeroMemory(a, l)        memset((a), 0x00, (l))
 #define GETBIT(a, b)            ((WORD)(a) >> (WORD)(b) & 0x01)
 

@@ -2,6 +2,7 @@
 #include "QtTypeDef.h"
 #include <QtCore/qglobal.h>
 #include <string.h>
+#include <vector>
 
 //错误码说明：
 //------------------------ 错误码定义 ----------------------------------
@@ -472,6 +473,14 @@ enum eCMDType
     eCMDType_Other = 3,
 };
 
+//30-00-00-00(FS#0025) add start
+enum BVSETTINGCMDTYPE{
+    BVSET_CMDTYPE_CASHCOUNT = 0,
+    BVSET_CMDTYPE_STOREMONEY = 1,
+    BVSET_CMDTYPE_DISPENSE = 2
+};
+//30-00-00-00(FS#0025) add end
+
 typedef struct tag_SET_VERIFICATION_LEVEL           //设置校验级别-宽松
 {
     BOOL bSetForCashCount;                          //验钞
@@ -862,6 +871,16 @@ typedef struct _TESTCASHUNITSOUTPUT
     ST_TOTAL_STACKE_NOTES_DENO_INFO stPerDenomiNumofRJ; //拒钞各面值及张数
     TESTDISPFAILCAUSE eRoomError[2][5];                //各room测试出钞结果
 }TESTCASHUNITSOUTPUT, *LPTESTCASHUNITSOUTPUT;
+
+//BlackList
+typedef struct tag_blacklist_info
+{
+    char cCurrency[4];
+    char cValue[5];
+    char cVersion;
+    char cAction;
+    char cSerialNumber[17];
+} BLACKLIST_INFO, *LPBLACKLIST_INFO;
 
 //------------------------ 接口类定义 ----------------------------------
 class IURDevice
@@ -1579,6 +1598,12 @@ public:
 	{
         return 0;
     }
+
+    //功能：设置BV鉴别设定
+    virtual int SetZeroBVSettingInfo(BYTE byCmdType, BYTE byBVSettingLevel, LPCSTR lpBVSettingInfo) = 0;
+
+    //功能：BlackList
+    virtual int SetBlackList(std::vector<BLACKLIST_INFO>& vctBlackListInfoList) = 0;
 protected:
 
 };

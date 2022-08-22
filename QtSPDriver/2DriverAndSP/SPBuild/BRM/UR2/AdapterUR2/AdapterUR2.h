@@ -94,6 +94,11 @@ typedef struct _DevConfigInfo
     DWORD dwCloseShutterRetryTimes;                         //30-00-00-00(FT#0053)
 
     std::map<BYTE, BYTE> mapNoteIDGroups;                   //30-00-00-00(FS#0018)
+    std::string strBVSettingInfo;                           //30-00-00-00(FS#0025)
+    BYTE        byBVSettingLevel;                           //30-00-00-00(FS#0025)
+
+    //Blacklist file
+    std::string strSNBlacklistFile;
 } DEVCONFIGINFO, *LPDEVCONFIGINFO;
 
 //定义设置钞票ID相关信息
@@ -796,6 +801,8 @@ private:
     void GetAcceptDispenseRoomsPriorityInfo();                  //30-00-00-00(FS#0022)
     //获取IOMC硬件类型
     string GetIOMCHWType();
+    //Blacklist
+    bool SetBlacklistInfo();
 private:
     //配置数据
     //初始化配置信息

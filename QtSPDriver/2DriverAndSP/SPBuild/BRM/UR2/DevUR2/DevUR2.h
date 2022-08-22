@@ -12,6 +12,107 @@
 #include "LogWriteThread.h"
 #include "INIFileReader.h"              //30-00-00-00(FS#0016)
 
+#pragma pack(push, 1)
+//30-00-00-00(FS#0025) add start
+// BV设定
+#define FLG_ADVANCE_SETTING         1
+#define FLG_RADICAL_SETTING         2
+#define FLG_BLANCED_SETTING         3
+#define FLG_DEFAULT_SETTING         4
+#define FLG_AGILE_SETTING           255
+
+#define FLG_CMD_1               1               //损券Level设定
+#define FLG_CMD_2               2               //真伪Level设定
+#define FLG_CMD_3               3               //Option机能设定
+#define BRM_SND_BUFF_SIZE       8182
+#define BV_RCV_BUFF_SIZE        8182
+
+struct BVOPTSNDDATA_FULL{
+    BYTE	byCmdSize[2];
+    BYTE	byRsrv1[2];
+    BYTE	byFunc;
+    BYTE	byBVCmd;
+    BYTE	byMode;
+    BYTE	byRsrv2;
+    DWORD	dwDataSize;
+    DWORD	dwRsrv3;
+    DWORD	dwRsrv4;
+    BYTE	byRsrv5[48];
+    BYTE	byData[256];
+};
+
+BYTE static byFLG_CMD_1[0x68] = {
+    0x00, 0x68, 0x00, 0x00, 0x00, 0x07, 0x01, 0x00,
+    0x00, 0x00, 0x00, 0x24, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x2A, 0x2A, 0x2A, 0x2A,
+    0x2A, 0x2A, 0x2A, 0x2A, 0x2A, 0x00, 0x01, 0xFF,
+    0x02, 0x45, 0x03, 0x3C, 0x04, 0x7F, 0x05, 0xFF,
+    0x06, 0x7F, 0x07, 0x7F, 0x08, 0x07, 0x09, 0x7F,
+    0x0A, 0xFF, 0x0B, 0xFF, 0x0C, 0xFE, 0x00, 0x00
+};
+
+BYTE static byFLG_CMD_2[0x52] = {
+    0x00, 0x52, 0x00, 0x00, 0x00, 0x08, 0x01, 0x00,
+    0x00, 0x00, 0x00, 0x0E, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x2A, 0x2A, 0x2A, 0x2A,
+    0x2A, 0x2A, 0x2A, 0x2A, 0x2A, 0x00, 0x01, 0x30,
+    0x00, 0x00
+};
+
+BYTE static byFLG_CMD_3[0x48] = {
+    0x00, 0x48, 0x00, 0x00, 0x00, 0x0C, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00};
+
+typedef struct _BVSETTING {
+    BYTE	byFLG_CMD_1_4F;
+    BYTE	byFLG_CMD_1_51;
+    BYTE	byFLG_CMD_1_53;
+    BYTE	byFLG_CMD_1_55;
+    BYTE	byFLG_CMD_1_57;
+    BYTE	byFLG_CMD_1_59;
+    BYTE	byFLG_CMD_1_5B;
+    BYTE	byFLG_CMD_1_5D;
+    BYTE	byFLG_CMD_1_5F;
+    BYTE	byFLG_CMD_1_61;
+    BYTE	byFLG_CMD_1_63;
+    BYTE	byFLG_CMD_1_65;
+    BYTE	byFLG_CMD_2_4F;
+} BVSETTING, *LPBVSETTING;
+
+BVSETTING static bvSetting[4][3] = {
+    {{255,69,60,127,255,255,255,7,127,255,255,254,48},
+    {255,69,60,127,255,80,80,7,127,255,255,254,48},
+    {255,69,60,127,255,80,80,7,127,255,255,254,48}},
+    {{255,69,60,255,255,255,255,48,127,255,255,254,48},
+    {255,69,60,70,255,70,35,7,127,255,255,254,48},
+    {255,69,60,70,255,70,35,7,127,255,255,254,48}},
+    {{255,69,60,255,255,255,255,7,127,255,255,254,48},
+    {255,69,60,80,255,80,127,7,127,255,255,254,48},
+    {255,69,60,80,255,80,127,7,127,255,255,254,48}},
+    {{255,69,60,127,255,127,127,7,127,255,255,254,48},
+    {255,69,60,127,255,127,127,7,127,255,255,254,48},
+    {255,69,60,127,255,127,127,7,127,255,255,254,48}}
+};
+//30-00-00-00(FS#0025) add end
+
 // 验钞模式
 enum NOTES_DENO_INFO_TYPE
 {
@@ -22,6 +123,33 @@ enum NOTES_DENO_INFO_TYPE
     REJECT_BV_NOTES_DENO_INFO_TYPE,      // 回收的钞票面额的流向、张数信息
     NOTES_DENO_INFO_TYPE_OTHER
 };
+
+// BlackList相关
+#define MAX_BLACKLIST_BLOCK		124
+typedef struct tag_BLBLOCKDATA {
+    BYTE	byCurrencyID[3];
+    BYTE	byValues[4];
+    BYTE	byRelease;
+    BYTE	byRsrv1;
+    BYTE	byType;
+    BYTE	byRsrv2[6];
+    BYTE	byNumber[16];
+} ST_BL_BLOCKDATA;
+
+typedef struct tag_BLACKLISTDDATA {
+    WORD	wCmdSize;
+    BYTE	byRsrv1[2];
+    BYTE	byFunc;
+    BYTE	byBVCmd;
+    BYTE	byRsrv2;
+    BYTE	byMode;
+    DWORD	dwDataSize;
+    DWORD	dwTotalDataSize;
+    DWORD	dwSentDataSize;
+    BYTE	byRsrv3[48];
+    ST_BL_BLOCKDATA stData[MAX_BLACKLIST_BLOCK];
+} ST_BLACKLISTDDATA;
+#pragma pack(pop)
 
 class CUR2Drv;
 
@@ -734,6 +862,11 @@ public:
                           const ST_BV_DEPENDENT_MODE stBVDependentMode,
                           bool  bContinueAfterBVDataFull = false); //30-00-00-00(FS#0022)
 
+    //功能：设置BV鉴别设定
+    virtual int SetZeroBVSettingInfo(BYTE byCmdType, BYTE byBVSettingLevel, LPCSTR lpBVSettingInfo);    //30-00-00-00(FS#0025)
+
+    //功能：BlackList
+    virtual int SetBlackList(std::vector<BLACKLIST_INFO>& vctBlackListInfoList);
 protected:
     //功能：初始化成员变量m_mPacketIDLength，map不为空时将PacketID与包长填充
     //输入：无
@@ -907,10 +1040,17 @@ protected:
     //根据错误码判断是否需要重启HCM或系统
     BOOL IsNeetRebootByErrCode(int iRet);
     //根据相关设置重启系统
-    BOOL RebootSys();
+    BOOL RebootSys();   
 
+    //编辑BlackList命令数据
+    USHORT BlackListEdit(char* szCmdData, bool bFirstBlock, LPBLACKLIST_INFO lpBlacklistInfo,
+                         DWORD dwInfoNum, DWORD dwTotalInfoNum, DWORD dwSentInfoNum);
 private:
     void ReadConfig();                  //30-00-00-00(FS#0016)
+
+    long ZeroBVOptionCmdEdit(LPBYTE pbyCmd, BYTE byCmdType, BYTE byCmdNo, BYTE bySettingType);  //30-00-00-00(FS#0025)
+    int  ZeroBVOptionCmdExec(LPBYTE byCmd, long lBufSize);                                       //30-00-00-00(FS#0025)
+    BOOL ZeroBVAgileSettingInit(LPCSTR lpBVSettingInfo);                                        //30-00-00-00(FS#0025)
 
 private:
     //long GetLocalSystemTime(SYSTEMTIME &stSystemTime);
@@ -924,5 +1064,7 @@ private:
     CVHUSBDrive *m_pUSBDrv;
     map<USHORT, USHORT> m_mPacketIDLength; //存储<PacketID, Length> 用于校验返回数据有效性。Length为0表示不需要校验该包
 
-    bool m_bUseFuncLib;                     //30-00-00-00(FS#0016)
+    bool          m_bUseFuncLib;                     //30-00-00-00(FS#0016)
+    BVSETTING     m_stAgileSetting[3];              //30-00-00-00(FS#0025)
+    bool          m_bHeavyPrincipleModeSupp;        //30-00-00-00(FS#0025)
 };

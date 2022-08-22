@@ -1,5 +1,5 @@
 #pragma once
-#include "QtTypeInclude.h"
+#include "QtTypeDef.h"
 
 #define DEF_WRITE_TIMEOUT                         (3*1000)
 #define DEF_SINGLE_READ_TIMEOUT                   (100)
@@ -309,43 +309,43 @@ typedef struct _I2CABNORMINFO
 //////////////////////////////////////////////////////////////////////////
 struct VERtag
 {
-    uchar    NAME[8];
-    uchar    byV[2];
-    uchar    byR[2];
-    uchar    byT[2];
-    uchar    byN[2];
+    BYTE    NAME[8];
+    BYTE    byV[2];
+    BYTE    byR[2];
+    BYTE    byT[2];
+    BYTE    byN[2];
 };
 
 
 struct IOMC_VERtag
 {
-    ushort    wType ;
+    WORD    wType ;
     VERtag    VerDt[2] ;
 };
 
 struct DRV_VERtag
 {
-    ushort    wType ;
+    WORD      wType ;
     VERtag    VerDt[4] ;
 };
 
 struct SVERSION
 {
-    ushort    wID;
-    ushort    wLNG;
-    char      cKatashiki[16] ;
-    char      cVER[8] ;
-    uchar     byDate[6];
-    uint      dwSum;
+    WORD     wID;
+    WORD     wLNG;
+    char     cKatashiki[16] ;
+    char     cVER[8] ;
+    BYTE     byDate[6];
+    DWORD    dwSum;
 };
 
 struct IOMCVrtInfT                          // IOMC
 {
-    ushort        wLEN ;                   // LEN      (2Byte)
-    ushort        wRESP_ID ;               // RESP ID  (2Byte)
-    ushort        wRESP_LNG ;              //      LNG (2Byte)
-    ushort        wRESP_RES ;              //      RES (2Byte)
-    uchar         byDATA[RES_COMMON_LEN] ; // commom part STD40-00-00-00
+    WORD        wLEN ;                   // LEN      (2Byte)
+    WORD        wRESP_ID ;               // RESP ID  (2Byte)
+    WORD        wRESP_LNG ;              //      LNG (2Byte)
+    WORD        wRESP_RES ;              //      RES (2Byte)
+    BYTE         byDATA[RES_COMMON_LEN] ; // commom part STD40-00-00-00
     SVERSION      VRT[2] ;                 //
 } ;
 
@@ -482,21 +482,21 @@ typedef struct _iomc_sense_info {	// IOMCセンサ状態情報
 //40-00-00-00(FT#0001) add start
 //灯闪烁-循环模式ON/OFF时间参数设置结构体
 typedef struct _IOMCWRITECYCLE {               // IOMC parameters for set cycle of flicker & lamp
-    ushort      wLEN;
-    ushort      wCNTL_ID;
-    ushort      wCNTL_LNG;
-    ushort      wCNTL_CMD;
+    WORD    wLEN;
+    WORD    wCNTL_ID;
+    WORD    wCNTL_LNG;
+    WORD    wCNTL_CMD;
 
-    ushort      wDATA_ID_FLK;                  // DATA ID  (2uchar)
-    ushort      wDATA_LNG_FLK;                 // LNG (2uchar)
-    uchar       FLK_Cycle1[2];
-    uchar	FLK_Cycle2[2];
-    uchar	FLK_Cycle3[2];
-    uchar	FLK_Cycle4[2];
-    uchar	FLK_Cycle5[2];
-    uchar	FLK_Cycle6[2];
-    uchar	FLK_Cycle7[2];
-    uchar	FLK_Cycle8[2];
+    WORD    wDATA_ID_FLK;                  // DATA ID  (2uchar)
+    WORD    wDATA_LNG_FLK;                 // LNG (2uchar)
+    BYTE    FLK_Cycle1[2];
+    BYTE	FLK_Cycle2[2];
+    BYTE	FLK_Cycle3[2];
+    BYTE	FLK_Cycle4[2];
+    BYTE	FLK_Cycle5[2];
+    BYTE	FLK_Cycle6[2];
+    BYTE	FLK_Cycle7[2];
+    BYTE	FLK_Cycle8[2];
 }IOMCWRITECYCLE, *LPIOMCWRITECYCLE;
 //40-00-00-00(FT#0001) add end
 //////////////////////////////////////////////////////////////////////////
